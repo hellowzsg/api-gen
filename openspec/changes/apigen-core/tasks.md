@@ -95,18 +95,18 @@
   - [x] 4.3.5 重构：提取注入目标枚举、统一 proto text format 生成
 
 - [x] 4.4 proto 模板渲染（确定性输出） <!-- TDD 任务 -->
-  - [ ] 4.4.1 写失败测试：`internal/render/template_test.go`（测试 proto 文件生成、import 排序字典序、message/RPC 顺序固定、字段号固定、api-linter 豁免注释生成（按实际触发裁剪）、多次运行 bit-identical）
-  - [ ] 4.4.2 验证测试失败（运行：`go test ./internal/render/ -run TestTemplate -v`，确认失败）
-  - [ ] 4.4.3 写最小实现：`internal/render/template.go`（text/template 模板、import 精确生成规则、豁免注释裁剪、确定性输出保证）
-  - [ ] 4.4.4 验证测试通过（运行：`go test ./internal/render/ -run TestTemplate -v`，确认通过）
-  - [ ] 4.4.5 重构：提取模板片段、统一 import 生成规则表（§15.6）
+  - [x] 4.4.1 写失败测试：`internal/render/template_test.go`（测试 proto 文件生成、import 排序字典序、message/RPC 顺序固定、字段号固定、api-linter 豁免注释生成（按实际触发裁剪）、多次运行 bit-identical）
+  - [x] 4.4.2 验证测试失败（运行：`go test ./internal/render/ -run TestTemplate -v`，确认失败）
+  - [x] 4.4.3 写最小实现：`internal/render/template.go`（text/template 模板、import 精确生成规则、豁免注释裁剪、确定性输出保证）
+  - [x] 4.4.4 验证测试通过（运行：`go test ./internal/render/ -run TestTemplate -v`，确认通过）
+  - [x] 4.4.5 重构：提取模板片段、统一 import 生成规则表（§15.6）
 
 - [x] 4.5 generate 命令集成 <!-- TDD 任务 -->
-  - [ ] 4.5.1 写失败测试：`internal/cli/generate_test.go`（测试端到端 generate 流程：YAML 解析 → 依赖拉取 → protocompile 解析 → 语义校验 → IR 构建 → 模板渲染 → 落盘 generated/proto/<service>/<service>.proto）
-  - [ ] 4.5.2 验证测试失败（运行：`go test ./internal/cli/ -run TestGenerate -v`，确认失败）
-  - [ ] 4.5.3 写最小实现：`internal/cli/generate.go`（编排全流程、错误处理、落盘逻辑）
-  - [ ] 4.5.4 验证测试通过（运行：`go test ./internal/cli/ -run TestGenerate -v`，确认通过）
-  - [ ] 4.5.5 重构：提取流程编排、统一错误消息
+  - [x] 4.5.1 写失败测试：`internal/cli/generate_test.go`（测试端到端 generate 流程：YAML 解析 → 依赖拉取 → protocompile 解析 → 语义校验 → IR 构建 → 模板渲染 → 落盘 generated/proto/<service>/<service>.proto）
+  - [x] 4.5.2 验证测试失败（运行：`go test ./internal/cli/ -run TestGenerate -v`，确认失败）
+  - [x] 4.5.3 写最小实现：`internal/cli/generate.go`（编排全流程、错误处理、落盘逻辑）
+  - [x] 4.5.4 验证测试通过（运行：`go test ./internal/cli/ -run TestGenerate -v`，确认通过）
+  - [x] 4.5.5 重构：提取流程编排、统一错误消息
 
 - [x] 4.6 代码审查
   - 前置验证：调用 superpowers:verification-before-completion 运行全量测试，确认输出干净后才继续
