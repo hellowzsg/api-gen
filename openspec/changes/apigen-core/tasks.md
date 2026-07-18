@@ -87,12 +87,12 @@
   - [x] 4.2.4 验证测试通过（运行：`go test ./internal/ir/ -run TestVersion -v`，确认通过）
   - [x] 4.2.5 重构：提取 version 类型映射表、统一 import 生成规则（WEAK 需 wrappers.proto）
 
-- [ ] 4.3 option 注入（五档纯搬运） <!-- TDD 任务 -->
-  - [ ] 4.3.1 写失败测试：`internal/ir/option_test.go`（测试 field/message/rpc/service/file 五档 option 注入、option 全限定名可达性校验、target.path 存在性校验、值类型合法性（标量 + YAML map → proto text format））
-  - [ ] 4.3.2 验证测试失败（运行：`go test ./internal/ir/ -run TestOption -v`，确认失败）
-  - [ ] 4.3.3 写最小实现：`internal/ir/option.go`（五档注入逻辑、option 可达性校验、target.path 存在性校验、值类型转换）
-  - [ ] 4.3.4 验证测试通过（运行：`go test ./internal/ir/ -run TestOption -v`，确认通过）
-  - [ ] 4.3.5 重构：提取注入目标枚举、统一 proto text format 生成
+- [x] 4.3 option 注入（五档纯搬运） <!-- TDD 任务 -->
+  - [x] 4.3.1 写失败测试：`internal/ir/option_test.go`（测试 field/message/rpc/service/file 五档 option 注入、option 全限定名可达性校验、target.path 存在性校验、值类型合法性（标量 + YAML map → proto text format））
+  - [x] 4.3.2 验证测试失败（运行：`go test ./internal/ir/ -run TestOption -v`，确认失败）
+  - [x] 4.3.3 写最小实现：`internal/ir/option.go`（五档注入逻辑、option 可达性校验、target.path 存在性校验、值类型转换）
+  - [x] 4.3.4 验证测试通过（运行：`go test ./internal/ir/ -run TestOption -v`，确认通过）
+  - [x] 4.3.5 重构：提取注入目标枚举、统一 proto text format 生成
 
 - [ ] 4.4 proto 模板渲染（确定性输出） <!-- TDD 任务 -->
   - [ ] 4.4.1 写失败测试：`internal/render/template_test.go`（测试 proto 文件生成、import 排序字典序、message/RPC 顺序固定、字段号固定、api-linter 豁免注释生成（按实际触发裁剪）、多次运行 bit-identical）
