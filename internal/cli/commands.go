@@ -5,11 +5,6 @@ import (
 	"fmt"
 )
 
-// runGenerate 执行 generate 子命令：校验 → 拉取依赖 → 生成 proto。
-func runGenerate(_ context.Context, _ string) error {
-	return fmt.Errorf("generate not implemented yet")
-}
-
 // runBuild 执行 build 子命令：generate + 编译成 pb.go/grpc.pb.go。
 func runBuild(_ context.Context, _ string) error {
 	return fmt.Errorf("build not implemented yet")
