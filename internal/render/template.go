@@ -12,17 +12,19 @@ import (
 // RenderServiceProto renders a service proto file from IR.
 func RenderServiceProto(irData *ir.IR, svc ir.ServiceIR) (string, error) {
 	var sb strings.Builder
+	// Build per-service, narrowed entity views: each service entity may
+	// narrow the set of exposed resources and/or their reader/writer methods.
 	var entities []ir.EntityIR
 	for _, se := range svc.Entities {
 		for i := range irData.Entities {
 			if irData.Entities[i].Name == se.Name {
-				entities = append(entities, irData.Entities[i])
+				entities = append(entities, narrowEntity(irData.Entities[i], se))
 				break
 			}
 		}
 	}
 	needEmpty, needMask, needWrapper := analyzeImports(entities)
-	typeImports := collectTypeImports(entities)
+	typeImports := collectTypeImports(entities, irData.TypeImportPaths)
 	imports := generateImports(needEmpty, needMask, needWrapper, false, typeImports)
 	exemptions := generateExemptions(entities)
 	renderExemptions(&sb, exemptions)
@@ -34,19 +36,79 @@ func RenderServiceProto(irData *ir.IR, svc ir.ServiceIR) (string, error) {
 	if len(imports) > 0 {
 		sb.WriteString("\n")
 	}
-	sb.WriteString(fmt.Sprintf("option go_package = \".../generated/go/%s;%s\";\n\n", svc.GoPackage, svc.GoPackage))
+	sb.WriteString(fmt.Sprintf("option go_package = %q;\n\n", buildGoPackage(svc)))
 	sb.WriteString(fmt.Sprintf("service %s {\n", svc.Name))
-	for _, e := range entities {
-		renderServiceRPCs(&sb, &e)
+	for i := range entities {
+		renderServiceRPCs(&sb, &entities[i])
 	}
 	for _, cm := range svc.CustomMethods {
 		sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s);\n", cm.Name, cm.Request, cm.Response))
 	}
 	sb.WriteString("}\n\n")
-	for _, e := range entities {
-		renderMessages(&sb, &e)
+	for i := range entities {
+		renderMessages(&sb, &entities[i])
 	}
 	return sb.String(), nil
+}
+
+// narrowEntity returns a copy of the entity IR filtered to the resources and
+// methods exposed by the given service entity narrowing spec.
+//
+// Rules (per design §十一):
+//   - If se.Resources is empty, the entity's full resource set is inherited.
+//   - If se.Resources is non-empty, only the listed resources are exposed.
+//   - For each listed resource, if se's reader/writer block is present, it
+//     overrides (narrows) the entity's reader/writer: a method is generated
+//     only if the narrow spec enables it. When the narrow block is nil, the
+//     entity's methods for that resource are inherited as-is.
+//   - Entity-level methods (Create/Delete/DeleteSoft) are always inherited —
+//     narrowing only applies to resource-level methods.
+func narrowEntity(e ir.EntityIR, se ir.ServiceEntityIR) ir.EntityIR {
+	out := ir.EntityIR{
+		Name:       e.Name,
+		PascalName: e.PascalName,
+		KeyType:    e.KeyType,
+		Create:     e.Create,
+		Delete:     e.Delete,
+		DeleteSoft: e.DeleteSoft,
+	}
+	if len(se.Resources) == 0 {
+		out.Resources = e.Resources
+		return out
+	}
+	// Build a name→narrow index.
+	narrowByName := make(map[string]ir.ResourceNarrowIR, len(se.Resources))
+	for _, nr := range se.Resources {
+		narrowByName[nr.Name] = nr
+	}
+	for _, r := range e.Resources {
+		narrow, ok := narrowByName[r.Name]
+		if !ok {
+			continue // resource not listed in the service → not exposed
+		}
+		filt := r // copy of ResourceIR
+		// Apply reader narrowing.
+		if narrow.Reader != nil {
+			if narrow.Reader.Batch != nil && !*narrow.Reader.Batch {
+				filt.BatchGet = nil
+			}
+			if narrow.Reader.List != nil && !*narrow.Reader.List {
+				filt.List = nil
+			}
+			// When a reader block is present but neither batch nor list is
+			// true, only the base Get remains (inherited). When Get should
+			// also be narrowed off, a future flag can control it; for now
+			// Get is inherited when reader block is present.
+		}
+		// Apply writer narrowing.
+		if narrow.Writer != nil {
+			if narrow.Writer.Update != nil && !*narrow.Writer.Update {
+				filt.Update = nil
+			}
+		}
+		out.Resources = append(out.Resources, filt)
+	}
+	return out
 }
 
 func renderServiceRPCs(sb *strings.Builder, e *ir.EntityIR) {
@@ -155,20 +217,60 @@ func analyzeImports(entities []ir.EntityIR) (needEmpty, needMask, needWrapper bo
 	return
 }
 
-func collectTypeImports(entities []ir.EntityIR) []string {
+// buildGoPackage derives the go_package option string for a service proto.
+// Format: "<go_repo>/<out_go_dir>/<go_package>;<go_package>"
+// e.g. "github.com/acme/demo-book/generated/go/library_service;library_service"
+// Falls back to ".../<out>/<pkg>;<pkg>" when GoRepo is unset (e.g. in tests).
+func buildGoPackage(svc ir.ServiceIR) string {
+	pkg := svc.GoPackage
+	if svc.GoRepo != "" {
+		outDir := svc.OutGoDir
+		if outDir == "" {
+			outDir = "generated/go"
+		}
+		return svc.GoRepo + "/" + outDir + "/" + pkg + ";" + pkg
+	}
+	outDir := svc.OutGoDir
+	if outDir == "" {
+		outDir = "generated/go"
+	}
+	return ".../" + outDir + "/" + pkg + ";" + pkg
+}
+
+func collectTypeImports(entities []ir.EntityIR, resolved map[string]string) []string {
 	seen := make(map[string]bool)
 	var imports []string
 	addImport := func(typeName string) {
-		if strings.Contains(typeName, ".") {
-			parts := strings.Split(typeName, ".")
-			if len(parts) >= 2 {
-				pkg := strings.Join(parts[:len(parts)-1], "/")
-				imp := pkg + ".proto"
-				if !seen[imp] && !strings.HasPrefix(imp, "google.protobuf") && !strings.HasPrefix(imp, "google/api") {
-					seen[imp] = true
-					imports = append(imports, imp)
+		// Strip leading dot if present (fully-qualified form).
+		tn := strings.TrimPrefix(typeName, ".")
+		// Skip WKT — they are handled by needEmpty/needMask/needWrapper.
+		if strings.HasPrefix(tn, "google.protobuf.") {
+			return
+		}
+		var imp string
+		if resolved != nil {
+			// Use the exact file path from the resolved proto files.
+			if p, ok := resolved[tn]; ok {
+				imp = p
+			}
+		}
+		if imp == "" {
+			// Heuristic fallback (used in unit tests without a resolver):
+			// pkg.subpkg.MessageName → pkg/subpkg/subpkg.proto
+			// This assumes the conventional file-name == last-pkg-segment.
+			if strings.Contains(tn, ".") {
+				parts := strings.Split(tn, ".")
+				if len(parts) >= 2 {
+					pkgParts := parts[:len(parts)-1]
+					lastPkg := pkgParts[len(pkgParts)-1]
+					pkgPath := strings.Join(pkgParts, "/")
+					imp = pkgPath + "/" + lastPkg + ".proto"
 				}
 			}
+		}
+		if imp != "" && !seen[imp] && !strings.HasPrefix(imp, "google/protobuf") && !strings.HasPrefix(imp, "google/api") {
+			seen[imp] = true
+			imports = append(imports, imp)
 		}
 	}
 	for _, e := range entities {

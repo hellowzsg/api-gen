@@ -43,7 +43,18 @@ func (r *PathResolver) Glob() error {
 		return fmt.Errorf("no .proto files matched pattern %q", pattern)
 	}
 	r.files = matches
-	seen := make(map[string]bool)
+	// The import root is the glob root — the directory prefix before any
+	// wildcard (**). All matched proto files are resolvable as paths relative
+	// to this root, which is what protocompile expects (proto import paths
+	// are relative to --proto_path roots, not to individual file dirs).
+	// Using the glob root ensures imports like "demo/business/book/book.proto"
+	// resolve correctly instead of being flattened to "book.proto".
+	importRoot := globRoot(pattern)
+	r.importPaths = []string{importRoot}
+	// Also include any intermediate directories that contain proto files but
+	// are not under the glob root — this is a defensive fallback for patterns
+	// like "a.proto" (no wildcards) where the glob root is the file's dir.
+	seen := map[string]bool{importRoot: true}
 	for _, f := range matches {
 		d := filepath.Dir(f)
 		if !seen[d] {
@@ -53,6 +64,30 @@ func (r *PathResolver) Glob() error {
 	}
 	sort.Strings(r.importPaths)
 	return nil
+}
+
+// globRoot returns the import root for a glob pattern: the directory prefix
+// before the first wildcard segment.
+//   - "proto/**/*.proto"     → "proto"
+//   - "proto/book.proto"     → "proto"
+//   - "proto/sub/*.proto"    → "proto/sub"
+//   - "*.proto"              → "."
+//   - "/abs/proto/**/*.proto" → "/abs/proto"
+func globRoot(pattern string) string {
+	idx := strings.Index(pattern, "**")
+	if idx >= 0 {
+		root := filepath.Clean(pattern[:idx])
+		if root == "" {
+			return "."
+		}
+		return root
+	}
+	// No ** — strip the last path segment (the filename or wildcard leaf).
+	dir := filepath.Dir(pattern)
+	if dir == "" {
+		return "."
+	}
+	return dir
 }
 
 // ResolveFiles returns the list of matched .proto file paths.

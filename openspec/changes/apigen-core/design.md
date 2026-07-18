@@ -168,5 +168,15 @@ BSR 依赖需要 buf CLI，引入外部二进制依赖。
 
 ### 实现决策
 - git 依赖使用系统 git subprocess 而非 go-git library（功能等价，避免 go-git auth 复杂性，后续可替换）
-- CompositeResolver.CollectTransitiveClosure 当前为占位实现（仅排序 seedFiles），完整传递依赖收集待 build 阶段补全
-- build.go 的 FileDescriptorProto 转换需要处理 protocompile linker.File → descriptorpb.FileDescriptorProto 的类型映射
+- CompositeResolver.CollectTransitiveClosure 已实现完整传递依赖收集（BFS 遍历 linker.Files 的 Imports，含 WKT）
+- BuildTypeImportPaths 从 resolved linker.Files 构建类型 FQMN → proto 文件路径映射，供 renderer 精确生成 import
+
+### Bug 修复（build 流程）
+- **compiler.go 语法错误修复**：原 `loadFileDescriptor` 函数体后有孤立代码（`globalFileRegistry()` 未定义调用 + 未闭合函数体），导致 `go build` 失败。已删除残留代码。
+- **WKT 文件收集修复**：原 `getWKTFileDescriptor` 使用 `protoregistry.GlobalFiles.FindFileByName`（不存在的方法，正确为 `FindFileByPath`），且忽略返回的 error。改为统一 BFS 遍历：先查 linker.Files 索引 → 再查 `FindImportByPath` → 最后回退 `protoregistry.GlobalFiles.FindFileByPath`（处理 WKT 自身的传递依赖，如 `type.proto` import `source_context.proto`）。
+- **go_package 派生修复**：renderer 原硬编码 `".../generated/go/<svc>;<svc>"` 占位符，protoc-gen-go 无法据此生成有效 Go import path。改为从 IR.ServiceIR.GoRepo + OutGoDir 派生完整 go_package（`<go_repo>/<out_go_dir>/<svc>;<svc>`），IR 层新增 GoRepo/OutGoDir 字段。
+- **type_ import 路径精确化**：`collectTypeImports` 原用启发式（pkg 最后段 + 同名 .proto），对非约定文件名会出错。改为优先使用 `IR.TypeImportPaths`（由 CompositeResolver.BuildTypeImportPaths 从 resolved 文件按 message/enum 全限定名 → 文件路径精确映射），fallback 启发式仅用于无 resolver 的单测。
+- **PathResolver import root 修复**：原 `Glob()` 将每个 .proto 文件的父目录作为 import path（`proto/a/b/c.proto` → import path = `proto/a/b`，相对路径扁平化为 `c.proto`），导致 import 语句丢失包层级。改为以 glob root（`**` 前的目录前缀）作为 import root（`proto/**/*.proto` → import root = `proto`，相对路径 = `a/b/c.proto`），保留包层级。
+- **protoc-gen-go paths=source_relative**：Compile 向 protoc-gen-go/go-grpc 传递 `paths=source_relative` 参数，使输出文件按 proto 源相对路径落盘（`generated/go/<service>/<service>.pb.go`），而非从 go_package import path 派生嵌套目录。
+- **build 编译用户 type_ proto**：`fileToGenerate` 原仅含 service proto，导致用户 type_ proto 未编译、service stub 引用的 type 包缺失。改为同时编译 service proto + 用户 type_ proto。
+- **service 资源收窄（narrowing）实现**：原 `buildService` 忽略 `services[].entities[].resources` 收窄声明，AdminService 错误暴露全部资源方法。新增 `ServiceEntityIR.Resources`（`ResourceNarrowIR`）承载收窄 spec，renderer `narrowEntity` 按收窄规则过滤资源/方法：未列出资源不暴露；reader 块存在时未显式启用的方法（batch/list）收窄掉；writer 块存在时 update 子块缺失则不生成 Update。

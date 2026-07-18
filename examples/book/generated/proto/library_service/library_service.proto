@@ -29,52 +29,45 @@ service LibraryService {
   rpc UpdateBookContent(UpdateBookContentRequest) returns (google.protobuf.Empty);
 }
 
-// ===== 实体级 Create：各资源字段可选，支持部分创建 =====
 message CreateBookRequest {
-  demo.business.book.BookMeta    meta    = 1;
+  demo.business.book.BookMeta meta = 1;
   demo.business.book.BookContent content = 2;
 }
 message CreateBookResponse { demo.business.book.BookId key = 1; }
 
-message DeleteBookRequest     { demo.business.book.BookId key = 1; }
+message DeleteBookRequest { demo.business.book.BookId key = 1; }
 message DeleteBookSoftRequest { demo.business.book.BookId key = 1; }
-
-// ===== 资源级 · meta（STRONG/U64）=====
-message GetBookMetaRequest  { demo.business.book.BookId key = 1; }
+message GetBookMetaRequest { demo.business.book.BookId key = 1; }
 message GetBookMetaResponse {
   demo.business.book.BookMeta book_meta = 1;
   uint64 version = 2;
 }
-
-message BatchGetBookMetasRequest  { repeated demo.business.book.BookId keys = 1; }
+message BatchGetBookMetasRequest { repeated demo.business.book.BookId keys = 1; }
 message BatchGetBookMetasResponse { repeated demo.business.book.BookMeta metas = 1; }
-
 message ListBookMetasRequest {
-  int32  page_size  = 1;
+  int32 page_size = 1;
   string page_token = 2;
-  string filter     = 3;
-  string order_by   = 4;
+  string filter = 3;
+  string order_by = 4;
 }
 message ListBookMetasResponse {
   repeated demo.business.book.BookMeta metas = 1;
   string next_page_token = 2;
-  int32  total_size = 3;
+  int32 total_size = 3;
 }
-
 message UpdateBookMetaRequest {
-  demo.business.book.BookMeta         book_meta   = 1;
-  demo.business.book.BookId           key         = 2;
-  google.protobuf.FieldMask             update_mask = 3;
-  uint64                                version     = 4;
+  demo.business.book.BookMeta meta = 1;
+  demo.business.book.BookId key = 2;
+  google.protobuf.FieldMask update_mask = 3;
+  uint64 version = 4;
 }
 message UpdateBookMetaResponse { uint64 version = 1; }
-
-// ===== 资源级 · content（NONE）=====
-message GetBookContentRequest  { demo.business.book.BookId key = 1; }
-message GetBookContentResponse { demo.business.book.BookContent book_content = 1; }
-
-message UpdateBookContentRequest {
+message GetBookContentRequest { demo.business.book.BookId key = 1; }
+message GetBookContentResponse {
   demo.business.book.BookContent book_content = 1;
-  demo.business.book.BookId      key          = 2;
-  google.protobuf.FieldMask        update_mask  = 3;
 }
+message UpdateBookContentRequest {
+  demo.business.book.BookContent content = 1;
+  demo.business.book.BookId key = 2;
+}
+

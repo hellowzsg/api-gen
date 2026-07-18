@@ -2,8 +2,9 @@ syntax = "proto3";
 
 package demo.business.book;
 
+option go_package = "github.com/acme/demo-book/generated/go/demo/business/book;book";
+
 // BookId 是 Book 实体的主键类型。
-// 工具视为不透明符号（gRPC 下黑盒，HTTP 下递归解析标量叶子做路径绑定）。
 message BookId {
   string id = 1;
 }

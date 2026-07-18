@@ -31,6 +31,28 @@ apigen dep prune -f api.yaml
 apigen entity list -f api.yaml
 ```
 
+## 示例
+
+`examples/book/` 是一个完整的端到端示例，演示：
+
+- 四段式 `api.yaml`（含 path 依赖、两个 service、实体级 + 资源级方法、STRONG/NONE version）
+- `LibraryService`（全量继承实体能力）
+- `AdminService`（收窄到仅 `meta` 资源的 `list` reader 方法）
+- 生成的 proto + Go stub 可直接 `go build`
+
+```bash
+# 从仓库根目录运行
+go run ./cmd/apigen build -f examples/book/api.yaml
+
+# 验证生成的 Go 代码可编译
+cd examples/book && go build ./...
+```
+
+生成产物：
+- `generated/proto/<service>/<service>.proto` — AIP 风格服务 proto
+- `generated/go/<service>/<service>.pb.go` / `*_grpc.pb.go` — Go gRPC stub
+- `generated/go/<type_proto_rel_path>/<type>.pb.go` — 用户 type_ proto 编译产物
+
 ## 设计文档
 
 详见 [design-v2.md](design-v2.md)。

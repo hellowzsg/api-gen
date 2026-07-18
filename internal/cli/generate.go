@@ -50,15 +50,32 @@ func runGenerate(ctx context.Context, apiYAMLPath string) error {
 	if err != nil {
 		return fmt.Errorf("build IR: %w", err)
 	}
+	irData.TypeImportPaths = cr.BuildTypeImportPaths()
 	if err := ir.ValidateAllOptions(irData); err != nil {
 		return fmt.Errorf("validate options: %w", err)
 	}
+	// Render all service protos into a staging directory first; only swap
+	// into the real output dir once every service has rendered successfully.
+	// This makes generate atomic — a failure midway leaves the previous
+	// output intact.
+	protoOutDir := filepath.Join(baseDir, cfg.Settings.Out.Proto)
+	staging, err := newStagingDir(protoOutDir)
+	if err != nil {
+		return fmt.Errorf("create staging dir: %w", err)
+	}
+	// Ensure staging is cleaned up if we return before committing.
+	committed := false
+	defer func() {
+		if !committed {
+			_ = os.RemoveAll(staging)
+		}
+	}()
 	for _, svc := range irData.Services {
 		output, err := render.RenderServiceProto(irData, svc)
 		if err != nil {
 			return fmt.Errorf("render service %s: %w", svc.Name, err)
 		}
-		outPath := filepath.Join(baseDir, cfg.Settings.Out.Proto, toSnakeCase(svc.Name), toSnakeCase(svc.Name)+".proto")
+		outPath := filepath.Join(staging, toSnakeCase(svc.Name), toSnakeCase(svc.Name)+".proto")
 		if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
 			return fmt.Errorf("create output dir: %w", err)
 		}
@@ -66,6 +83,10 @@ func runGenerate(ctx context.Context, apiYAMLPath string) error {
 			return fmt.Errorf("write proto file: %w", err)
 		}
 	}
+	if err := commitDir(staging, protoOutDir); err != nil {
+		return fmt.Errorf("commit proto output: %w", err)
+	}
+	committed = true
 	return nil
 }
 

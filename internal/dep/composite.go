@@ -150,9 +150,105 @@ func (c *CompositeResolver) Files() linker.Files {
 }
 
 // CollectTransitiveClosure returns proto file paths for plugins.
+// It performs a real transitive-closure walk over the resolved linker.Files,
+// following each file's imports (including WKT) and returning the deduplicated,
+// sorted list of all reachable file paths.
 func (c *CompositeResolver) CollectTransitiveClosure(seedFiles []string) []string {
-	result := make([]string, len(seedFiles))
-	copy(result, seedFiles)
+	if !c.resolved {
+		result := make([]string, len(seedFiles))
+		copy(result, seedFiles)
+		sort.Strings(result)
+		return result
+	}
+	seen := make(map[string]bool)
+	var result []string
+	// Index resolved files by path for quick lookup.
+	byPath := make(map[string]linker.File, len(c.files))
+	for _, f := range c.files {
+		byPath[string(f.Path())] = f
+	}
+	// BFS queue seeded with the explicit seed files.
+	var queue []linker.File
+	for _, seed := range seedFiles {
+		if !seen[seed] {
+			seen[seed] = true
+			result = append(result, seed)
+			if f, ok := byPath[seed]; ok {
+				queue = append(queue, f)
+			}
+		}
+	}
+	for len(queue) > 0 {
+		cur := queue[0]
+		queue = queue[1:]
+		imports := cur.Imports()
+		for i := 0; i < imports.Len(); i++ {
+			impPath := string(imports.Get(i).Path())
+			if seen[impPath] {
+				continue
+			}
+			seen[impPath] = true
+			result = append(result, impPath)
+			if dep, ok := byPath[impPath]; ok {
+				queue = append(queue, dep)
+			} else if lf := cur.FindImportByPath(impPath); lf != nil {
+				queue = append(queue, lf)
+			}
+			// WKT files from protoregistry are not enqueued as linker.File —
+			// they have no further user-relevant imports beyond other WKT,
+			// which protoc-gen-go resolves internally.
+		}
+	}
 	sort.Strings(result)
 	return result
+}
+
+// BuildTypeImportPaths builds a map from fully-qualified message/enum type name
+// to the proto file path that defines it. This is used by the renderer to emit
+// exact import statements for type_ references instead of guessing the file
+// path from the package name.
+func (c *CompositeResolver) BuildTypeImportPaths() map[string]string {
+	if !c.resolved {
+		return nil
+	}
+	m := make(map[string]string)
+	for _, f := range c.files {
+		path := string(f.Path())
+		// Walk all messages and enums defined in this file.
+		collectTypeNames(f.Messages(), path, m)
+		collectEnumNames(f.Enums(), path, m)
+	}
+	return m
+}
+
+func collectTypeNames(msgs protoreflect.MessageDescriptors, path string, m map[string]string) {
+	for i := 0; i < msgs.Len(); i++ {
+		md := msgs.Get(i)
+		m[string(md.FullName())] = path
+		collectTypeNames(md.Messages(), path, m)
+		collectEnumNames(md.Enums(), path, m)
+	}
+}
+
+func collectEnumNames(enums protoreflect.EnumDescriptors, path string, m map[string]string) {
+	for i := 0; i < enums.Len(); i++ {
+		ed := enums.Get(i)
+		m[string(ed.FullName())] = path
+	}
+}
+
+// ResolveWithFiles resolves the given proto files (relative paths) using
+// the import paths, without relying on pathResolvers.
+func (c *CompositeResolver) ResolveWithFiles(protoFiles []string) (linker.Files, error) {
+	sort.Strings(protoFiles)
+	srcResolver := &protocompile.SourceResolver{ImportPaths: c.importPaths}
+	resolver := protocompile.WithStandardImports(srcResolver)
+	compiler := protocompile.Compiler{Resolver: resolver}
+	files, err := compiler.Compile(context.Background(), protoFiles...)
+	if err != nil {
+		return nil, fmt.Errorf("protocompile failed: %w", err)
+	}
+	c.files = files
+	c.resolved = true
+	return files, nil
 }

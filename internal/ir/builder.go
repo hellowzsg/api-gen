@@ -13,6 +13,12 @@ type IR struct {
 	PackageName string
 	Entities    []EntityIR
 	Services    []ServiceIR
+	// TypeImportPaths maps a fully-qualified type name (e.g.
+	// "demo.business.book.BookMeta") to the proto file import path that
+	// defines it (e.g. "demo/business/book/book.proto"). Populated by the
+	// CLI from the resolved proto files so the renderer emits exact imports
+	// instead of guessing the file path from the package name.
+	TypeImportPaths map[string]string
 }
 
 type EntityIR struct {
@@ -110,13 +116,35 @@ type ServiceIR struct {
 	Name          string
 	ProtoPackage  string
 	GoPackage     string
+	GoRepo        string
+	OutGoDir      string
 	Entities      []ServiceEntityIR
 	CustomMethods []CustomMethodIR
 }
 
 type ServiceEntityIR struct {
 	Name      string
-	Resources []ResourceIR
+	// Resources is the per-service resource narrowing spec. When non-empty,
+	// only the listed resources (and their narrowed reader/writer methods)
+	// are exposed by this service. When empty, the entity's full resource
+	// set is inherited.
+	Resources []ResourceNarrowIR
+}
+
+// ResourceNarrowIR describes a per-service resource narrowing.
+type ResourceNarrowIR struct {
+	Name   string
+	Reader *ReaderNarrowIR
+	Writer *WriterNarrowIR
+}
+
+type ReaderNarrowIR struct {
+	Batch *bool // nil = inherit, true/false = override
+	List  *bool
+}
+
+type WriterNarrowIR struct {
+	Update *bool // nil = inherit; when false, no Update generated
 }
 
 type CustomMethodIR struct {
@@ -323,13 +351,36 @@ func versionWrapperType(t string) string {
 }
 
 func buildService(s *apigenyaml.Service, cfg *apigenyaml.Config) ServiceIR {
+	goPkg := toSnakeCase(s.Name)
 	sir := ServiceIR{
 		Name:         s.Name,
 		ProtoPackage: cfg.Name + "." + toSnakeCase(s.Name),
-		GoPackage:    toSnakeCase(s.Name),
+		GoPackage:    goPkg,
+		GoRepo:       cfg.Settings.GoRepo,
+		OutGoDir:     cfg.Settings.Out.Go,
 	}
 	for _, se := range s.Entities {
-		sir.Entities = append(sir.Entities, ServiceEntityIR{Name: se.Name})
+		ser := ServiceEntityIR{Name: se.Name}
+		for _, sr := range se.Resources {
+			narrow := ResourceNarrowIR{Name: sr.Name}
+			// When the service resource declares a reader block, only the
+			// explicitly-enabled methods survive; unspecified methods are
+			// narrowed off. (Design §十一 example: `reader: { list: true }`
+			// → only List is exposed.)
+			if sr.Reader != nil {
+				b := sr.Reader.Batch
+				l := sr.Reader.List
+				narrow.Reader = &ReaderNarrowIR{Batch: &b, List: &l}
+			}
+			// When the service resource declares a writer block, Update is
+			// exposed only if the update sub-block is present.
+			if sr.Writer != nil {
+				u := sr.Writer.Update != nil
+				narrow.Writer = &WriterNarrowIR{Update: &u}
+			}
+			ser.Resources = append(ser.Resources, narrow)
+		}
+		sir.Entities = append(sir.Entities, ser)
 	}
 	for _, cm := range s.CustomMethods {
 		sir.CustomMethods = append(sir.CustomMethods, CustomMethodIR{Name: cm.Name, Request: cm.Request, Response: cm.Response})
