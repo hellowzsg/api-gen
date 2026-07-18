@@ -61,7 +61,7 @@
   - [x] 3.4.4 验证测试通过（运行：`go test ./internal/dep/ -run TestComposite -v`，确认通过）
   - [x] 3.4.5 重构：提取校验规则、统一 protocompile link 结果处理
 
-- [ ] 3.5 代码审查
+- [x] 3.5 代码审查
   - 前置验证：调用 superpowers:verification-before-completion 运行全量测试，确认输出干净后才继续
   - 调用 superpowers:requesting-code-review 审查本任务组（含任务组 1 轻量变更）所有变更，占位符映射：
     - `{PLAN_OR_REQUIREMENTS}` → `openspec/changes/apigen-core/specs/apigen.md` 和 `openspec/changes/apigen-core/tasks.md`
@@ -73,12 +73,12 @@
 
 ## 4. IR 构建与 proto 生成
 
-- [ ] 4.1 IR 构建（实体→资源→方法映射，wrapper 字段号分配） <!-- TDD 任务 -->
-  - [ ] 4.1.1 写失败测试：`internal/ir/builder_test.go`（测试实体级 Create/Delete/DeleteSoft IR 生成、资源级 Get/BatchGet/List/Update IR 生成、wrapper 字段号从 1 连续分配、version 追加固定尾号、Create 各资源可选、Create 响应只返回 key）
-  - [ ] 4.1.2 验证测试失败（运行：`go test ./internal/ir/ -run TestBuilder -v`，确认失败）
-  - [ ] 4.1.3 写最小实现：`internal/ir/builder.go`（Entity/Resource/Method IR 结构体、wrapper 字段号分配器、RPC 命名规则 `<Verb><Entity>` / `<Verb><Entity><Resource>`）
-  - [ ] 4.1.4 验证测试通过（运行：`go test ./internal/ir/ -run TestBuilder -v`，确认通过）
-  - [ ] 4.1.5 重构：提取字段号分配规则常量、统一命名派生函数
+- [x] 4.1 IR 构建（实体→资源→方法映射，wrapper 字段号分配） <!-- TDD 任务 -->
+  - [x] 4.1.1 写失败测试：`internal/ir/builder_test.go`（测试实体级 Create/Delete/DeleteSoft IR 生成、资源级 Get/BatchGet/List/Update IR 生成、wrapper 字段号从 1 连续分配、version 追加固定尾号、Create 各资源可选、Create 响应只返回 key）
+  - [x] 4.1.2 验证测试失败（运行：`go test ./internal/ir/ -run TestBuilder -v`，确认失败）
+  - [x] 4.1.3 写最小实现：`internal/ir/builder.go`（Entity/Resource/Method IR 结构体、wrapper 字段号分配器、RPC 命名规则 `<Verb><Entity>` / `<Verb><Entity><Resource>`）
+  - [x] 4.1.4 验证测试通过（运行：`go test ./internal/ir/ -run TestBuilder -v`，确认通过）
+  - [x] 4.1.5 重构：提取字段号分配规则常量、统一命名派生函数
 
 - [ ] 4.2 version 策略（STRONG/WEAK/NONE + wrapper 类型） <!-- TDD 任务 -->
   - [ ] 4.2.1 写失败测试：`internal/ir/version_test.go`（测试 STRONG 标量 version、WEAK wrapper version（UInt64Value/UInt32Value/StringValue）、NONE 无 version、Get 响应回带 version、Update 请求 CAS、Update 响应 STRONG 回带新版本）
