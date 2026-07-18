@@ -145,3 +145,28 @@ BSR 依赖需要 buf CLI，引入外部二进制依赖。
 工具不理解 option 语义，可能搬运非法值。
 
 **对策**：值类型合法性由 protocompile 校验与 extend 声明类型匹配；option 全限定名可达性 + target.path 存在性校验。
+
+## Implementation Progress (Phase 3)
+
+### 已实现（P0 核心）
+- YAML schema 解析与校验（`internal/yaml/`）：四段式 api.yaml 解析、type_ 引用校验、实体引用校验
+- 依赖管理三路径（`internal/dep/`）：
+  - path 依赖：glob 匹配 + ImportPaths（含 ** 支持）
+  - git 依赖：系统 git subprocess clone + api.lock 读写（白名单校验防注入）
+  - BSR 依赖：buf CLI subprocess + buf.yaml 生成 + module 白名单校验
+  - 复合 Resolver：protocompile 集成 + 符号可达性 + 类型约束 + dry-run
+- IR 构建（`internal/ir/`）：实体→资源→方法映射、wrapper 字段号分配、version 策略（STRONG/WEAK/NONE）、option 注入校验
+- proto 模板渲染（`internal/render/`）：确定性输出、api-linter 豁免、import 排序
+- generate 命令集成（`internal/cli/generate.go`）：端到端 api.yaml → generated proto
+
+### 待实现（后续会话）
+- 编译 subprocess（`internal/build/`）：CodeGeneratorRequest 组装 + protoc-gen-go/go-grpc 调用
+- build 命令集成：generate + 编译 + FDSet 复用
+- api-linter 豁免生成与调用（`internal/lint/linter.go`）
+- buf breaking 后置校验（`internal/lint/breaking.go`）
+- dep update / dep prune / entity list 子命令
+
+### 实现决策
+- git 依赖使用系统 git subprocess 而非 go-git library（功能等价，避免 go-git auth 复杂性，后续可替换）
+- CompositeResolver.CollectTransitiveClosure 当前为占位实现（仅排序 seedFiles），完整传递依赖收集待 build 阶段补全
+- build.go 的 FileDescriptorProto 转换需要处理 protocompile linker.File → descriptorpb.FileDescriptorProto 的类型映射

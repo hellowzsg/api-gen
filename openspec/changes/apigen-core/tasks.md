@@ -108,7 +108,7 @@
   - [ ] 4.5.4 验证测试通过（运行：`go test ./internal/cli/ -run TestGenerate -v`，确认通过）
   - [ ] 4.5.5 重构：提取流程编排、统一错误消息
 
-- [ ] 4.6 代码审查
+- [x] 4.6 代码审查
   - 前置验证：调用 superpowers:verification-before-completion 运行全量测试，确认输出干净后才继续
   - 调用 superpowers:requesting-code-review 审查本任务组所有变更，占位符映射：
     - `{PLAN_OR_REQUIREMENTS}` → `openspec/changes/apigen-core/specs/apigen.md` 和 `openspec/changes/apigen-core/tasks.md`
