@@ -32,10 +32,16 @@ type Import struct {
 
 // Settings holds generation configuration.
 type Settings struct {
-	GoRepo string     `yaml:"go_repo"`
-	JsRepo string     `yaml:"js_repo"`
-	Out    OutConfig  `yaml:"out"`
-	HTTP   *HTTPConfig `yaml:"http,omitempty"`
+	GoRepo  string        `yaml:"go_repo"`
+	JsRepo  string        `yaml:"js_repo"`
+	Out     OutConfig     `yaml:"out"`
+	HTTP    *HTTPConfig   `yaml:"http,omitempty"`
+	Plugins PluginsConfig `yaml:"plugins,omitempty"`
+}
+
+// PluginsConfig holds plugin declarations for code generation.
+type PluginsConfig struct {
+	JS []string `yaml:"js,omitempty"`
 }
 
 // OutConfig defines output directories.

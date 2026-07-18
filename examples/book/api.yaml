@@ -4,6 +4,8 @@ name: demo.business.book
 
 import_protos:
   - path: "proto/**/*.proto"
+  - git: https://github.com/googleapis/googleapis
+    ref: master
 
 settings:
   go_repo: github.com/acme/demo-book
@@ -17,6 +19,8 @@ settings:
     enable: true
     prefix: /library
     generate_openapi: true
+  plugins:
+    js: [es]
 
 entities:
   - name: book

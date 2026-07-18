@@ -20,6 +20,9 @@ func (c *Config) ValidateReferences() error {
 	if err := c.validatePerMethodHTTPOverrides(); err != nil {
 		return err
 	}
+	if err := c.validatePlugins(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -213,6 +216,18 @@ func validatePathVarSyntax(path string) error {
 		}
 		if strings.HasPrefix(inner, ".") || strings.HasSuffix(inner, ".") {
 			return fmt.Errorf("malformed path variable {%s} in %q (leading/trailing dot)", inner, path)
+		}
+	}
+	return nil
+}
+
+// validatePlugins validates the settings.plugins.js declarations.
+// Currently only "es" (protoc-gen-es) is a supported JS plugin value.
+// Any other value triggers a fail-fast error.
+func (c *Config) validatePlugins() error {
+	for _, p := range c.Settings.Plugins.JS {
+		if p != "es" {
+			return fmt.Errorf("settings.plugins.js: unknown JS plugin %q (only \"es\" is supported)", p)
 		}
 	}
 	return nil

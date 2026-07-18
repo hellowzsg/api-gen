@@ -1,6 +1,7 @@
 package build
 
 import (
+	"context"
 	"testing"
 
 	"github.com/bufbuild/protocompile/linker"
@@ -76,6 +77,17 @@ func TestCompile_OpenAPISignature(t *testing.T) {
 	//   func Compile(ctx, files, fileToGenerate, goOutDir, openAPIOutDir string, httpEnabled, generateOpenAPI bool) error
 	// We verify it exists by referencing it (compile-time check).
 	_ = Compile
+}
+
+// TestCompile_JSSignature verifies the Compile signature includes jsOutDir
+// and generateJS parameters (JS stub support via protoc-gen-es).
+// This is a compile-time check: if the signature lacks the new params,
+// the function call below will fail to compile.
+func TestCompile_JSSignature(t *testing.T) {
+	// Verify Compile accepts jsOutDir and generateJS by type-asserting the
+	// function signature. This fails to compile if the signature changes.
+	var fn func(context.Context, linker.Files, []string, string, string, string, bool, bool, bool) error = Compile
+	_ = fn
 }
 
 func stringPtr(s string) *string { return &s }

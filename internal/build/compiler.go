@@ -188,12 +188,15 @@ func RunPlugin(ctx context.Context, pluginName string, req *pluginpb.CodeGenerat
 // When generateOpenAPI is true (and httpEnabled is true), protoc-gen-openapiv2
 // is invoked to generate <service>.swagger.json into openAPIOutDir.
 //
+// When generateJS is true, protoc-gen-es is invoked to generate TypeScript
+// stubs (*.pb.ts) into jsOutDir with plugin parameter target=ts.
+//
 // The protoc-gen-go plugin is invoked with `paths=source_relative` so that
 // output files are placed at <goOutDir>/<proto-relative-path>.pb.go rather
 // than deriving the output directory from the go_package import path. This
 // matches the design doc's layout: generated/go/<service>/<service>.pb.go.
 // protoc-gen-go-grpc and protoc-gen-grpc-gateway follow the same parameter.
-func Compile(ctx context.Context, files linker.Files, fileToGenerate []string, goOutDir, openAPIOutDir string, httpEnabled, generateOpenAPI bool) error {
+func Compile(ctx context.Context, files linker.Files, fileToGenerate []string, goOutDir, openAPIOutDir, jsOutDir string, httpEnabled, generateOpenAPI, generateJS bool) error {
 	req, err := BuildCodeGeneratorRequest(files, fileToGenerate)
 	if err != nil {
 		return fmt.Errorf("build request: %w", err)
@@ -235,6 +238,19 @@ func Compile(ctx context.Context, files linker.Files, fileToGenerate []string, g
 			if err := RunPlugin(ctx, "protoc-gen-openapiv2", openapiReq, openAPIOutDir); err != nil {
 				return fmt.Errorf("run protoc-gen-openapiv2: %w", err)
 			}
+		}
+	}
+	// protoc-gen-es: only when JS stub generation is enabled. Generates
+	// TypeScript files (*.pb.ts) into jsOutDir with target=ts.
+	if generateJS && jsOutDir != "" {
+		if err := os.MkdirAll(jsOutDir, 0755); err != nil {
+			return fmt.Errorf("create js output dir: %w", err)
+		}
+		jsReq := proto.Clone(req).(*pluginpb.CodeGeneratorRequest)
+		jsParam := "target=ts"
+		jsReq.Parameter = &jsParam
+		if err := RunPlugin(ctx, "protoc-gen-es", jsReq, jsOutDir); err != nil {
+			return fmt.Errorf("run protoc-gen-es: %w", err)
 		}
 	}
 	return nil

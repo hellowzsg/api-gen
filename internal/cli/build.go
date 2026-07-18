@@ -48,6 +48,24 @@ func runBuild(ctx context.Context, apiYAMLPath string) error {
 		openAPIOutDir = filepath.Join(baseDir, openAPISubDir)
 	}
 
+	// JS output dir: derived from settings.out.js (default "generated/js").
+	// generateJS is true when settings.plugins.js contains "es".
+	jsOutDir := ""
+	generateJS := false
+	for _, p := range cfg.Settings.Plugins.JS {
+		if p == "es" {
+			generateJS = true
+			break
+		}
+	}
+	if generateJS {
+		jsSubDir := cfg.Settings.Out.Js
+		if jsSubDir == "" {
+			jsSubDir = "generated/js"
+		}
+		jsOutDir = filepath.Join(baseDir, jsSubDir)
+	}
+
 	// Step 2: collect the service proto files to generate Go code for.
 	var serviceProtoFiles []string
 	for _, svc := range cfg.Services {
@@ -150,7 +168,7 @@ func runBuild(ctx context.Context, apiYAMLPath string) error {
 			_ = os.RemoveAll(staging)
 		}
 	}()
-	if err := build.Compile(ctx, files, fileToGenerate, staging, openAPIOutDir, cfg.Settings.HTTP != nil && cfg.Settings.HTTP.Enable, generateOpenAPI); err != nil {
+	if err := build.Compile(ctx, files, fileToGenerate, staging, openAPIOutDir, jsOutDir, cfg.Settings.HTTP != nil && cfg.Settings.HTTP.Enable, generateOpenAPI, generateJS); err != nil {
 		return fmt.Errorf("compile: %w", err)
 	}
 	if err := commitDir(staging, goOutDir); err != nil {

@@ -266,3 +266,53 @@ services:
 		t.Errorf("CustomMethods[0].HTTP.Body = %q, want %q", cms[0].HTTP.Body, "*")
 	}
 }
+
+// TestParsePluginsJS 测试 settings.plugins.js 解析。
+func TestParsePluginsJS(t *testing.T) {
+	// 子测试 1：plugins.js 声明 [es]
+	t.Run("declares es", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+settings:
+  plugins:
+    js: [es]
+entities:
+  - name: book
+    key: { type_: BookId }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		if len(cfg.Settings.Plugins.JS) != 1 || cfg.Settings.Plugins.JS[0] != "es" {
+			t.Errorf("cfg.Settings.Plugins.JS = %v, want []string{\"es\"}", cfg.Settings.Plugins.JS)
+		}
+	})
+
+	// 子测试 2：plugins 省略（向后兼容）
+	t.Run("plugins omitted", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		if len(cfg.Settings.Plugins.JS) != 0 {
+			t.Errorf("cfg.Settings.Plugins.JS = %v, want nil or empty", cfg.Settings.Plugins.JS)
+		}
+	})
+}

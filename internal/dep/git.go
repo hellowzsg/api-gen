@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -94,15 +93,13 @@ func (r *GitResolver) Fetch() ([]string, error) {
 	}
 
 	r.protoFiles = protoFiles
-	seen := make(map[string]bool)
-	for _, f := range protoFiles {
-		d := filepath.Dir(f)
-		if !seen[d] {
-			seen[d] = true
-			r.importPaths = append(r.importPaths, d)
-		}
-	}
-	sort.Strings(r.importPaths)
+	// Register the subdir path (or clone root when subdir is empty) as the sole
+	// import path. Proto files within use import paths relative to this root.
+	// For example, a file at <clone>/google/api/annotations.proto is imported
+	// as "google/api/annotations.proto", so the import root must be <clone>/.
+	// Previously we registered each unique directory containing .proto files,
+	// which broke imports when proto files had nested package paths.
+	r.importPaths = []string{subdirPath}
 	return r.importPaths, nil
 }
 

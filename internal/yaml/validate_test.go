@@ -384,3 +384,70 @@ func TestValidateHTTPOverridePath(t *testing.T) {
 		})
 	}
 }
+
+// TestValidatePluginsJS 测试 plugins.js 元素校验。
+func TestValidatePluginsJS(t *testing.T) {
+	baseEntity := Entity{
+		Name: "book",
+		Key:  KeyDef{Type: "BookId"},
+		Resources: []Resource{
+			{Name: "meta", Type: "BookMeta", Version: VersionDef{Kind: "NONE"}},
+		},
+	}
+
+	tests := []struct {
+		name      string
+		jsPlugins []string
+		wantError bool
+		errSubstr string
+	}{
+		{
+			name:      "valid es",
+			jsPlugins: []string{"es"},
+			wantError: false,
+		},
+		{
+			name:      "unknown plugin connect-es",
+			jsPlugins: []string{"connect-es"},
+			wantError: true,
+			errSubstr: "unknown JS plugin",
+		},
+		{
+			name:      "mixed es and unknown",
+			jsPlugins: []string{"es", "connect-es"},
+			wantError: true,
+			errSubstr: "unknown JS plugin",
+		},
+		{
+			name:      "empty plugins (backward compat)",
+			jsPlugins: nil,
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{
+				Syntax:   "v1",
+				Name:     "foo",
+				Entities: []Entity{baseEntity},
+				Settings: Settings{
+					Plugins: PluginsConfig{JS: tt.jsPlugins},
+				},
+			}
+			err := cfg.ValidateReferences()
+			if tt.wantError {
+				if err == nil {
+					t.Fatalf("ValidateReferences should fail for js=%v, got nil", tt.jsPlugins)
+				}
+				if !strings.Contains(err.Error(), tt.errSubstr) {
+					t.Errorf("error should contain %q, got: %v", tt.errSubstr, err)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("ValidateReferences should pass for js=%v, got: %v", tt.jsPlugins, err)
+				}
+			}
+		})
+	}
+}
