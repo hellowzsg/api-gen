@@ -40,12 +40,12 @@
   - [x] 3.1.4 验证测试通过（运行：`go test ./internal/dep/ -run TestPathResolver -v`，确认通过）
   - [x] 3.1.5 重构：提取 glob 工具函数、统一 ImportPaths 管理
 
-- [ ] 3.2 git 依赖拉取（go-git library）+ api.lock <!-- TDD 任务 -->
-  - [ ] 3.2.1 写失败测试：`internal/dep/git_test.go`（测试 branch/tag 浅克隆、commit SHA 完整 clone+checkout、api.lock 生成与读取、api.lock 一致性校验、ref 不存在 fail-fast）
-  - [ ] 3.2.2 验证测试失败（运行：`go test ./internal/dep/ -run TestGitResolver -v`，确认失败）
-  - [ ] 3.2.3 写最小实现：`internal/dep/git.go`（go-git clone、subdir 提取、api.lock 读写、resolved_commit 记录）
-  - [ ] 3.2.4 验证测试通过（运行：`go test ./internal/dep/ -run TestGitResolver -v`，确认通过）
-  - [ ] 3.2.5 重构：提取锁文件结构体、统一缓存目录管理（`.apigen_cache/git/`）
+- [x] 3.2 git 依赖拉取（go-git library）+ api.lock <!-- TDD 任务 -->
+  - [x] 3.2.1 写失败测试：`internal/dep/git_test.go`（测试 branch/tag 浅克隆、commit SHA 完整 clone+checkout、api.lock 生成与读取、api.lock 一致性校验、ref 不存在 fail-fast）
+  - [x] 3.2.2 验证测试失败（运行：`go test ./internal/dep/ -run TestGitResolver -v`，确认失败）
+  - [x] 3.2.3 写最小实现：`internal/dep/git.go`（go-git clone、subdir 提取、api.lock 读写、resolved_commit 记录）
+  - [x] 3.2.4 验证测试通过（运行：`go test ./internal/dep/ -run TestGitResolver -v`，确认通过）
+  - [x] 3.2.5 重构：提取锁文件结构体、统一缓存目录管理（`.apigen_cache/git/`）
 
 - [ ] 3.3 BSR 依赖拉取（buf CLI subprocess）+ buf.yaml/buf.lock <!-- TDD 任务 -->
   - [ ] 3.3.1 写失败测试：`internal/dep/bsr_test.go`（测试 buf.yaml(v2) 生成、buf dep update 调用、buf export 调用、buf 未安装检测、版本管理 APIGEN_BUF_VERSION、subprocess 参数数组形式）
