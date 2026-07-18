@@ -47,12 +47,12 @@
   - [x] 3.2.4 验证测试通过（运行：`go test ./internal/dep/ -run TestGitResolver -v`，确认通过）
   - [x] 3.2.5 重构：提取锁文件结构体、统一缓存目录管理（`.apigen_cache/git/`）
 
-- [ ] 3.3 BSR 依赖拉取（buf CLI subprocess）+ buf.yaml/buf.lock <!-- TDD 任务 -->
-  - [ ] 3.3.1 写失败测试：`internal/dep/bsr_test.go`（测试 buf.yaml(v2) 生成、buf dep update 调用、buf export 调用、buf 未安装检测、版本管理 APIGEN_BUF_VERSION、subprocess 参数数组形式）
-  - [ ] 3.3.2 验证测试失败（运行：`go test ./internal/dep/ -run TestBSRResolver -v`，确认失败）
-  - [ ] 3.3.3 写最小实现：`internal/dep/bsr.go`（buf CLI 检测/安装、buf.yaml 生成、subprocess 调用 buf dep update + buf export、白名单校验）
-  - [ ] 3.3.4 验证测试通过（运行：`go test ./internal/dep/ -run TestBSRResolver -v`，确认通过）
-  - [ ] 3.3.5 重构：提取 subprocess 安全调用封装、统一 buf CLI 版本管理
+- [x] 3.3 BSR 依赖拉取（buf CLI subprocess）+ buf.yaml/buf.lock <!-- TDD 任务 -->
+  - [x] 3.3.1 写失败测试：`internal/dep/bsr_test.go`（测试 buf.yaml(v2) 生成、buf dep update 调用、buf export 调用、buf 未安装检测、版本管理 APIGEN_BUF_VERSION、subprocess 参数数组形式）
+  - [x] 3.3.2 验证测试失败（运行：`go test ./internal/dep/ -run TestBSRResolver -v`，确认失败）
+  - [x] 3.3.3 写最小实现：`internal/dep/bsr.go`（buf CLI 检测/安装、buf.yaml 生成、subprocess 调用 buf dep update + buf export、白名单校验）
+  - [x] 3.3.4 验证测试通过（运行：`go test ./internal/dep/ -run TestBSRResolver -v`，确认通过）
+  - [x] 3.3.5 重构：提取 subprocess 安全调用封装、统一 buf CLI 版本管理
 
 - [ ] 3.4 复合 Resolver 组装与闭包 dry-run 校验 <!-- TDD 任务 -->
   - [ ] 3.4.1 写失败测试：`internal/dep/composite_test.go`（测试 path+git+bsr 复合 Resolver 组装、import 闭包 dry-run、符号可达性校验、type_ 类型约束校验（必须 message 类型）、传递依赖递归收集）
