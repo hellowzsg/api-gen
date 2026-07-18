@@ -15,6 +15,7 @@ import (
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
+	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
@@ -100,7 +101,64 @@ func BuildCodeGeneratorRequest(files linker.Files, fileToGenerate []string) (*pl
 			// at this point would indicate a logic error upstream.
 		}
 	}
+
+	// Topologically sort ProtoFile so that dependencies precede dependents.
+	// protoc-gen-go tolerates any order (it indexes via protoregistry), but
+	// protoc-gen-es requires strict dependency-first ordering — otherwise it
+	// reports "Cannot find <file>.proto, imported by <dependent>.proto".
+	sortProtoFilesTopologically(req)
+
 	return req, nil
+}
+
+// sortProtoFilesTopologically reorders req.ProtoFile so that every file
+// appears before any file that imports it (dependency-first / topological order).
+// Files with no dependencies come first; the relative order among
+// independent files is preserved as much as possible (stable sort).
+func sortProtoFilesTopologically(req *pluginpb.CodeGeneratorRequest) {
+	type info struct {
+		name    string
+		deps    map[string]bool
+		idx     int
+		visited bool
+		onStack bool
+	}
+	infos := make(map[string]*info, len(req.ProtoFile))
+	for i, pf := range req.ProtoFile {
+		name := pf.GetName()
+		deps := make(map[string]bool, len(pf.GetDependency()))
+		for _, d := range pf.GetDependency() {
+			deps[d] = true
+		}
+		infos[name] = &info{name: name, deps: deps, idx: i}
+	}
+
+	var sorted []*descriptorpb.FileDescriptorProto
+	var visit func(name string)
+	visit = func(name string) {
+		inf := infos[name]
+		if inf == nil || inf.visited {
+			return
+		}
+		if inf.onStack {
+			// Circular dependency — bail out and let original order handle it.
+			return
+		}
+		inf.onStack = true
+		for dep := range inf.deps {
+			visit(dep)
+		}
+		inf.onStack = false
+		if !inf.visited {
+			inf.visited = true
+			sorted = append(sorted, req.ProtoFile[inf.idx])
+		}
+	}
+	// Visit in original order for stable output.
+	for i := range req.ProtoFile {
+		visit(req.ProtoFile[i].GetName())
+	}
+	req.ProtoFile = sorted
 }
 
 // walkImportDeps enqueues imports of a plain protoreflect.FileDescriptor
