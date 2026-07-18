@@ -54,12 +54,12 @@
   - [x] 3.3.4 验证测试通过（运行：`go test ./internal/dep/ -run TestBSRResolver -v`，确认通过）
   - [x] 3.3.5 重构：提取 subprocess 安全调用封装、统一 buf CLI 版本管理
 
-- [ ] 3.4 复合 Resolver 组装与闭包 dry-run 校验 <!-- TDD 任务 -->
-  - [ ] 3.4.1 写失败测试：`internal/dep/composite_test.go`（测试 path+git+bsr 复合 Resolver 组装、import 闭包 dry-run、符号可达性校验、type_ 类型约束校验（必须 message 类型）、传递依赖递归收集）
-  - [ ] 3.4.2 验证测试失败（运行：`go test ./internal/dep/ -run TestComposite -v`，确认失败）
-  - [ ] 3.4.3 写最小实现：`internal/dep/composite.go`（CompositeResolver 组装、collectTransitiveClosure、dry-run 校验、type_ 类型约束校验）
-  - [ ] 3.4.4 验证测试通过（运行：`go test ./internal/dep/ -run TestComposite -v`，确认通过）
-  - [ ] 3.4.5 重构：提取校验规则、统一 protocompile link 结果处理
+- [x] 3.4 复合 Resolver 组装与闭包 dry-run 校验 <!-- TDD 任务 -->
+  - [x] 3.4.1 写失败测试：`internal/dep/composite_test.go`（测试 path+git+bsr 复合 Resolver 组装、import 闭包 dry-run、符号可达性校验、type_ 类型约束校验（必须 message 类型）、传递依赖递归收集）
+  - [x] 3.4.2 验证测试失败（运行：`go test ./internal/dep/ -run TestComposite -v`，确认失败）
+  - [x] 3.4.3 写最小实现：`internal/dep/composite.go`（CompositeResolver 组装、collectTransitiveClosure、dry-run 校验、type_ 类型约束校验）
+  - [x] 3.4.4 验证测试通过（运行：`go test ./internal/dep/ -run TestComposite -v`，确认通过）
+  - [x] 3.4.5 重构：提取校验规则、统一 protocompile link 结果处理
 
 - [ ] 3.5 代码审查
   - 前置验证：调用 superpowers:verification-before-completion 运行全量测试，确认输出干净后才继续
