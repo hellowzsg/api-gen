@@ -80,12 +80,12 @@
   - [x] 4.1.4 验证测试通过（运行：`go test ./internal/ir/ -run TestBuilder -v`，确认通过）
   - [x] 4.1.5 重构：提取字段号分配规则常量、统一命名派生函数
 
-- [ ] 4.2 version 策略（STRONG/WEAK/NONE + wrapper 类型） <!-- TDD 任务 -->
-  - [ ] 4.2.1 写失败测试：`internal/ir/version_test.go`（测试 STRONG 标量 version、WEAK wrapper version（UInt64Value/UInt32Value/StringValue）、NONE 无 version、Get 响应回带 version、Update 请求 CAS、Update 响应 STRONG 回带新版本）
-  - [ ] 4.2.2 验证测试失败（运行：`go test ./internal/ir/ -run TestVersion -v`，确认失败）
-  - [ ] 4.2.3 写最小实现：`internal/ir/version.go`（version 策略映射、wrapper 类型选择、字段号追加逻辑）
-  - [ ] 4.2.4 验证测试通过（运行：`go test ./internal/ir/ -run TestVersion -v`，确认通过）
-  - [ ] 4.2.5 重构：提取 version 类型映射表、统一 import 生成规则（WEAK 需 wrappers.proto）
+- [x] 4.2 version 策略（STRONG/WEAK/NONE + wrapper 类型） <!-- TDD 任务 -->
+  - [x] 4.2.1 写失败测试：`internal/ir/version_test.go`（测试 STRONG 标量 version、WEAK wrapper version（UInt64Value/UInt32Value/StringValue）、NONE 无 version、Get 响应回带 version、Update 请求 CAS、Update 响应 STRONG 回带新版本）
+  - [x] 4.2.2 验证测试失败（运行：`go test ./internal/ir/ -run TestVersion -v`，确认失败）
+  - [x] 4.2.3 写最小实现：`internal/ir/version.go`（version 策略映射、wrapper 类型选择、字段号追加逻辑）
+  - [x] 4.2.4 验证测试通过（运行：`go test ./internal/ir/ -run TestVersion -v`，确认通过）
+  - [x] 4.2.5 重构：提取 version 类型映射表、统一 import 生成规则（WEAK 需 wrappers.proto）
 
 - [ ] 4.3 option 注入（五档纯搬运） <!-- TDD 任务 -->
   - [ ] 4.3.1 写失败测试：`internal/ir/option_test.go`（测试 field/message/rpc/service/file 五档 option 注入、option 全限定名可达性校验、target.path 存在性校验、值类型合法性（标量 + YAML map → proto text format））
