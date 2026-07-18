@@ -160,14 +160,14 @@
 
 ## 6. 辅助子命令
 
-- [ ] 6.1 dep update / dep prune / entity list 子命令 <!-- TDD 任务 -->
-  - [ ] 6.1.1 写失败测试：`internal/cli/dep_test.go`（测试 dep update 强制刷新 git/BSR 依赖、dep prune 文件级反查移除未引用依赖、entity list 干跑预览实体/资源/方法清单）
-  - [ ] 6.1.2 验证测试失败（运行：`go test ./internal/cli/ -run TestDep -v`，确认失败）
-  - [ ] 6.1.3 写最小实现：`internal/cli/dep.go`（dep update 编排、dep prune 文件级反查、entity list 预览渲染）
-  - [ ] 6.1.4 验证测试通过（运行：`go test ./internal/cli/ -run TestDep -v`，确认通过）
-  - [ ] 6.1.5 重构：提取文件级反查逻辑、统一预览输出格式
+- [x] 6.1 dep update / dep prune / entity list 子命令 <!-- TDD 任务 -->
+  - [x] 6.1.1 写失败测试：`internal/cli/dep_test.go`（测试 dep update 强制刷新 git/BSR 依赖、dep prune 文件级反查移除未引用依赖、entity list 干跑预览实体/资源/方法清单）
+  - [x] 6.1.2 验证测试失败（运行：`go test ./internal/cli/ -run TestDep -v`，确认失败）
+  - [x] 6.1.3 写最小实现：`internal/cli/dep.go`（dep update 编排、dep prune 文件级反查、entity list 预览渲染）
+  - [x] 6.1.4 验证测试通过（运行：`go test ./internal/cli/ -run TestDep -v`，确认通过）
+  - [x] 6.1.5 重构：提取文件级反查逻辑、统一预览输出格式
 
-- [ ] 6.2 代码审查
+- [x] 6.2 代码审查
   - 前置验证：调用 superpowers:verification-before-completion 运行全量测试，确认输出干净后才继续
   - 调用 superpowers:requesting-code-review 审查本任务组所有变更，占位符映射：
     - `{PLAN_OR_REQUIREMENTS}` → `openspec/changes/apigen-core/specs/apigen.md` 和 `openspec/changes/apigen-core/tasks.md`
