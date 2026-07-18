@@ -179,24 +179,24 @@
 
 ## 7. PreCI 代码规范检查
 
-- [ ] 7.1 检测 preci 安装状态
+- [x] 7.1 检测 preci 安装状态
   - 按以下优先级检测：① `~/PreCI/preci`（优先）→ ② `command -v preci`（PATH）
   - 若均未找到：执行本技能 "PreCI 代码规范检查规范" 节中的安装命令，安装完成后继续
   - 若找到：记录可用路径，直接继续
-- [ ] 7.2 检测项目是否已 preci 初始化
+- [x] 7.2 检测项目是否已 preci 初始化
   - 检查 `.preci/`、`build.yml`、`.codecc/` 任一存在即为已初始化
   - 若未初始化：执行 `preci init`，等待完成后继续
-- [ ] 7.3 检测 PreCI Server 状态
+- [x] 7.3 检测 PreCI Server 状态
   - 执行 `<preci路径> server status` 检查服务是否启动
   - 若未启动：执行 `<preci路径> server start`，等待服务启动（最多 10 秒）
   - 若启动失败且 `skip_preci: false`：暂停流程，提示用户选择操作（重试/跳过/中止），等待用户明确确认后才继续
-- [ ] 7.4 执行代码规范扫描
+- [x] 7.4 执行代码规范扫描
   - 依次执行两个扫描命令：
     1. `<preci路径> scan --diff`（扫描未暂存变更）
     2. `<preci路径> scan --pre-commit`（扫描已暂存变更）
   - 合并两次扫描结果，去重后统一处理
   - 仅扫描代码文件（跳过 .md/.yml/.json/.xml/.txt/.png/.jpg 等非代码文件）
-- [ ] 7.5 处理扫描结果
+- [x] 7.5 处理扫描结果
   - 若无告警：输出 `✅ PreCI 检查通过`，继续 Documentation Sync
   - 若有告警：自动修正（最多重试次数由配置 `max_auto_fix_rounds` 决定，默认 3 次），修正后重新扫描验证
   - **若重试用尽后仍有无法自动修正的告警且 `skip_preci: false`**：暂停流程，输出剩余问题列表及以下选项，等待用户明确确认：
@@ -213,8 +213,8 @@
 
 ## 8. Documentation Sync (Required)
 
-- [ ] 8.1 sync design.md: record technical decisions, deviations, and implementation details after each code change
-- [ ] 8.2 sync tasks.md: 逐一检查所有顶层任务及其子任务，将已完成但仍为 `[ ]` 的条目标记为 `[x]`；每次更新只修改 `[ ]` → `[x]`，禁止修改任何任务描述文字
-- [ ] 8.3 sync proposal.md: update scope/impact if changed
-- [ ] 8.4 sync specs/*.md: update requirements if changed
-- [ ] 8.5 Final review: ensure all OpenSpec docs reflect actual implementation
+- [x] 8.1 sync design.md: record technical decisions, deviations, and implementation details after each code change
+- [x] 8.2 sync tasks.md: 逐一检查所有顶层任务及其子任务，将已完成但仍为 `[ ]` 的条目标记为 `[x]`；每次更新只修改 `[ ]` → `[x]`，禁止修改任何任务描述文字
+- [x] 8.3 sync proposal.md: update scope/impact if changed
+- [x] 8.4 sync specs/*.md: update requirements if changed
+- [x] 8.5 Final review: ensure all OpenSpec docs reflect actual implementation
