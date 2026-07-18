@@ -7,19 +7,19 @@
 
 ## 2. YAML schema 解析与校验
 
-- [ ] 2.1 四段式 api.yaml schema 解析 <!-- TDD 任务 -->
-  - [ ] 2.1.1 写失败测试：`internal/yaml/parser_test.go`（测试合法 api.yaml 解析为内部结构、缺少必填段 fail-fast、name 字段非法 fail-fast）
-  - [ ] 2.1.2 验证测试失败（运行：`go test ./internal/yaml/ -run TestParse -v`，确认失败原因是缺少功能）
-  - [ ] 2.1.3 写最小实现：`internal/yaml/parser.go`（定义 Config/Entity/Resource/Service 等结构体，yaml.v3 解析，schema 校验）
-  - [ ] 2.1.4 验证测试通过（运行：`go test ./internal/yaml/ -run TestParse -v`，确认所有测试通过，输出干净）
-  - [ ] 2.1.5 重构：整理结构体命名、提取校验函数、消除重复
+- [x] 2.1 四段式 api.yaml schema 解析 <!-- TDD 任务 -->
+  - [x] 2.1.1 写失败测试：`internal/yaml/parser_test.go`（测试合法 api.yaml 解析为内部结构、缺少必填段 fail-fast、name 字段非法 fail-fast）
+  - [x] 2.1.2 验证测试失败（运行：`go test ./internal/yaml/ -run TestParse -v`，确认失败原因是缺少功能）
+  - [x] 2.1.3 写最小实现：`internal/yaml/parser.go`（定义 Config/Entity/Resource/Service 等结构体，yaml.v3 解析，schema 校验）
+  - [x] 2.1.4 验证测试通过（运行：`go test ./internal/yaml/ -run TestParse -v`，确认所有测试通过，输出干净）
+  - [x] 2.1.5 重构：整理结构体命名、提取校验函数、消除重复
 
-- [ ] 2.2 type_ 引用规则与实体引用校验 <!-- TDD 任务 -->
-  - [ ] 2.2.1 写失败测试：`internal/yaml/validate_test.go`（测试 type_ 短名/全限定名/alias 引用解析、service 引用实体越权校验、service 不声明 resources 时全量继承）
-  - [ ] 2.2.2 验证测试失败（运行：`go test ./internal/yaml/ -run TestValidate -v`，确认失败）
-  - [ ] 2.2.3 写最小实现：`internal/yaml/validate.go`（type_ 引用解析、实体引用校验、越权校验、继承逻辑）
-  - [ ] 2.2.4 验证测试通过（运行：`go test ./internal/yaml/ -run TestValidate -v`，确认通过）
-  - [ ] 2.2.5 重构：提取校验规则常量、统一错误消息格式
+- [x] 2.2 type_ 引用规则与实体引用校验 <!-- TDD 任务 -->
+  - [x] 2.2.1 写失败测试：`internal/yaml/validate_test.go`（测试 type_ 短名/全限定名/alias 引用解析、service 引用实体越权校验、service 不声明 resources 时全量继承）
+  - [x] 2.2.2 验证测试失败（运行：`go test ./internal/yaml/ -run TestValidate -v`，确认失败）
+  - [x] 2.2.3 写最小实现：`internal/yaml/validate.go`（type_ 引用解析、实体引用校验、越权校验、继承逻辑）
+  - [x] 2.2.4 验证测试通过（运行：`go test ./internal/yaml/ -run TestValidate -v`，确认通过）
+  - [x] 2.2.5 重构：提取校验规则常量、统一错误消息格式
 
 - [ ] 2.3 代码审查
   - 前置验证：调用 superpowers:verification-before-completion 运行全量测试，确认输出干净后才继续
