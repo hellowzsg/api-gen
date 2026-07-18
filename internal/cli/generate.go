@@ -1,0 +1,148 @@
+package cli
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/acme/apigen/internal/dep"
+	"github.com/acme/apigen/internal/ir"
+	"github.com/acme/apigen/internal/render"
+	apigenyaml "github.com/acme/apigen/internal/yaml"
+)
+
+func runGenerate(ctx context.Context, apiYAMLPath string) error {
+	cfg, err := parseConfig(apiYAMLPath)
+	if err != nil {
+		return fmt.Errorf("parse config: %w", err)
+	}
+	if err := cfg.ValidateReferences(); err != nil {
+		return fmt.Errorf("validate references: %w", err)
+	}
+	baseDir := filepath.Dir(apiYAMLPath)
+	cacheDir := filepath.Join(baseDir, ".apigen_cache")
+	importPaths, err := resolveDependencies(cfg, baseDir, cacheDir)
+	if err != nil {
+		return fmt.Errorf("resolve dependencies: %w", err)
+	}
+	pathResolver := setupPathResolver(cfg, baseDir)
+	if pathResolver != nil {
+		if err := pathResolver.Glob(); err != nil {
+			return fmt.Errorf("glob proto files: %w", err)
+		}
+		importPaths = append(importPaths, pathResolver.ImportPaths()...)
+	}
+	cr := dep.NewCompositeResolver(importPaths)
+	if pathResolver != nil {
+		if err := cr.AddPathResolver(pathResolver); err != nil {
+			return fmt.Errorf("add path resolver: %w", err)
+		}
+	}
+	if _, err := cr.Resolve(); err != nil {
+		return fmt.Errorf("resolve proto: %w", err)
+	}
+	if err := validateTypeReferences(cfg, cr); err != nil {
+		return fmt.Errorf("validate type references: %w", err)
+	}
+	irData, err := ir.Build(cfg)
+	if err != nil {
+		return fmt.Errorf("build IR: %w", err)
+	}
+	if err := ir.ValidateAllOptions(irData); err != nil {
+		return fmt.Errorf("validate options: %w", err)
+	}
+	for _, svc := range irData.Services {
+		output, err := render.RenderServiceProto(irData, svc)
+		if err != nil {
+			return fmt.Errorf("render service %s: %w", svc.Name, err)
+		}
+		outPath := filepath.Join(baseDir, cfg.Settings.Out.Proto, toSnakeCase(svc.Name), toSnakeCase(svc.Name)+".proto")
+		if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
+			return fmt.Errorf("create output dir: %w", err)
+		}
+		if err := os.WriteFile(outPath, []byte(output), 0644); err != nil {
+			return fmt.Errorf("write proto file: %w", err)
+		}
+	}
+	return nil
+}
+
+func parseConfig(path string) (*apigenyaml.Config, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return apigenyaml.Parse(f)
+}
+
+func resolveDependencies(cfg *apigenyaml.Config, baseDir, cacheDir string) ([]string, error) {
+	var importPaths []string
+	for _, imp := range cfg.ImportProtos {
+		switch {
+		case imp.Path != "":
+			r := dep.NewPathResolverWithBase(imp.Path, baseDir)
+			if err := r.Glob(); err != nil {
+				return nil, fmt.Errorf("path dependency %q: %w", imp.Path, err)
+			}
+			importPaths = append(importPaths, r.ImportPaths()...)
+		case imp.Git != "":
+			r := dep.NewGitResolver(dep.GitDep{URL: imp.Git, Ref: imp.Ref, Subdir: imp.Subdir}, filepath.Join(cacheDir, "git"))
+			paths, err := r.Fetch()
+			if err != nil {
+				return nil, fmt.Errorf("git dependency %q: %w", imp.Git, err)
+			}
+			importPaths = append(importPaths, paths...)
+		case imp.BSR != "":
+			r := dep.NewBSRResolver([]dep.BSRDep{{Module: imp.BSR, Version: imp.Version}}, baseDir)
+			paths, err := r.Fetch()
+			if err != nil {
+				return nil, fmt.Errorf("bsr dependency %q: %w", imp.BSR, err)
+			}
+			importPaths = append(importPaths, paths...)
+		}
+	}
+	return importPaths, nil
+}
+
+func setupPathResolver(cfg *apigenyaml.Config, baseDir string) *dep.PathResolver {
+	for _, imp := range cfg.ImportProtos {
+		if imp.Path != "" {
+			return dep.NewPathResolverWithBase(imp.Path, baseDir)
+		}
+	}
+	return nil
+}
+
+func validateTypeReferences(cfg *apigenyaml.Config, cr *dep.CompositeResolver) error {
+	for _, e := range cfg.Entities {
+		keyType := cfg.ResolveTypeName(e.Key.Type)
+		if err := cr.CheckTypeIsMessage(keyType); err != nil {
+			return fmt.Errorf("entity %q key.type_ %q: %w", e.Name, keyType, err)
+		}
+		for _, r := range e.Resources {
+			resType := cfg.ResolveTypeName(r.Type)
+			if err := cr.CheckTypeIsMessage(resType); err != nil {
+				return fmt.Errorf("entity %q resource %q type_ %q: %w", e.Name, r.Name, resType, err)
+			}
+		}
+	}
+	return nil
+}
+
+func toSnakeCase(s string) string {
+	var sb strings.Builder
+	for i, r := range s {
+		if r >= 'A' && r <= 'Z' {
+			if i > 0 {
+				sb.WriteByte('_')
+			}
+			sb.WriteRune(r + 32)
+		} else {
+			sb.WriteRune(r)
+		}
+	}
+	return sb.String()
+}
