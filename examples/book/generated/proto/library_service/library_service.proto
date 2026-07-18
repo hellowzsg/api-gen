@@ -8,9 +8,17 @@
 // (-- api-linter: core::0135::request-name-field=disabled --)
 // (-- api-linter: core::0231::response-message-name=disabled --)
 // (-- api-linter: core::0231::method-name=disabled --)
+// (-- api-linter: core::0133::http-body=disabled --)
+// (-- api-linter: core::0231::http-body=disabled --)
+// (-- api-linter: core::0231::http-method=disabled --)
+// (-- api-linter: core::0132::http-method=disabled --)
+// (-- api-linter: core::0132::http-body=disabled --)
+// (-- api-linter: core::0135::http-method=disabled --)
+// (-- api-linter: core::0135::http-body=disabled --)
 syntax = "proto3";
 package demo.business.book.library_service;
 
+import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "demo/business/book/book.proto";
@@ -18,15 +26,33 @@ import "demo/business/book/book.proto";
 option go_package = "github.com/acme/demo-book/generated/go/library_service;library_service";
 
 service LibraryService {
-  rpc CreateBook(CreateBookRequest) returns (CreateBookResponse);
-  rpc DeleteBook(DeleteBookRequest) returns (google.protobuf.Empty);
-  rpc DeleteBookSoft(DeleteBookSoftRequest) returns (google.protobuf.Empty);
-  rpc GetBookMeta(GetBookMetaRequest) returns (GetBookMetaResponse);
-  rpc BatchGetBookMetas(BatchGetBookMetasRequest) returns (BatchGetBookMetasResponse);
-  rpc ListBookMetas(ListBookMetasRequest) returns (ListBookMetasResponse);
-  rpc UpdateBookMeta(UpdateBookMetaRequest) returns (UpdateBookMetaResponse);
-  rpc GetBookContent(GetBookContentRequest) returns (GetBookContentResponse);
-  rpc UpdateBookContent(UpdateBookContentRequest) returns (google.protobuf.Empty);
+  rpc CreateBook(CreateBookRequest) returns (CreateBookResponse) {
+    option (google.api.http) = { post: "/library/LibraryService/book" body: "*" };
+  }
+  rpc DeleteBook(DeleteBookRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { delete: "/library/LibraryService/book/{key.id}" };
+  }
+  rpc DeleteBookSoft(DeleteBookSoftRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { post: "/library/LibraryService/book/deleteSoft" body: "*" };
+  }
+  rpc GetBookMeta(GetBookMetaRequest) returns (GetBookMetaResponse) {
+    option (google.api.http) = { get: "/library/LibraryService/book/{key.id}/meta" };
+  }
+  rpc BatchGetBookMetas(BatchGetBookMetasRequest) returns (BatchGetBookMetasResponse) {
+    option (google.api.http) = { post: "/library/LibraryService/book/meta/batchGet" body: "*" };
+  }
+  rpc ListBookMetas(ListBookMetasRequest) returns (ListBookMetasResponse) {
+    option (google.api.http) = { post: "/library/LibraryService/book/meta/list" body: "*" };
+  }
+  rpc UpdateBookMeta(UpdateBookMetaRequest) returns (UpdateBookMetaResponse) {
+    option (google.api.http) = { patch: "/library/LibraryService/book/{key.id}/meta" body: "*" };
+  }
+  rpc GetBookContent(GetBookContentRequest) returns (GetBookContentResponse) {
+    option (google.api.http) = { get: "/library/LibraryService/book/{key.id}/content" };
+  }
+  rpc UpdateBookContent(UpdateBookContentRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { patch: "/library/LibraryService/book/{key.id}/content" body: "*" };
+  }
 }
 
 message CreateBookRequest {

@@ -8,6 +8,7 @@ package library_service
 
 import (
 	book "github.com/acme/demo-book/generated/go/demo/business/book"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -776,7 +777,7 @@ var File_library_service_library_service_proto protoreflect.FileDescriptor
 
 const file_library_service_library_service_proto_rawDesc = "" +
 	"\n" +
-	"%library_service/library_service.proto\x12$demo.business.book.library_service\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fdemo/business/book/book.proto\"\x84\x01\n" +
+	"%library_service/library_service.proto\x12$demo.business.book.library_service\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fdemo/business/book/book.proto\"\x84\x01\n" +
 	"\x11CreateBookRequest\x122\n" +
 	"\x04meta\x18\x01 \x01(\v2\x1e.demo.business.book.BookMetaR\x04meta\x12;\n" +
 	"\acontent\x18\x02 \x01(\v2!.demo.business.book.BookContentR\acontent\"D\n" +
@@ -820,19 +821,19 @@ const file_library_service_library_service_proto_rawDesc = "" +
 	"\fbook_content\x18\x01 \x01(\v2!.demo.business.book.BookContentR\vbookContent\"\x87\x01\n" +
 	"\x18UpdateBookContentRequest\x12;\n" +
 	"\acontent\x18\x01 \x01(\v2!.demo.business.book.BookContentR\acontent\x12.\n" +
-	"\x03key\x18\x02 \x01(\v2\x1c.demo.business.book.BookIdR\x03key2\x87\t\n" +
-	"\x0eLibraryService\x12\x7f\n" +
+	"\x03key\x18\x02 \x01(\v2\x1c.demo.business.book.BookIdR\x03key2\xdd\f\n" +
+	"\x0eLibraryService\x12\xa8\x01\n" +
 	"\n" +
-	"CreateBook\x127.demo.business.book.library_service.CreateBookRequest\x1a8.demo.business.book.library_service.CreateBookResponse\x12]\n" +
+	"CreateBook\x127.demo.business.book.library_service.CreateBookRequest\x1a8.demo.business.book.library_service.CreateBookResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/library/LibraryService/book\x12\x8c\x01\n" +
 	"\n" +
-	"DeleteBook\x127.demo.business.book.library_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\x12e\n" +
-	"\x0eDeleteBookSoft\x12;.demo.business.book.library_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\x12\x82\x01\n" +
-	"\vGetBookMeta\x128.demo.business.book.library_service.GetBookMetaRequest\x1a9.demo.business.book.library_service.GetBookMetaResponse\x12\x94\x01\n" +
-	"\x11BatchGetBookMetas\x12>.demo.business.book.library_service.BatchGetBookMetasRequest\x1a?.demo.business.book.library_service.BatchGetBookMetasResponse\x12\x88\x01\n" +
-	"\rListBookMetas\x12:.demo.business.book.library_service.ListBookMetasRequest\x1a;.demo.business.book.library_service.ListBookMetasResponse\x12\x8b\x01\n" +
-	"\x0eUpdateBookMeta\x12;.demo.business.book.library_service.UpdateBookMetaRequest\x1a<.demo.business.book.library_service.UpdateBookMetaResponse\x12\x8b\x01\n" +
-	"\x0eGetBookContent\x12;.demo.business.book.library_service.GetBookContentRequest\x1a<.demo.business.book.library_service.GetBookContentResponse\x12k\n" +
-	"\x11UpdateBookContent\x12>.demo.business.book.library_service.UpdateBookContentRequest\x1a\x16.google.protobuf.EmptyBJZHgithub.com/acme/demo-book/generated/go/library_service;library_serviceb\x06proto3"
+	"DeleteBook\x127.demo.business.book.library_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\"-\x82\xd3\xe4\x93\x02'*%/library/LibraryService/book/{key.id}\x12\x99\x01\n" +
+	"\x0eDeleteBookSoft\x12;.demo.business.book.library_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\"2\x82\xd3\xe4\x93\x02,:\x01*\"'/library/LibraryService/book/deleteSoft\x12\xb6\x01\n" +
+	"\vGetBookMeta\x128.demo.business.book.library_service.GetBookMetaRequest\x1a9.demo.business.book.library_service.GetBookMetaResponse\"2\x82\xd3\xe4\x93\x02,\x12*/library/LibraryService/book/{key.id}/meta\x12\xcb\x01\n" +
+	"\x11BatchGetBookMetas\x12>.demo.business.book.library_service.BatchGetBookMetasRequest\x1a?.demo.business.book.library_service.BatchGetBookMetasResponse\"5\x82\xd3\xe4\x93\x02/:\x01*\"*/library/LibraryService/book/meta/batchGet\x12\xbb\x01\n" +
+	"\rListBookMetas\x12:.demo.business.book.library_service.ListBookMetasRequest\x1a;.demo.business.book.library_service.ListBookMetasResponse\"1\x82\xd3\xe4\x93\x02+:\x01*\"&/library/LibraryService/book/meta/list\x12\xc2\x01\n" +
+	"\x0eUpdateBookMeta\x12;.demo.business.book.library_service.UpdateBookMetaRequest\x1a<.demo.business.book.library_service.UpdateBookMetaResponse\"5\x82\xd3\xe4\x93\x02/:\x01*2*/library/LibraryService/book/{key.id}/meta\x12\xc2\x01\n" +
+	"\x0eGetBookContent\x12;.demo.business.book.library_service.GetBookContentRequest\x1a<.demo.business.book.library_service.GetBookContentResponse\"5\x82\xd3\xe4\x93\x02/\x12-/library/LibraryService/book/{key.id}/content\x12\xa5\x01\n" +
+	"\x11UpdateBookContent\x12>.demo.business.book.library_service.UpdateBookContentRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x022:\x01*2-/library/LibraryService/book/{key.id}/contentBJZHgithub.com/acme/demo-book/generated/go/library_service;library_serviceb\x06proto3"
 
 var (
 	file_library_service_library_service_proto_rawDescOnce sync.Once

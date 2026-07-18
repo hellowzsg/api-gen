@@ -12,6 +12,9 @@ settings:
     proto:   generated/proto
     go:      generated/go
     js:      generated/js
+  http:
+    enable: true
+    prefix: /library
 
 entities:
   - name: book
@@ -52,3 +55,4 @@ services:
         resources:
           - name: meta
             reader: { list: true }
+

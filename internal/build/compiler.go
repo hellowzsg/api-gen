@@ -182,12 +182,15 @@ func RunPlugin(ctx context.Context, pluginName string, req *pluginpb.CodeGenerat
 // service protos + WKT). `fileToGenerate` lists the service proto paths that
 // the plugins should emit Go code for.
 //
+// When httpEnabled is true, protoc-gen-grpc-gateway is also invoked to
+// generate *.pb.gw.go alongside the *.pb.go files.
+//
 // The protoc-gen-go plugin is invoked with `paths=source_relative` so that
 // output files are placed at <goOutDir>/<proto-relative-path>.pb.go rather
 // than deriving the output directory from the go_package import path. This
 // matches the design doc's layout: generated/go/<service>/<service>.pb.go.
-// protoc-gen-go-grpc ignores the parameter and follows protoc-gen-go's lead.
-func Compile(ctx context.Context, files linker.Files, fileToGenerate []string, goOutDir string) error {
+// protoc-gen-go-grpc and protoc-gen-grpc-gateway follow the same parameter.
+func Compile(ctx context.Context, files linker.Files, fileToGenerate []string, goOutDir string, httpEnabled bool) error {
 	req, err := BuildCodeGeneratorRequest(files, fileToGenerate)
 	if err != nil {
 		return fmt.Errorf("build request: %w", err)
@@ -208,6 +211,15 @@ func Compile(ctx context.Context, files linker.Files, fileToGenerate []string, g
 	grpcReq.Parameter = &param
 	if err := RunPlugin(ctx, "protoc-gen-go-grpc", grpcReq, goOutDir); err != nil {
 		return fmt.Errorf("run protoc-gen-go-grpc: %w", err)
+	}
+	// protoc-gen-grpc-gateway: only when HTTP is enabled. Generates
+	// *.pb.gw.go in the same output directory.
+	if httpEnabled {
+		gwReq := proto.Clone(req).(*pluginpb.CodeGeneratorRequest)
+		gwReq.Parameter = &param
+		if err := RunPlugin(ctx, "protoc-gen-grpc-gateway", gwReq, goOutDir); err != nil {
+			return fmt.Errorf("run protoc-gen-grpc-gateway: %w", err)
+		}
 	}
 	return nil
 }

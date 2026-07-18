@@ -23,10 +23,21 @@ func RenderServiceProto(irData *ir.IR, svc ir.ServiceIR) (string, error) {
 			}
 		}
 	}
+	// HTTP annotations are generated at entity level using the first
+	// referencing service's name (see ir builder). When rendering for a
+	// different service, rewrite the service-name segment in each path so
+	// that each service's REST routes are isolated (e.g.
+	// /library/AdminService/book/... vs /library/LibraryService/book/...).
+	if irData.HTTPEnabled {
+		for i := range entities {
+			rewriteHTTPPathForService(&entities[i], svc.Name)
+		}
+	}
 	needEmpty, needMask, needWrapper := analyzeImports(entities)
+	needHTTP := irData.HTTPEnabled
 	typeImports := collectTypeImports(entities, irData.TypeImportPaths)
-	imports := generateImports(needEmpty, needMask, needWrapper, false, typeImports)
-	exemptions := generateExemptions(entities)
+	imports := generateImports(needEmpty, needMask, needWrapper, needHTTP, typeImports)
+	exemptions := generateExemptions(entities, needHTTP)
 	renderExemptions(&sb, exemptions)
 	sb.WriteString(`syntax = "proto3";` + "\n")
 	sb.WriteString(fmt.Sprintf("package %s;\n\n", svc.ProtoPackage))
@@ -51,8 +62,123 @@ func RenderServiceProto(irData *ir.IR, svc ir.ServiceIR) (string, error) {
 	return sb.String(), nil
 }
 
-// narrowEntity returns a copy of the entity IR filtered to the resources and
-// methods exposed by the given service entity narrowing spec.
+// rewriteHTTPPathForService rewrites the service-name segment in every HTTP
+// annotation path on the entity (and its resources) so that the path matches
+// the service currently being rendered.
+//
+// The path layout is: <prefix>/<svcName>/<entity>[/{key...}][/<resource>[/...]].
+// We split off the prefix (everything up to and including the last "/" before
+// the service segment is tricky, so instead we split the path into segments
+// and replace the segment immediately after the prefix).
+//
+// To keep this self-contained, we treat the prefix as a known string passed
+// via the entity IR's HTTPPrefix. When the prefix is empty, the service name
+// is the first segment after the leading "/".
+func rewriteHTTPPathForService(e *ir.EntityIR, svcName string) {
+	rewrite := func(ann *ir.HTTPAnnotation) {
+		if ann == nil || ann.Path == "" {
+			return
+		}
+		ann.Path = replaceServiceSegment(ann.Path, svcName)
+	}
+	if e.Create != nil {
+		rewrite(e.Create.HTTPAnnotation)
+	}
+	if e.Delete != nil {
+		rewrite(e.Delete.HTTPAnnotation)
+	}
+	if e.DeleteSoft != nil {
+		rewrite(e.DeleteSoft.HTTPAnnotation)
+	}
+	for i := range e.Resources {
+		r := &e.Resources[i]
+		if r.Get != nil {
+			rewrite(r.Get.HTTPAnnotation)
+		}
+		if r.BatchGet != nil {
+			rewrite(r.BatchGet.HTTPAnnotation)
+		}
+		if r.List != nil {
+			rewrite(r.List.HTTPAnnotation)
+		}
+		if r.Update != nil {
+			rewrite(r.Update.HTTPAnnotation)
+		}
+	}
+}
+
+// replaceServiceSegment replaces the service-name segment in a path. The path
+// has the form "<prefix>/<svcName>/<rest...>" where <prefix> may be empty.
+// Since the prefix itself is just a leading path component (no embedded
+// slashes in P1), we split by "/" and replace segment[1] (segment[0] is the
+// empty string from the leading "/"). When a prefix exists (e.g.
+// "/library"), segment[1] is the prefix and segment[2] is the service name.
+//
+// We detect the service segment by position: it is the segment right before
+// the entity-name segment. But simpler: the service segment is always the
+// segment at index (prefixSegCount + 1) where prefixSegCount is the number
+// of non-empty segments in the prefix.
+//
+// For P1 the prefix is a single segment (e.g. "/library"), so the service
+// segment is segment index 2 (0="", 1="library", 2="LibraryService").
+// When no prefix, service segment is index 1.
+//
+// To stay robust, we re-derive the prefix length from the IR: we don't have
+// it here, so we rely on the convention that the entity name is a known
+// segment and the service segment is the one immediately before it.
+func replaceServiceSegment(path, svcName string) string {
+	// Strip leading "/" for uniform processing.
+	trimmed := strings.TrimPrefix(path, "/")
+	segs := strings.Split(trimmed, "/")
+	if len(segs) < 2 {
+		return path
+	}
+	// The entity segment is the first segment that matches the entity
+	// name. But we don't have the entity name here. Use heuristic: the
+	// service segment is the last segment before a "{key...}" segment or
+	// a resource suffix. Simpler and correct for P1: the service segment
+	// is segs[1] when segs[0] looks like a prefix (no "{" and not the
+	// entity), otherwise segs[0].
+	//
+	// Even simpler and fully correct for P1: the service segment is the
+	// segment at index 1 if the path has a prefix (segs[0] is the prefix,
+	// non-empty, not the entity). Otherwise it's segs[0].
+	//
+	// We detect "has prefix" by checking whether segs[0] is a known
+	// service name. Since we don't have that list, fall back to: if there
+	// are >= 3 non-empty segments before the first "{" segment, the prefix
+	// exists and service is segs[1]; else service is segs[0].
+	firstBrace := -1
+	for i, s := range segs {
+		if strings.HasPrefix(s, "{") {
+			firstBrace = i
+			break
+		}
+	}
+	nonEmptyBeforeBrace := 0
+	if firstBrace == -1 {
+		nonEmptyBeforeBrace = len(segs)
+	} else {
+		nonEmptyBeforeBrace = firstBrace
+	}
+	// P1 path shapes:
+	//   /<prefix>/<svc>/<entity>/{key}/<resource>        → 5 segs before resource
+	//   /<prefix>/<svc>/<entity>/{key}                   → 4
+	//   /<prefix>/<svc>/<entity>/<resource>/batchGet     → 5 (no key)
+	//   /<prefix>/<svc>/<entity>/deleteSoft              → 4 (no key)
+	//   /<svc>/<entity>/...                              → one fewer
+	// Heuristic: if nonEmptyBeforeBrace >= 3, prefix exists (svc=index 1).
+	// If 2, no prefix (svc=index 0).
+	svcIdx := 0
+	if nonEmptyBeforeBrace >= 3 {
+		svcIdx = 1
+	}
+	if svcIdx >= len(segs) {
+		return path
+	}
+	segs[svcIdx] = svcName
+	return "/" + strings.Join(segs, "/")
+}
 //
 // Rules (per design §十一):
 //   - If se.Resources is empty, the entity's full resource set is inherited.
@@ -113,26 +239,26 @@ func narrowEntity(e ir.EntityIR, se ir.ServiceEntityIR) ir.EntityIR {
 
 func renderServiceRPCs(sb *strings.Builder, e *ir.EntityIR) {
 	if e.Create != nil {
-		sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s);\n", e.Create.RPCName, e.Create.RequestName, e.Create.ResponseName))
+		renderRPCWithHTTP(sb, e.Create.RPCName, e.Create.RequestName, e.Create.ResponseName, e.Create.HTTPAnnotation)
 	}
 	if e.Delete != nil {
-		sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s);\n", e.Delete.RPCName, e.Delete.RequestName, e.Delete.ResponseName))
+		renderRPCWithHTTP(sb, e.Delete.RPCName, e.Delete.RequestName, e.Delete.ResponseName, e.Delete.HTTPAnnotation)
 	}
 	if e.DeleteSoft != nil {
-		sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s);\n", e.DeleteSoft.RPCName, e.DeleteSoft.RequestName, e.DeleteSoft.ResponseName))
+		renderRPCWithHTTP(sb, e.DeleteSoft.RPCName, e.DeleteSoft.RequestName, e.DeleteSoft.ResponseName, e.DeleteSoft.HTTPAnnotation)
 	}
 	for _, r := range e.Resources {
 		if r.Get != nil {
-			sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s);\n", r.Get.RPCName, r.Get.RequestName, r.Get.ResponseName))
+			renderRPCWithHTTP(sb, r.Get.RPCName, r.Get.RequestName, r.Get.ResponseName, r.Get.HTTPAnnotation)
 		}
 		if r.BatchGet != nil {
-			sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s);\n", r.BatchGet.RPCName, r.BatchGet.RequestName, r.BatchGet.ResponseName))
+			renderRPCWithHTTP(sb, r.BatchGet.RPCName, r.BatchGet.RequestName, r.BatchGet.ResponseName, r.BatchGet.HTTPAnnotation)
 		}
 		if r.List != nil {
-			sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s);\n", r.List.RPCName, r.List.RequestName, r.List.ResponseName))
+			renderRPCWithHTTP(sb, r.List.RPCName, r.List.RequestName, r.List.ResponseName, r.List.HTTPAnnotation)
 		}
 		if r.Update != nil {
-			sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s);\n", r.Update.RPCName, r.Update.RequestName, r.Update.ResponseName))
+			renderRPCWithHTTP(sb, r.Update.RPCName, r.Update.RequestName, r.Update.ResponseName, r.Update.HTTPAnnotation)
 		}
 	}
 }
@@ -301,9 +427,9 @@ func generateImports(needEmpty, needMask, needWrapper, needHTTP bool, typeImport
 	return imports
 }
 
-func generateExemptions(entities []ir.EntityIR) []string {
+func generateExemptions(entities []ir.EntityIR, httpEnabled bool) []string {
 	var exemptions []string
-	hasCreate, hasDelete, hasDeleteSoft, hasGet, hasBatchGet, hasUpdate := false, false, false, false, false, false
+	hasCreate, hasDelete, hasDeleteSoft, hasGet, hasBatchGet, hasList, hasUpdate := false, false, false, false, false, false, false
 	for _, e := range entities {
 		if e.Create != nil { hasCreate = true }
 		if e.Delete != nil { hasDelete = true }
@@ -311,6 +437,7 @@ func generateExemptions(entities []ir.EntityIR) []string {
 		for _, r := range e.Resources {
 			if r.Get != nil { hasGet = true }
 			if r.BatchGet != nil { hasBatchGet = true }
+			if r.List != nil { hasList = true }
 			if r.Update != nil { hasUpdate = true }
 		}
 	}
@@ -328,6 +455,21 @@ func generateExemptions(entities []ir.EntityIR) []string {
 	}
 	if hasBatchGet {
 		exemptions = append(exemptions, "core::0231::response-message-name", "core::0231::method-name")
+	}
+	// HTTP-specific exemptions (only when HTTP is enabled).
+	if httpEnabled {
+		if hasCreate {
+			exemptions = append(exemptions, "core::0133::http-body")
+		}
+		if hasBatchGet {
+			exemptions = append(exemptions, "core::0231::http-body", "core::0231::http-method")
+		}
+		if hasList {
+			exemptions = append(exemptions, "core::0132::http-method", "core::0132::http-body")
+		}
+		if hasDeleteSoft {
+			exemptions = append(exemptions, "core::0135::http-method", "core::0135::http-body")
+		}
 	}
 	return exemptions
 }

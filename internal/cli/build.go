@@ -102,8 +102,20 @@ func runBuild(ctx context.Context, apiYAMLPath string) error {
 	// type_ protos. The service stubs import the user type packages, so the
 	// user type protos must also be compiled into .pb.go for the generated
 	// module to be self-consistent.
-	fileToGenerate := make([]string, len(allProtoFiles))
-	copy(fileToGenerate, allProtoFiles)
+	//
+	// Exclude any vendored googleapis protos (e.g. google/api/*.proto) that
+	// were matched by broad import_protos globs. These must remain as
+	// link-only dependencies: their Go bindings come from the
+	// google.golang.org/genproto/googleapis/api/annotations module, not from
+	// locally generated code. Generating them would produce duplicate symbol
+	// errors when users import the canonical genproto package.
+	fileToGenerate := make([]string, 0, len(allProtoFiles))
+	for _, f := range allProtoFiles {
+		if isVendoredDependency(f) {
+			continue
+		}
+		fileToGenerate = append(fileToGenerate, f)
+	}
 
 	// Step 4: resolve the full set through protocompile to obtain linked
 	// FileDescriptors. This produces the complete transitive closure (user
@@ -127,7 +139,7 @@ func runBuild(ctx context.Context, apiYAMLPath string) error {
 			_ = os.RemoveAll(staging)
 		}
 	}()
-	if err := build.Compile(ctx, files, fileToGenerate, staging); err != nil {
+	if err := build.Compile(ctx, files, fileToGenerate, staging, cfg.Settings.HTTP != nil && cfg.Settings.HTTP.Enable); err != nil {
 		return fmt.Errorf("compile: %w", err)
 	}
 	if err := commitDir(staging, goOutDir); err != nil {
@@ -135,4 +147,19 @@ func runBuild(ctx context.Context, apiYAMLPath string) error {
 	}
 	committed = true
 	return nil
+}
+
+// isVendoredDependency reports whether a proto import path refers to a
+// third-party dependency that should be linked but not compiled to Go code.
+//
+// This covers:
+//   - google/api/*.proto      (googleapis HTTP annotations — Go bindings from
+//     google.golang.org/genproto/googleapis/api/annotations)
+//   - google/protobuf/*.proto (Well-Known Types — Go bindings from
+//     google.golang.org/protobuf/types/known/*)
+//
+// User-authored protos and apigen-generated service protos never start with
+// "google/", so they are always compiled.
+func isVendoredDependency(protoPath string) bool {
+	return strings.HasPrefix(protoPath, "google/")
 }

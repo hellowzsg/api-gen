@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	"github.com/acme/apigen/internal/dep"
 	"github.com/acme/apigen/internal/ir"
 	"github.com/acme/apigen/internal/render"
@@ -46,7 +48,7 @@ func runGenerate(ctx context.Context, apiYAMLPath string) error {
 	if err := validateTypeReferences(cfg, cr); err != nil {
 		return fmt.Errorf("validate type references: %w", err)
 	}
-	irData, err := ir.Build(cfg)
+	irData, err := buildIR(cfg, cr)
 	if err != nil {
 		return fmt.Errorf("build IR: %w", err)
 	}
@@ -97,6 +99,29 @@ func parseConfig(path string) (*apigenyaml.Config, error) {
 	}
 	defer f.Close()
 	return apigenyaml.Parse(f)
+}
+
+// buildIR constructs the IR from the YAML config, optionally enriching it
+// with key type descriptors for HTTP path binding. When HTTP is disabled,
+// behavior is identical to ir.Build (P0). When HTTP is enabled, key type
+// descriptors are fetched from the CompositeResolver so that ExtractKeyLeaves
+// can run.
+func buildIR(cfg *apigenyaml.Config, cr *dep.CompositeResolver) (*ir.IR, error) {
+	httpEnabled := cfg.Settings.HTTP != nil && cfg.Settings.HTTP.Enable
+	if !httpEnabled {
+		return ir.Build(cfg)
+	}
+	// Build KeyDescriptors map for HTTP key-leaf extraction.
+	keyDescs := make(map[string]protoreflect.MessageDescriptor, len(cfg.Entities))
+	for _, e := range cfg.Entities {
+		keyType := cfg.ResolveTypeName(e.Key.Type)
+		md := cr.FindMessageDescriptor(keyType)
+		if md == nil {
+			return nil, fmt.Errorf("HTTP enabled but key type %q descriptor not found in resolved protos", keyType)
+		}
+		keyDescs[keyType] = md
+	}
+	return ir.BuildWithOptions(cfg, ir.BuildOptions{KeyDescriptors: keyDescs})
 }
 
 func resolveDependencies(cfg *apigenyaml.Config, baseDir, cacheDir string) ([]string, error) {

@@ -111,6 +111,21 @@ func (c *CompositeResolver) CheckTypeIsMessage(fqn string) error {
 	return nil
 }
 
+// FindMessageDescriptor returns the protoreflect.MessageDescriptor for the
+// given fully-qualified message name, or nil if not found / not a message.
+// Used by the CLI to obtain key type descriptors for HTTP key-leaf extraction.
+func (c *CompositeResolver) FindMessageDescriptor(fqn string) protoreflect.MessageDescriptor {
+	if !c.resolved {
+		return nil
+	}
+	d := c.findDescriptor(fqn)
+	if d == nil {
+		return nil
+	}
+	md, _ := d.(protoreflect.MessageDescriptor)
+	return md
+}
+
 // DryRunClosure validates that all imports are resolvable.
 func (c *CompositeResolver) DryRunClosure() error {
 	if !c.resolved {

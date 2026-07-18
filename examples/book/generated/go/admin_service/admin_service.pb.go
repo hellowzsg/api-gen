@@ -8,6 +8,7 @@ package admin_service
 
 import (
 	book "github.com/acme/demo-book/generated/go/demo/business/book"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -548,7 +549,7 @@ var File_admin_service_admin_service_proto protoreflect.FileDescriptor
 
 const file_admin_service_admin_service_proto_rawDesc = "" +
 	"\n" +
-	"!admin_service/admin_service.proto\x12\"demo.business.book.admin_service\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fdemo/business/book/book.proto\"\x84\x01\n" +
+	"!admin_service/admin_service.proto\x12\"demo.business.book.admin_service\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fdemo/business/book/book.proto\"\x84\x01\n" +
 	"\x11CreateBookRequest\x122\n" +
 	"\x04meta\x18\x01 \x01(\v2\x1e.demo.business.book.BookMetaR\x04meta\x12;\n" +
 	"\acontent\x18\x02 \x01(\v2!.demo.business.book.BookContentR\acontent\"D\n" +
@@ -581,16 +582,16 @@ const file_admin_service_admin_service_proto_rawDesc = "" +
 	"updateMask\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\x04R\aversion\"2\n" +
 	"\x16UpdateBookMetaResponse\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\x04R\aversion2\xde\x05\n" +
-	"\fAdminService\x12{\n" +
+	"\aversion\x18\x01 \x01(\x04R\aversion2\x80\b\n" +
+	"\fAdminService\x12\xa2\x01\n" +
 	"\n" +
-	"CreateBook\x125.demo.business.book.admin_service.CreateBookRequest\x1a6.demo.business.book.admin_service.CreateBookResponse\x12[\n" +
+	"CreateBook\x125.demo.business.book.admin_service.CreateBookRequest\x1a6.demo.business.book.admin_service.CreateBookResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/library/AdminService/book\x12\x88\x01\n" +
 	"\n" +
-	"DeleteBook\x125.demo.business.book.admin_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\x12c\n" +
-	"\x0eDeleteBookSoft\x129.demo.business.book.admin_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\x12~\n" +
-	"\vGetBookMeta\x126.demo.business.book.admin_service.GetBookMetaRequest\x1a7.demo.business.book.admin_service.GetBookMetaResponse\x12\x84\x01\n" +
-	"\rListBookMetas\x128.demo.business.book.admin_service.ListBookMetasRequest\x1a9.demo.business.book.admin_service.ListBookMetasResponse\x12\x87\x01\n" +
-	"\x0eUpdateBookMeta\x129.demo.business.book.admin_service.UpdateBookMetaRequest\x1a:.demo.business.book.admin_service.UpdateBookMetaResponseBFZDgithub.com/acme/demo-book/generated/go/admin_service;admin_serviceb\x06proto3"
+	"DeleteBook\x125.demo.business.book.admin_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\"+\x82\xd3\xe4\x93\x02%*#/library/AdminService/book/{key.id}\x12\x95\x01\n" +
+	"\x0eDeleteBookSoft\x129.demo.business.book.admin_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\"0\x82\xd3\xe4\x93\x02*:\x01*\"%/library/AdminService/book/deleteSoft\x12\xb0\x01\n" +
+	"\vGetBookMeta\x126.demo.business.book.admin_service.GetBookMetaRequest\x1a7.demo.business.book.admin_service.GetBookMetaResponse\"0\x82\xd3\xe4\x93\x02*\x12(/library/AdminService/book/{key.id}/meta\x12\xb5\x01\n" +
+	"\rListBookMetas\x128.demo.business.book.admin_service.ListBookMetasRequest\x1a9.demo.business.book.admin_service.ListBookMetasResponse\"/\x82\xd3\xe4\x93\x02):\x01*\"$/library/AdminService/book/meta/list\x12\xbc\x01\n" +
+	"\x0eUpdateBookMeta\x129.demo.business.book.admin_service.UpdateBookMetaRequest\x1a:.demo.business.book.admin_service.UpdateBookMetaResponse\"3\x82\xd3\xe4\x93\x02-:\x01*2(/library/AdminService/book/{key.id}/metaBFZDgithub.com/acme/demo-book/generated/go/admin_service;admin_serviceb\x06proto3"
 
 var (
 	file_admin_service_admin_service_proto_rawDescOnce sync.Once

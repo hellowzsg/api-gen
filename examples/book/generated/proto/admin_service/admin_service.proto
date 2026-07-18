@@ -6,9 +6,15 @@
 // (-- api-linter: core::0134::response-message-name=disabled --)
 // (-- api-linter: core::0134::request-unknown-fields=disabled --)
 // (-- api-linter: core::0135::request-name-field=disabled --)
+// (-- api-linter: core::0133::http-body=disabled --)
+// (-- api-linter: core::0132::http-method=disabled --)
+// (-- api-linter: core::0132::http-body=disabled --)
+// (-- api-linter: core::0135::http-method=disabled --)
+// (-- api-linter: core::0135::http-body=disabled --)
 syntax = "proto3";
 package demo.business.book.admin_service;
 
+import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
 import "demo/business/book/book.proto";
@@ -16,12 +22,24 @@ import "demo/business/book/book.proto";
 option go_package = "github.com/acme/demo-book/generated/go/admin_service;admin_service";
 
 service AdminService {
-  rpc CreateBook(CreateBookRequest) returns (CreateBookResponse);
-  rpc DeleteBook(DeleteBookRequest) returns (google.protobuf.Empty);
-  rpc DeleteBookSoft(DeleteBookSoftRequest) returns (google.protobuf.Empty);
-  rpc GetBookMeta(GetBookMetaRequest) returns (GetBookMetaResponse);
-  rpc ListBookMetas(ListBookMetasRequest) returns (ListBookMetasResponse);
-  rpc UpdateBookMeta(UpdateBookMetaRequest) returns (UpdateBookMetaResponse);
+  rpc CreateBook(CreateBookRequest) returns (CreateBookResponse) {
+    option (google.api.http) = { post: "/library/AdminService/book" body: "*" };
+  }
+  rpc DeleteBook(DeleteBookRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { delete: "/library/AdminService/book/{key.id}" };
+  }
+  rpc DeleteBookSoft(DeleteBookSoftRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { post: "/library/AdminService/book/deleteSoft" body: "*" };
+  }
+  rpc GetBookMeta(GetBookMetaRequest) returns (GetBookMetaResponse) {
+    option (google.api.http) = { get: "/library/AdminService/book/{key.id}/meta" };
+  }
+  rpc ListBookMetas(ListBookMetasRequest) returns (ListBookMetasResponse) {
+    option (google.api.http) = { post: "/library/AdminService/book/meta/list" body: "*" };
+  }
+  rpc UpdateBookMeta(UpdateBookMetaRequest) returns (UpdateBookMetaResponse) {
+    option (google.api.http) = { patch: "/library/AdminService/book/{key.id}/meta" body: "*" };
+  }
 }
 
 message CreateBookRequest {

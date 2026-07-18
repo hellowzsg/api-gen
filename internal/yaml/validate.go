@@ -13,7 +13,84 @@ func (c *Config) ValidateReferences() error {
 	if err := c.validateServiceReferences(); err != nil {
 		return err
 	}
+	if err := c.validateHTTPConfig(); err != nil {
+		return err
+	}
 	return nil
+}
+
+// validateHTTPConfig validates the HTTP configuration (P1).
+// When HTTP is disabled or not declared, no checks are performed (backward
+// compatibility with P0 pure-gRPC users).
+// When HTTP is enabled:
+//   - body_style must be "" (default) or "wrapper"; "resource" is P2.
+//   - generate_openapi must be false; OpenAPI generation is P2.
+//   - import_protos must contain at least one googleapis source (path/git/bsr)
+//     so that google/api/annotations.proto is resolvable.
+func (c *Config) validateHTTPConfig() error {
+	if c.Settings.HTTP == nil || !c.Settings.HTTP.Enable {
+		return nil
+	}
+	hc := c.Settings.HTTP
+
+	// P1 only supports body_style: wrapper (default). "resource" is P2.
+	if hc.BodyStyle == "resource" {
+		return fmt.Errorf("settings.http.body_style: %q is not supported in P1 (only \"wrapper\"); body_style: resource will be supported in P2", hc.BodyStyle)
+	}
+	if hc.BodyStyle != "" && hc.BodyStyle != "wrapper" {
+		return fmt.Errorf("settings.http.body_style: invalid value %q (only \"wrapper\" or empty is supported in P1)", hc.BodyStyle)
+	}
+
+	// P1 does not support OpenAPI generation.
+	if hc.GenerateOpenAPI {
+		return fmt.Errorf("settings.http.generate_openapi: OpenAPI generation is not supported in P1; it will be supported in P2")
+	}
+
+	// HTTP requires googleapis (google/api/annotations.proto) to be resolvable.
+	if !c.hasGoogleapisDependency() {
+		return fmt.Errorf("settings.http.enable: HTTP is enabled but no googleapis dependency found in import_protos; add a path/git/bsr entry that provides google/api/annotations.proto")
+	}
+
+	return nil
+}
+
+// hasGoogleapisDependency checks whether import_protos contains at least one
+// entry that can provide google/api/annotations.proto. Detection is by source
+// type:
+//   - path: the path explicitly references the "google/api" directory segment
+//     (e.g. "third_party/google/api/annotations.proto"), OR is a broad glob
+//     ("**/*.proto") that could cover a vendored google/api directory. The
+//     authoritative closure check is performed by the composite resolver
+//     during protocompile link (fail-fast if annotations.proto is genuinely
+//     absent).
+//   - git: the repo URL contains "googleapis" (e.g. googleapis/googleapis).
+//   - bsr: the module is buf.build/googleapis/googleapis.
+func (c *Config) hasGoogleapisDependency() bool {
+	for _, imp := range c.ImportProtos {
+		if imp.Path != "" {
+			if strings.Contains(imp.Path, "google/api") {
+				return true
+			}
+			// Broad glob (e.g. "proto/**/*.proto") may cover a vendored
+			// google/api directory. Accept conservatively; the protocompile
+			// link step will fail-fast if annotations.proto is genuinely
+			// absent.
+			if strings.Contains(imp.Path, "**") {
+				return true
+			}
+		}
+		if imp.Git != "" {
+			if strings.Contains(strings.ToLower(imp.Git), "googleapis") {
+				return true
+			}
+		}
+		if imp.BSR != "" {
+			if strings.Contains(imp.BSR, "googleapis") {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (c *Config) validateTypeReferences() error {
