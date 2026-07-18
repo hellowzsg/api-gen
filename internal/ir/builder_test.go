@@ -429,8 +429,226 @@ func TestBuild_HTTPPathGeneration(t *testing.T) {
 		t.Fatal("Get.HTTPAnnotation should be non-nil")
 	}
 	// Expected: /library/LibraryService/book/{key.id}/meta
-	expectedPath := "/library/LibraryService/book/{key.id}/meta"
-	if r.Get.HTTPAnnotation.Path != expectedPath {
-		t.Errorf("Get.Path = %q, want %q", r.Get.HTTPAnnotation.Path, expectedPath)
+		expectedPath := "/library/LibraryService/book/{key.id}/meta"
+		if r.Get.HTTPAnnotation.Path != expectedPath {
+			t.Errorf("Get.Path = %q, want %q", r.Get.HTTPAnnotation.Path, expectedPath)
+		}
+}
+
+// TestBuildPerMethodHTTPOverride: reader.http overrides default verb/path.
+func TestBuildPerMethodHTTPOverride(t *testing.T) {
+	cfg := &apigenyaml.Config{
+		Syntax: "v1",
+		Name:   "test",
+		Settings: apigenyaml.Settings{
+			HTTP: &apigenyaml.HTTPConfig{
+				Enable: true,
+			},
+		},
+		Entities: []apigenyaml.Entity{{
+			Name: "book",
+			Key:  apigenyaml.KeyDef{Type: "BookId"},
+			Resources: []apigenyaml.Resource{{
+				Name:    "meta",
+				Type:    "BookMeta",
+				Version: apigenyaml.VersionDef{Kind: "NONE"},
+				Reader: &apigenyaml.ReaderDef{
+					List: true,
+					HTTP: &apigenyaml.HTTPOverride{
+						Verb: "get",
+						Path: "/custom/path/{key.id}/metadata",
+					},
+				},
+				Writer: &apigenyaml.WriterDef{
+					Update: &apigenyaml.UpdateDef{
+						Mask: true,
+						HTTP: &apigenyaml.HTTPOverride{
+							Verb:      "put",
+							BodyStyle: "resource",
+						},
+					},
+				},
+			}},
+		}},
 	}
+	keyDescs := map[string]protoreflect.MessageDescriptor{
+		"test.BookId": buildTestKeyDesc(t),
+	}
+	irData, err := BuildWithOptions(cfg, BuildOptions{KeyDescriptors: keyDescs})
+	if err != nil {
+		t.Fatalf("BuildWithOptions failed: %v", err)
+	}
+	e := irData.Entities[0]
+	r := e.Resources[0]
+
+	// reader.http overrides List verb/path.
+	if r.List == nil || r.List.HTTPAnnotation == nil {
+		t.Fatal("List.HTTPAnnotation should be non-nil")
+	}
+	if r.List.HTTPAnnotation.Verb != "GET" {
+		t.Errorf("List.Verb = %q, want GET (overridden)", r.List.HTTPAnnotation.Verb)
+	}
+	if r.List.HTTPAnnotation.Path != "/custom/path/{key.id}/metadata" {
+		t.Errorf("List.Path = %q, want /custom/path/{key.id}/metadata (overridden)", r.List.HTTPAnnotation.Path)
+	}
+	// List with verb=GET should have no body.
+	if r.List.HTTPAnnotation.Body != "" {
+		t.Errorf("List.Body = %q, want empty (GET has no body)", r.List.HTTPAnnotation.Body)
+	}
+
+	// writer.update.http overrides Update verb and body_style.
+	if r.Update == nil || r.Update.HTTPAnnotation == nil {
+		t.Fatal("Update.HTTPAnnotation should be non-nil")
+	}
+	if r.Update.HTTPAnnotation.Verb != "PUT" {
+		t.Errorf("Update.Verb = %q, want PUT (overridden)", r.Update.HTTPAnnotation.Verb)
+	}
+	// body_style: resource → body = resource field name "meta".
+	if r.Update.HTTPAnnotation.Body != "meta" {
+		t.Errorf("Update.Body = %q, want meta (body_style: resource)", r.Update.HTTPAnnotation.Body)
+	}
+
+	// Get (no http override) should keep default verb/path.
+	if r.Get == nil || r.Get.HTTPAnnotation == nil {
+		t.Fatal("Get.HTTPAnnotation should be non-nil (no override, default)")
+	}
+	if r.Get.HTTPAnnotation.Verb != "GET" {
+		t.Errorf("Get.Verb = %q, want GET (default, not overridden)", r.Get.HTTPAnnotation.Verb)
+	}
+}
+
+// TestBuildCustomMethodHTTP: custom_methods[].http populates HTTPAnnotation.
+func TestBuildCustomMethodHTTP(t *testing.T) {
+	cfg := &apigenyaml.Config{
+		Syntax: "v1",
+		Name:   "test",
+		Settings: apigenyaml.Settings{
+			HTTP: &apigenyaml.HTTPConfig{Enable: true},
+		},
+		Entities: []apigenyaml.Entity{{
+			Name: "book",
+			Key:  apigenyaml.KeyDef{Type: "BookId"},
+			Resources: []apigenyaml.Resource{{
+				Name:    "meta",
+				Type:    "BookMeta",
+				Version: apigenyaml.VersionDef{Kind: "NONE"},
+				Reader:  &apigenyaml.ReaderDef{},
+			}},
+		}},
+		Services: []apigenyaml.Service{{
+			Name: "LibraryService",
+			Entities: []apigenyaml.ServiceEntity{{Name: "book"}},
+			CustomMethods: []apigenyaml.CustomMethod{{
+				Name:     "ArchiveBook",
+				Request:  "ArchiveBookRequest",
+				Response: "ArchiveBookResponse",
+				HTTP: &apigenyaml.HTTPOverride{
+					Verb: "post",
+					Path: "/library/LibraryService/book/{book_id}:archive",
+					Body: "*",
+				},
+			}},
+		}},
+	}
+	keyDescs := map[string]protoreflect.MessageDescriptor{
+		"test.BookId": buildTestKeyDesc(t),
+	}
+	irData, err := BuildWithOptions(cfg, BuildOptions{KeyDescriptors: keyDescs})
+	if err != nil {
+		t.Fatalf("BuildWithOptions failed: %v", err)
+	}
+	if len(irData.Services) != 1 {
+		t.Fatalf("len(Services) = %d, want 1", len(irData.Services))
+	}
+	svc := irData.Services[0]
+	if len(svc.CustomMethods) != 1 {
+		t.Fatalf("len(CustomMethods) = %d, want 1", len(svc.CustomMethods))
+	}
+	cm := svc.CustomMethods[0]
+	if cm.Name != "ArchiveBook" {
+		t.Errorf("CustomMethod.Name = %q, want ArchiveBook", cm.Name)
+	}
+	if cm.HTTPAnnotation == nil {
+		t.Fatal("CustomMethod.HTTPAnnotation should be non-nil")
+	}
+	if cm.HTTPAnnotation.Verb != "POST" {
+		t.Errorf("CustomMethod.Verb = %q, want POST", cm.HTTPAnnotation.Verb)
+	}
+	if cm.HTTPAnnotation.Path != "/library/LibraryService/book/{book_id}:archive" {
+		t.Errorf("CustomMethod.Path = %q, want /library/LibraryService/book/{book_id}:archive", cm.HTTPAnnotation.Path)
+	}
+	if cm.HTTPAnnotation.Body != "*" {
+		t.Errorf("CustomMethod.Body = %q, want *", cm.HTTPAnnotation.Body)
+	}
+}
+
+// TestBodyStyleResource: global body_style:resource derives body=resourceName
+// for Update; multi-resource Create + body_style:resource returns error.
+func TestBodyStyleResource(t *testing.T) {
+	t.Run("Update body_style resource", func(t *testing.T) {
+		cfg := &apigenyaml.Config{
+			Syntax: "v1",
+			Name:   "test",
+			Settings: apigenyaml.Settings{
+				HTTP: &apigenyaml.HTTPConfig{
+					Enable:    true,
+					BodyStyle: "resource",
+				},
+			},
+			Entities: []apigenyaml.Entity{{
+				Name: "book",
+				Key:  apigenyaml.KeyDef{Type: "BookId"},
+				Resources: []apigenyaml.Resource{{
+					Name:    "meta",
+					Type:    "BookMeta",
+					Version: apigenyaml.VersionDef{Kind: "NONE"},
+					Reader:  &apigenyaml.ReaderDef{},
+					Writer:  &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{Mask: true}},
+				}},
+			}},
+		}
+		keyDescs := map[string]protoreflect.MessageDescriptor{
+			"test.BookId": buildTestKeyDesc(t),
+		}
+		irData, err := BuildWithOptions(cfg, BuildOptions{KeyDescriptors: keyDescs})
+		if err != nil {
+			t.Fatalf("BuildWithOptions failed: %v", err)
+		}
+		r := irData.Entities[0].Resources[0]
+		if r.Update == nil || r.Update.HTTPAnnotation == nil {
+			t.Fatal("Update.HTTPAnnotation should be non-nil")
+		}
+		if r.Update.HTTPAnnotation.Body != "meta" {
+			t.Errorf("Update.Body = %q, want meta (body_style: resource)", r.Update.HTTPAnnotation.Body)
+		}
+	})
+
+	t.Run("multi-resource Create body_style resource errors", func(t *testing.T) {
+		cfg := &apigenyaml.Config{
+			Syntax: "v1",
+			Name:   "test",
+			Settings: apigenyaml.Settings{
+				HTTP: &apigenyaml.HTTPConfig{
+					Enable:    true,
+					BodyStyle: "resource",
+				},
+			},
+			Entities: []apigenyaml.Entity{{
+				Name:  "book",
+				Key:   apigenyaml.KeyDef{Type: "BookId"},
+				Create: &struct{}{},
+				Resources: []apigenyaml.Resource{
+					{Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"}, Reader: &apigenyaml.ReaderDef{}},
+					{Name: "content", Type: "BookContent", Version: apigenyaml.VersionDef{Kind: "NONE"}, Reader: &apigenyaml.ReaderDef{}},
+				},
+			}},
+		}
+		keyDescs := map[string]protoreflect.MessageDescriptor{
+			"test.BookId": buildTestKeyDesc(t),
+		}
+		_, err := BuildWithOptions(cfg, BuildOptions{KeyDescriptors: keyDescs})
+		if err == nil {
+			t.Fatal("BuildWithOptions should fail for multi-resource Create with body_style: resource")
+		}
+	})
 }

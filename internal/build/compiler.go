@@ -185,12 +185,15 @@ func RunPlugin(ctx context.Context, pluginName string, req *pluginpb.CodeGenerat
 // When httpEnabled is true, protoc-gen-grpc-gateway is also invoked to
 // generate *.pb.gw.go alongside the *.pb.go files.
 //
+// When generateOpenAPI is true (and httpEnabled is true), protoc-gen-openapiv2
+// is invoked to generate <service>.swagger.json into openAPIOutDir.
+//
 // The protoc-gen-go plugin is invoked with `paths=source_relative` so that
 // output files are placed at <goOutDir>/<proto-relative-path>.pb.go rather
 // than deriving the output directory from the go_package import path. This
 // matches the design doc's layout: generated/go/<service>/<service>.pb.go.
 // protoc-gen-go-grpc and protoc-gen-grpc-gateway follow the same parameter.
-func Compile(ctx context.Context, files linker.Files, fileToGenerate []string, goOutDir string, httpEnabled bool) error {
+func Compile(ctx context.Context, files linker.Files, fileToGenerate []string, goOutDir, openAPIOutDir string, httpEnabled, generateOpenAPI bool) error {
 	req, err := BuildCodeGeneratorRequest(files, fileToGenerate)
 	if err != nil {
 		return fmt.Errorf("build request: %w", err)
@@ -219,6 +222,19 @@ func Compile(ctx context.Context, files linker.Files, fileToGenerate []string, g
 		gwReq.Parameter = &param
 		if err := RunPlugin(ctx, "protoc-gen-grpc-gateway", gwReq, goOutDir); err != nil {
 			return fmt.Errorf("run protoc-gen-grpc-gateway: %w", err)
+		}
+		// protoc-gen-openapiv2: only when OpenAPI generation is enabled.
+		// Generates <service>.swagger.json into openAPIOutDir.
+		if generateOpenAPI && openAPIOutDir != "" {
+			if err := os.MkdirAll(openAPIOutDir, 0755); err != nil {
+				return fmt.Errorf("create openapi output dir: %w", err)
+			}
+			openapiReq := proto.Clone(req).(*pluginpb.CodeGeneratorRequest)
+			openapiParam := "logtostderr=false,json_names_for_fields=false"
+			openapiReq.Parameter = &openapiParam
+			if err := RunPlugin(ctx, "protoc-gen-openapiv2", openapiReq, openAPIOutDir); err != nil {
+				return fmt.Errorf("run protoc-gen-openapiv2: %w", err)
+			}
 		}
 	}
 	return nil

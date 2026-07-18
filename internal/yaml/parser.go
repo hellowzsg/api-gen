@@ -54,6 +54,17 @@ type HTTPConfig struct {
 	GenerateOpenAPI bool   `yaml:"generate_openapi,omitempty"`
 }
 
+// HTTPOverride declares per-method HTTP routing override (P2).
+// When set on a reader/writer/custom_method, the specified fields
+// override the global settings.http defaults. Fields left empty
+// inherit the global default.
+type HTTPOverride struct {
+	Verb      string `yaml:"verb,omitempty"`
+	Path      string `yaml:"path,omitempty"`
+	Body      string `yaml:"body,omitempty"`
+	BodyStyle string `yaml:"body_style,omitempty"`
+}
+
 // Entity models a business object: key + multiple resources + entity-level writes.
 type Entity struct {
 	Name       string     `yaml:"name"`
@@ -98,6 +109,7 @@ type ReaderDef struct {
 	Batch      bool        `yaml:"batch,omitempty"`
 	List       bool        `yaml:"list,omitempty"`
 	ListConfig *ListConfig `yaml:"list_config,omitempty"`
+	HTTP       *HTTPOverride `yaml:"http,omitempty"`
 }
 
 // ListConfig holds List sub-configuration.
@@ -112,7 +124,8 @@ type WriterDef struct {
 
 // UpdateDef declares Update method options.
 type UpdateDef struct {
-	Mask bool `yaml:"mask"`
+	Mask bool          `yaml:"mask"`
+	HTTP *HTTPOverride `yaml:"http,omitempty"`
 }
 
 // Service assembles entities into an exposed service.
@@ -130,9 +143,10 @@ type ServiceEntity struct {
 
 // CustomMethod declares a user-defined RPC.
 type CustomMethod struct {
-	Name     string `yaml:"name"`
-	Request  string `yaml:"request"`
-	Response string `yaml:"response"`
+	Name     string        `yaml:"name"`
+	Request  string        `yaml:"request"`
+	Response string        `yaml:"response"`
+	HTTP     *HTTPOverride `yaml:"http,omitempty"`
 }
 
 // namePattern validates proto package names (dotted.identifier).

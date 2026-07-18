@@ -33,6 +33,7 @@ type mockLibraryServer struct {
 	lastUpdateMeta   *libpb.UpdateBookMetaRequest
 	lastGetContent   *libpb.GetBookContentRequest
 	lastUpdateCont   *libpb.UpdateBookContentRequest
+	lastArchiveReq   *bookpb.ArchiveBookRequest
 }
 
 func (m *mockLibraryServer) CreateBook(_ context.Context, req *libpb.CreateBookRequest) (*libpb.CreateBookResponse, error) {
@@ -81,6 +82,10 @@ func (m *mockLibraryServer) GetBookContent(_ context.Context, req *libpb.GetBook
 func (m *mockLibraryServer) UpdateBookContent(_ context.Context, req *libpb.UpdateBookContentRequest) (*emptypb.Empty, error) {
 	m.lastUpdateCont = req
 	return &emptypb.Empty{}, nil
+}
+func (m *mockLibraryServer) ArchiveBook(_ context.Context, req *bookpb.ArchiveBookRequest) (*bookpb.ArchiveBookResponse, error) {
+	m.lastArchiveReq = req
+	return &bookpb.ArchiveBookResponse{Archived: true}, nil
 }
 
 // ---- Mock AdminServiceServer ----
@@ -250,13 +255,10 @@ func TestLibraryServiceHTTP_AllMethods(t *testing.T) {
 		}
 	})
 
-	t.Run("ListBookMetas POST /meta/list body=*", func(t *testing.T) {
-		resp := doReq(t, ts, "POST", "/library/LibraryService/book/meta/list", map[string]any{
-			"page_size":  10,
-			"page_token": "p1",
-			"filter":     "author==\"X\"",
-			"order_by":   "title",
-		})
+	t.Run("ListBookMetas GET /meta/list (overridden)", func(t *testing.T) {
+		// P2: List verb overridden to GET via reader.http; query params
+		// are bound by grpc-gateway from the URL query string.
+		resp := doReq(t, ts, "GET", "/library/LibraryService/book/meta/list?page_size=10&page_token=p1&filter=author%3D%3D%22X%22&order_by=title", nil)
 		if resp.StatusCode != http.StatusOK {
 			t.Fatalf("status=%d", resp.StatusCode)
 		}
@@ -338,9 +340,8 @@ func TestAdminServiceHTTP_NarrowedRoutes(t *testing.T) {
 	defer ts.Close()
 
 	t.Run("ListBookMetas 在 AdminService 上可调用", func(t *testing.T) {
-		resp := doReq(t, ts, "POST", "/library/AdminService/book/meta/list", map[string]any{
-			"page_size": 5,
-		})
+		// P2: List verb overridden to GET; AdminService inherits the override.
+		resp := doReq(t, ts, "GET", "/library/AdminService/book/meta/list?page_size=5", nil)
 		if resp.StatusCode != http.StatusOK {
 			t.Fatalf("status=%d", resp.StatusCode)
 		}
@@ -406,6 +407,55 @@ func TestHTTP_KeyPathBinding_NoBody(t *testing.T) {
 	if got := srv.lastDeleteReq.GetKey().GetId(); got != "key-only-1" {
 		t.Errorf("key.id got=%q want=key-only-1", got)
 	}
+}
+
+// TestE2EHTTPPerMethodOverride: P2 逐方法 http 覆盖与 custom_method HTTP 路由。
+func TestE2EHTTPPerMethodOverride(t *testing.T) {
+	srv := &mockLibraryServer{}
+	mux := newGatewayMux(t, srv, &mockAdminServer{})
+	ts := httptest.NewServer(mux)
+	defer ts.Close()
+
+	t.Run("List overridden to GET /meta/list", func(t *testing.T) {
+		// reader.http 覆盖 List 为 GET /library/LibraryService/book/meta/list
+		resp := doReq(t, ts, "GET", "/library/LibraryService/book/meta/list", nil)
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("status=%d", resp.StatusCode)
+		}
+		if srv.lastListReq == nil {
+			t.Fatal("ListBookMetas not called")
+		}
+	})
+
+	t.Run("ArchiveBook custom method POST /{book_id}:archive", func(t *testing.T) {
+		// custom_method HTTP 路由（AIP-136 冒号语法）
+		resp := doReq(t, ts, "POST", "/library/LibraryService/book/bk-001:archive", map[string]any{})
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("status=%d", resp.StatusCode)
+		}
+		if srv.lastArchiveReq == nil {
+			t.Fatal("ArchiveBook not called")
+		}
+		if got := srv.lastArchiveReq.GetBookId(); got != "bk-001" {
+			t.Errorf("book_id got=%q want=bk-001", got)
+		}
+		var body map[string]any
+		json.NewDecoder(resp.Body).Decode(&body)
+		if body["archived"] != true {
+			t.Errorf("archived got=%v want=true", body["archived"])
+		}
+	})
+
+	t.Run("BatchGet retains default POST /meta/batchGet", func(t *testing.T) {
+		// BatchGet 不受 reader.http 覆盖影响，保持默认 POST
+		resp := doReq(t, ts, "POST", "/library/LibraryService/book/meta/batchGet", map[string]any{"keys": []map[string]any{{"id": "k1"}}})
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("status=%d", resp.StatusCode)
+		}
+		if srv.lastBatchGetReq == nil {
+			t.Fatal("BatchGetBookMetas not called")
+		}
+	})
 }
 
 // 防 import 误删

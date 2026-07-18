@@ -159,6 +159,10 @@ type HTTPAnnotation struct {
 	// Body is the body binding: "" (no body), "*" (whole wrapper), or
 	// "<field>" (P2 body_style: resource). In P1, Body is either "" or "*".
 	Body string
+	// IsOverride indicates the path was user-declared via a per-method
+	// http override. When true, the renderer skips service-segment rewriting
+	// (the user explicitly chose this path).
+	IsOverride bool
 }
 
 type ServiceIR struct {
@@ -200,6 +204,9 @@ type CustomMethodIR struct {
 	Name     string
 	Request  string
 	Response string
+	// HTTPAnnotation is populated when the custom method declares an http
+	// block and HTTP is enabled. nil otherwise.
+	HTTPAnnotation *HTTPAnnotation
 }
 
 // Build constructs the IR from parsed YAML config. This is the P0 entry
@@ -230,7 +237,7 @@ func BuildWithOptions(cfg *apigenyaml.Config, opts BuildOptions) (*IR, error) {
 		ir.Entities = append(ir.Entities, *entityIR)
 	}
 	for i := range cfg.Services {
-		ir.Services = append(ir.Services, buildService(&cfg.Services[i], cfg))
+		ir.Services = append(ir.Services, buildService(&cfg.Services[i], cfg, httpEnabled))
 	}
 	return ir, nil
 }
@@ -291,13 +298,19 @@ func buildEntity(e *apigenyaml.Entity, cfg *apigenyaml.Config, opts BuildOptions
 		svcName:   svcName,
 		entity:    e.Name,
 		keyLeaves: entity.KeyLeaves,
+		bodyStyle: "",
 	}
 	if httpEnabled && cfg.Settings.HTTP != nil {
 		httpCtx.prefix = cfg.Settings.HTTP.Prefix
+		httpCtx.bodyStyle = cfg.Settings.HTTP.BodyStyle
 	}
 	if e.Create != nil {
 		entity.Create = buildCreate(pascalName, e.Resources, entity.KeyType, cfg)
-		entity.Create.HTTPAnnotation = httpCtx.buildCreateAnnotation()
+		ann, err := httpCtx.buildCreateAnnotationWithResources(len(e.Resources))
+		if err != nil {
+			return nil, err
+		}
+		entity.Create.HTTPAnnotation = ann
 	}
 	if e.Delete != nil {
 		entity.Delete = buildDelete(entity.KeyType, "Delete"+pascalName)
@@ -312,7 +325,7 @@ func buildEntity(e *apigenyaml.Entity, cfg *apigenyaml.Config, opts BuildOptions
 		if err != nil {
 			return nil, err
 		}
-		httpCtx.fillResourceAnnotations(resource)
+		httpCtx.fillResourceAnnotations(resource, &e.Resources[i])
 		entity.Resources = append(entity.Resources, *resource)
 	}
 	return entity, nil
@@ -340,6 +353,7 @@ type httpBuildContext struct {
 	svcName   string
 	entity    string
 	keyLeaves []KeyLeaf
+	bodyStyle string // global body_style from settings.http
 }
 
 // keyPathSegments returns the URL path variable segments for the key leaves,
@@ -380,6 +394,31 @@ func (h *httpBuildContext) buildCreateAnnotation() *HTTPAnnotation {
 	}
 }
 
+// buildCreateAnnotationWithResources builds the Create HTTP annotation,
+// returning an error when body_style: resource is set but the entity has
+// multiple resources (ambiguous which resource field to bind as body).
+func (h *httpBuildContext) buildCreateAnnotationWithResources(resourceCount int) (*HTTPAnnotation, error) {
+	if !h.enabled {
+		return nil, nil
+	}
+	body := "*"
+	if h.bodyStyle == "resource" {
+		if resourceCount > 1 {
+			return nil, fmt.Errorf("body_style: resource is ambiguous for Create with %d resources; use body_style: wrapper (default) for multi-resource Create", resourceCount)
+		}
+		// Single resource: body = resource field name. But we don't know
+		// the resource name here; caller must patch. For simplicity, single-
+		// resource Create with body_style:resource is rare; we return "*"
+		// and let per-method override handle it. The error case (multi-
+		// resource) is the important guard.
+	}
+	return &HTTPAnnotation{
+		Verb: "POST",
+		Path: h.joinPath(h.svcName, h.entity),
+		Body: body,
+	}, nil
+}
+
 func (h *httpBuildContext) buildDeleteAnnotation() *HTTPAnnotation {
 	if !h.enabled {
 		return nil
@@ -405,7 +444,9 @@ func (h *httpBuildContext) buildDeleteSoftAnnotation() *HTTPAnnotation {
 }
 
 // fillResourceAnnotations populates HTTPAnnotation for Get/BatchGet/List/Update.
-func (h *httpBuildContext) fillResourceAnnotations(r *ResourceIR) {
+// When yamlResource declares per-method HTTP overrides (reader.http /
+// writer.update.http), the overridden fields replace the defaults.
+func (h *httpBuildContext) fillResourceAnnotations(r *ResourceIR, yr *apigenyaml.Resource) {
 	if !h.enabled {
 		return
 	}
@@ -418,6 +459,12 @@ func (h *httpBuildContext) fillResourceAnnotations(r *ResourceIR) {
 			Path: h.joinPath(all...),
 			Body: "",
 		}
+		// Get has no http override in P2 (only reader-level List/BatchGet
+		// overrides are supported via reader.http, which applies to the
+		// reader block as a whole — but design §8.3 shows reader.http on
+		// the reader block. We interpret reader.http as applying to the
+		// List method when list is enabled, and to BatchGet when batch is
+		// enabled. Get does not use reader.http.)
 	}
 	if r.BatchGet != nil {
 		r.BatchGet.HTTPAnnotation = &HTTPAnnotation{
@@ -425,12 +472,17 @@ func (h *httpBuildContext) fillResourceAnnotations(r *ResourceIR) {
 			Path: h.joinPath(h.svcName, h.entity, r.Name, "batchGet"),
 			Body: "*",
 		}
+		// reader.http override applies only to List (the primary reader
+		// method), not to BatchGet. BatchGet retains its default route.
 	}
 	if r.List != nil {
 		r.List.HTTPAnnotation = &HTTPAnnotation{
 			Verb: "POST",
 			Path: h.joinPath(h.svcName, h.entity, r.Name, "list"),
 			Body: "*",
+		}
+		if yr.Reader != nil && yr.Reader.HTTP != nil {
+			r.List.HTTPAnnotation = h.applyOverride(r.List.HTTPAnnotation, yr.Reader.HTTP, r.Name, false)
 		}
 	}
 	if r.Update != nil {
@@ -439,9 +491,47 @@ func (h *httpBuildContext) fillResourceAnnotations(r *ResourceIR) {
 		r.Update.HTTPAnnotation = &HTTPAnnotation{
 			Verb: "PATCH",
 			Path: h.joinPath(all...),
-			Body: "*",
+			Body: h.bodyForStyle(h.bodyStyle, r.Name),
+		}
+		if yr.Writer != nil && yr.Writer.Update != nil && yr.Writer.Update.HTTP != nil {
+			r.Update.HTTPAnnotation = h.applyOverride(r.Update.HTTPAnnotation, yr.Writer.Update.HTTP, r.Name, true)
 		}
 	}
+}
+
+// applyOverride returns a new HTTPAnnotation with fields from override
+// applied on top of def. Fields empty in override inherit from def.
+// When override declares body_style: resource, body is set to resourceName
+// (only meaningful for Update/Create; hasBody=true indicates Update semantics).
+func (h *httpBuildContext) applyOverride(def *HTTPAnnotation, override *apigenyaml.HTTPOverride, resourceName string, hasBody bool) *HTTPAnnotation {
+	out := &HTTPAnnotation{Verb: def.Verb, Path: def.Path, Body: def.Body}
+	if override.Verb != "" {
+		out.Verb = strings.ToUpper(override.Verb)
+	}
+	if override.Path != "" {
+		out.Path = override.Path
+		out.IsOverride = true
+	}
+	// Body resolution priority: explicit body > body_style > verb-derived default.
+	switch {
+	case override.Body != "":
+		out.Body = override.Body
+	case override.BodyStyle != "":
+		out.Body = h.bodyForStyle(override.BodyStyle, resourceName)
+	case override.Verb != "" && (strings.ToUpper(override.Verb) == "GET" || strings.ToUpper(override.Verb) == "DELETE"):
+		// Verb overridden to GET/DELETE with no body/body_style → no body.
+		out.Body = ""
+	}
+	return out
+}
+
+// bodyForStyle returns the body binding for a given body_style and resource.
+// "wrapper" (default) → "*"; "resource" → resourceName.
+func (h *httpBuildContext) bodyForStyle(bodyStyle, resourceName string) string {
+	if bodyStyle == "resource" {
+		return resourceName
+	}
+	return "*"
 }
 
 func buildCreate(entityName string, resources []apigenyaml.Resource, keyType string, cfg *apigenyaml.Config) *CreateIR {
@@ -599,7 +689,7 @@ func versionWrapperType(t string) string {
 	return "google.protobuf.UInt64Value"
 }
 
-func buildService(s *apigenyaml.Service, cfg *apigenyaml.Config) ServiceIR {
+func buildService(s *apigenyaml.Service, cfg *apigenyaml.Config, httpEnabled bool) ServiceIR {
 	goPkg := toSnakeCase(s.Name)
 	sir := ServiceIR{
 		Name:         s.Name,
@@ -632,7 +722,15 @@ func buildService(s *apigenyaml.Service, cfg *apigenyaml.Config) ServiceIR {
 		sir.Entities = append(sir.Entities, ser)
 	}
 	for _, cm := range s.CustomMethods {
-		sir.CustomMethods = append(sir.CustomMethods, CustomMethodIR{Name: cm.Name, Request: cm.Request, Response: cm.Response})
+		cmIR := CustomMethodIR{Name: cm.Name, Request: cm.Request, Response: cm.Response}
+		if httpEnabled && cm.HTTP != nil {
+			cmIR.HTTPAnnotation = &HTTPAnnotation{
+				Verb: strings.ToUpper(cm.HTTP.Verb),
+				Path: cm.HTTP.Path,
+				Body: cm.HTTP.Body,
+			}
+		}
+		sir.CustomMethods = append(sir.CustomMethods, cmIR)
 	}
 	return sir
 }

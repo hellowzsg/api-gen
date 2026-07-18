@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/acme/demo-book/generated/go/demo/business/book"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"
 	"google.golang.org/grpc"
@@ -222,16 +223,21 @@ func local_request_LibraryService_BatchGetBookMetas_0(ctx context.Context, marsh
 	return msg, metadata, err
 }
 
+var filter_LibraryService_ListBookMetas_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+
 func request_LibraryService_ListBookMetas_0(ctx context.Context, marshaler runtime.Marshaler, client LibraryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq ListBookMetasRequest
 		metadata runtime.ServerMetadata
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 	if req.Body != nil {
 		_, _ = io.Copy(io.Discard, req.Body)
+	}
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LibraryService_ListBookMetas_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.ListBookMetas(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -242,7 +248,10 @@ func local_request_LibraryService_ListBookMetas_0(ctx context.Context, marshaler
 		protoReq ListBookMetasRequest
 		metadata runtime.ServerMetadata
 	)
-	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_LibraryService_ListBookMetas_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := server.ListBookMetas(ctx, &protoReq)
@@ -392,6 +401,51 @@ func local_request_LibraryService_UpdateBookContent_0(ctx context.Context, marsh
 	return msg, metadata, err
 }
 
+func request_LibraryService_ArchiveBook_0(ctx context.Context, marshaler runtime.Marshaler, client LibraryServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq book.ArchiveBookRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if req.Body != nil {
+		_, _ = io.Copy(io.Discard, req.Body)
+	}
+	val, ok := pathParams["book_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "book_id")
+	}
+	protoReq.BookId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "book_id", err)
+	}
+	msg, err := client.ArchiveBook(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func local_request_LibraryService_ArchiveBook_0(ctx context.Context, marshaler runtime.Marshaler, server LibraryServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var (
+		protoReq book.ArchiveBookRequest
+		metadata runtime.ServerMetadata
+		err      error
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	val, ok := pathParams["book_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "book_id")
+	}
+	protoReq.BookId, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "book_id", err)
+	}
+	msg, err := server.ArchiveBook(ctx, &protoReq)
+	return msg, metadata, err
+}
+
 // RegisterLibraryServiceHandlerServer registers the http handlers for service LibraryService to "mux".
 // UnaryRPC     :call LibraryServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -498,7 +552,7 @@ func RegisterLibraryServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		}
 		forward_LibraryService_BatchGetBookMetas_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_LibraryService_ListBookMetas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_LibraryService_ListBookMetas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -577,6 +631,26 @@ func RegisterLibraryServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 			return
 		}
 		forward_LibraryService_UpdateBookContent_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
+	mux.Handle(http.MethodPost, pattern_LibraryService_ArchiveBook_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/demo.business.book.library_service.LibraryService/ArchiveBook", runtime.WithHTTPPathPattern("/library/LibraryService/book/{book_id}:archive"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_LibraryService_ArchiveBook_0(annotatedContext, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_LibraryService_ArchiveBook_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
 	return nil
@@ -703,7 +777,7 @@ func RegisterLibraryServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		}
 		forward_LibraryService_BatchGetBookMetas_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
-	mux.Handle(http.MethodPost, pattern_LibraryService_ListBookMetas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle(http.MethodGet, pattern_LibraryService_ListBookMetas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -771,6 +845,23 @@ func RegisterLibraryServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		}
 		forward_LibraryService_UpdateBookContent_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_LibraryService_ArchiveBook_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/demo.business.book.library_service.LibraryService/ArchiveBook", runtime.WithHTTPPathPattern("/library/LibraryService/book/{book_id}:archive"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_LibraryService_ArchiveBook_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_LibraryService_ArchiveBook_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+	})
 	return nil
 }
 
@@ -784,6 +875,7 @@ var (
 	pattern_LibraryService_UpdateBookMeta_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"library", "LibraryService", "book", "key.id", "meta"}, ""))
 	pattern_LibraryService_GetBookContent_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"library", "LibraryService", "book", "key.id", "content"}, ""))
 	pattern_LibraryService_UpdateBookContent_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"library", "LibraryService", "book", "key.id", "content"}, ""))
+	pattern_LibraryService_ArchiveBook_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"library", "LibraryService", "book", "book_id"}, "archive"))
 )
 
 var (
@@ -796,4 +888,5 @@ var (
 	forward_LibraryService_UpdateBookMeta_0    = runtime.ForwardResponseMessage
 	forward_LibraryService_GetBookContent_0    = runtime.ForwardResponseMessage
 	forward_LibraryService_UpdateBookContent_0 = runtime.ForwardResponseMessage
+	forward_LibraryService_ArchiveBook_0       = runtime.ForwardResponseMessage
 )

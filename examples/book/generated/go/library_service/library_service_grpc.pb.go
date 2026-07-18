@@ -8,6 +8,7 @@ package library_service
 
 import (
 	context "context"
+	book "github.com/acme/demo-book/generated/go/demo/business/book"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -29,6 +30,7 @@ const (
 	LibraryService_UpdateBookMeta_FullMethodName    = "/demo.business.book.library_service.LibraryService/UpdateBookMeta"
 	LibraryService_GetBookContent_FullMethodName    = "/demo.business.book.library_service.LibraryService/GetBookContent"
 	LibraryService_UpdateBookContent_FullMethodName = "/demo.business.book.library_service.LibraryService/UpdateBookContent"
+	LibraryService_ArchiveBook_FullMethodName       = "/demo.business.book.library_service.LibraryService/ArchiveBook"
 )
 
 // LibraryServiceClient is the client API for LibraryService service.
@@ -44,6 +46,7 @@ type LibraryServiceClient interface {
 	UpdateBookMeta(ctx context.Context, in *UpdateBookMetaRequest, opts ...grpc.CallOption) (*UpdateBookMetaResponse, error)
 	GetBookContent(ctx context.Context, in *GetBookContentRequest, opts ...grpc.CallOption) (*GetBookContentResponse, error)
 	UpdateBookContent(ctx context.Context, in *UpdateBookContentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ArchiveBook(ctx context.Context, in *book.ArchiveBookRequest, opts ...grpc.CallOption) (*book.ArchiveBookResponse, error)
 }
 
 type libraryServiceClient struct {
@@ -144,6 +147,16 @@ func (c *libraryServiceClient) UpdateBookContent(ctx context.Context, in *Update
 	return out, nil
 }
 
+func (c *libraryServiceClient) ArchiveBook(ctx context.Context, in *book.ArchiveBookRequest, opts ...grpc.CallOption) (*book.ArchiveBookResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(book.ArchiveBookResponse)
+	err := c.cc.Invoke(ctx, LibraryService_ArchiveBook_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LibraryServiceServer is the server API for LibraryService service.
 // All implementations must embed UnimplementedLibraryServiceServer
 // for forward compatibility.
@@ -157,6 +170,7 @@ type LibraryServiceServer interface {
 	UpdateBookMeta(context.Context, *UpdateBookMetaRequest) (*UpdateBookMetaResponse, error)
 	GetBookContent(context.Context, *GetBookContentRequest) (*GetBookContentResponse, error)
 	UpdateBookContent(context.Context, *UpdateBookContentRequest) (*emptypb.Empty, error)
+	ArchiveBook(context.Context, *book.ArchiveBookRequest) (*book.ArchiveBookResponse, error)
 	mustEmbedUnimplementedLibraryServiceServer()
 }
 
@@ -193,6 +207,9 @@ func (UnimplementedLibraryServiceServer) GetBookContent(context.Context, *GetBoo
 }
 func (UnimplementedLibraryServiceServer) UpdateBookContent(context.Context, *UpdateBookContentRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateBookContent not implemented")
+}
+func (UnimplementedLibraryServiceServer) ArchiveBook(context.Context, *book.ArchiveBookRequest) (*book.ArchiveBookResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ArchiveBook not implemented")
 }
 func (UnimplementedLibraryServiceServer) mustEmbedUnimplementedLibraryServiceServer() {}
 func (UnimplementedLibraryServiceServer) testEmbeddedByValue()                        {}
@@ -377,6 +394,24 @@ func _LibraryService_UpdateBookContent_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LibraryService_ArchiveBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(book.ArchiveBookRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).ArchiveBook(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_ArchiveBook_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).ArchiveBook(ctx, req.(*book.ArchiveBookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LibraryService_ServiceDesc is the grpc.ServiceDesc for LibraryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -419,6 +454,10 @@ var LibraryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateBookContent",
 			Handler:    _LibraryService_UpdateBookContent_Handler,
+		},
+		{
+			MethodName: "ArchiveBook",
+			Handler:    _LibraryService_ArchiveBook_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

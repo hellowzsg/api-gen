@@ -12,9 +12,11 @@ settings:
     proto:   generated/proto
     go:      generated/go
     js:      generated/js
+    openapi: generated/openapi
   http:
     enable: true
     prefix: /library
+    generate_openapi: true
 
 entities:
   - name: book
@@ -34,6 +36,10 @@ entities:
           list: true
           list_config:
             total_size: true
+          # P2: 逐方法 http 覆盖 — List 用 GET 而非默认 POST
+          http:
+            verb: get
+            path: /library/LibraryService/book/meta/list
         writer:
           update: { mask: true }
 
@@ -48,6 +54,15 @@ services:
   - name: LibraryService
     entities:
       - name: book
+    # P2: custom_method HTTP 路由（AIP-136 冒号语法）
+    custom_methods:
+      - name: ArchiveBook
+        request: ArchiveBookRequest
+        response: ArchiveBookResponse
+        http:
+          verb: post
+          path: /library/LibraryService/book/{book_id}:archive
+          body: "*"
 
   - name: AdminService
     entities:
@@ -55,4 +70,5 @@ services:
         resources:
           - name: meta
             reader: { list: true }
+
 

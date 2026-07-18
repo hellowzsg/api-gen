@@ -35,7 +35,7 @@ service AdminService {
     option (google.api.http) = { get: "/library/AdminService/book/{key.id}/meta" };
   }
   rpc ListBookMetas(ListBookMetasRequest) returns (ListBookMetasResponse) {
-    option (google.api.http) = { post: "/library/AdminService/book/meta/list" body: "*" };
+    option (google.api.http) = { get: "/library/AdminService/book/meta/list" };
   }
   rpc UpdateBookMeta(UpdateBookMetaRequest) returns (UpdateBookMetaResponse) {
     option (google.api.http) = { patch: "/library/AdminService/book/{key.id}/meta" body: "*" };

@@ -42,7 +42,7 @@ service LibraryService {
     option (google.api.http) = { post: "/library/LibraryService/book/meta/batchGet" body: "*" };
   }
   rpc ListBookMetas(ListBookMetasRequest) returns (ListBookMetasResponse) {
-    option (google.api.http) = { post: "/library/LibraryService/book/meta/list" body: "*" };
+    option (google.api.http) = { get: "/library/LibraryService/book/meta/list" };
   }
   rpc UpdateBookMeta(UpdateBookMetaRequest) returns (UpdateBookMetaResponse) {
     option (google.api.http) = { patch: "/library/LibraryService/book/{key.id}/meta" body: "*" };
@@ -52,6 +52,9 @@ service LibraryService {
   }
   rpc UpdateBookContent(UpdateBookContentRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = { patch: "/library/LibraryService/book/{key.id}/content" body: "*" };
+  }
+  rpc ArchiveBook(ArchiveBookRequest) returns (ArchiveBookResponse) {
+    option (google.api.http) = { post: "/library/LibraryService/book/{book_id}:archive" body: "*" };
   }
 }
 

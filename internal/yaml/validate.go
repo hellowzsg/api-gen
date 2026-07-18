@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -14,6 +15,9 @@ func (c *Config) ValidateReferences() error {
 		return err
 	}
 	if err := c.validateHTTPConfig(); err != nil {
+		return err
+	}
+	if err := c.validatePerMethodHTTPOverrides(); err != nil {
 		return err
 	}
 	return nil
@@ -33,17 +37,10 @@ func (c *Config) validateHTTPConfig() error {
 	}
 	hc := c.Settings.HTTP
 
-	// P1 only supports body_style: wrapper (default). "resource" is P2.
-	if hc.BodyStyle == "resource" {
-		return fmt.Errorf("settings.http.body_style: %q is not supported in P1 (only \"wrapper\"); body_style: resource will be supported in P2", hc.BodyStyle)
-	}
-	if hc.BodyStyle != "" && hc.BodyStyle != "wrapper" {
-		return fmt.Errorf("settings.http.body_style: invalid value %q (only \"wrapper\" or empty is supported in P1)", hc.BodyStyle)
-	}
-
-	// P1 does not support OpenAPI generation.
-	if hc.GenerateOpenAPI {
-		return fmt.Errorf("settings.http.generate_openapi: OpenAPI generation is not supported in P1; it will be supported in P2")
+	// body_style: "wrapper" (default) or "resource" (P2). Any other value
+	// is invalid.
+	if hc.BodyStyle != "" && hc.BodyStyle != "wrapper" && hc.BodyStyle != "resource" {
+		return fmt.Errorf("settings.http.body_style: invalid value %q (only \"wrapper\" or \"resource\" is supported)", hc.BodyStyle)
 	}
 
 	// HTTP requires googleapis (google/api/annotations.proto) to be resolvable.
@@ -161,4 +158,62 @@ func (c *Config) ResolveTypeName(typeName string) string {
 		return typeName
 	}
 	return c.Name + "." + typeName
+}
+
+// pathVarPattern matches a path variable of the form {name} or {a.b.c}.
+// It captures the inner content (without braces). An empty inner (e.g. {})
+// or a dangling dot (e.g. {key.}) is considered malformed.
+var pathVarPattern = regexp.MustCompile(`\{([^}]*)\}`)
+
+// validatePerMethodHTTPOverrides validates the path variable syntax of every
+// per-method HTTP override declared in the config. This is a syntax-level
+// check: each {var} must be non-empty and not end with a dot. Deep key-leaf
+// reachability validation (via ir.ValidatePathVariables) is performed in the
+// IR build phase when key descriptors are available.
+//
+// TODO(P2 task group 2): supplement with ir.ValidatePathVariables for
+// key.* variables once key descriptors are resolved.
+func (c *Config) validatePerMethodHTTPOverrides() error {
+	for i := range c.Entities {
+		for j := range c.Entities[i].Resources {
+			r := &c.Entities[i].Resources[j]
+			if r.Reader != nil && r.Reader.HTTP != nil {
+				if err := validatePathVarSyntax(r.Reader.HTTP.Path); err != nil {
+					return fmt.Errorf("entities[%d].resources[%d].reader.http.path: %w", i, j, err)
+				}
+			}
+			if r.Writer != nil && r.Writer.Update != nil && r.Writer.Update.HTTP != nil {
+				if err := validatePathVarSyntax(r.Writer.Update.HTTP.Path); err != nil {
+					return fmt.Errorf("entities[%d].resources[%d].writer.update.http.path: %w", i, j, err)
+				}
+			}
+		}
+	}
+	for i := range c.Services {
+		for j := range c.Services[i].CustomMethods {
+			cm := &c.Services[i].CustomMethods[j]
+			if cm.HTTP != nil {
+				if err := validatePathVarSyntax(cm.HTTP.Path); err != nil {
+					return fmt.Errorf("services[%d].custom_methods[%d].http.path: %w", i, j, err)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// validatePathVarSyntax checks that every {var} in the path is well-formed:
+// non-empty, starts and ends with an identifier character (not a dot).
+func validatePathVarSyntax(path string) error {
+	matches := pathVarPattern.FindAllStringSubmatch(path, -1)
+	for _, m := range matches {
+		inner := m[1]
+		if inner == "" {
+			return fmt.Errorf("empty path variable {} in %q", path)
+		}
+		if strings.HasPrefix(inner, ".") || strings.HasSuffix(inner, ".") {
+			return fmt.Errorf("malformed path variable {%s} in %q (leading/trailing dot)", inner, path)
+		}
+	}
+	return nil
 }

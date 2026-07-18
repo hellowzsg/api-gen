@@ -53,7 +53,7 @@ func RenderServiceProto(irData *ir.IR, svc ir.ServiceIR) (string, error) {
 		renderServiceRPCs(&sb, &entities[i])
 	}
 	for _, cm := range svc.CustomMethods {
-		sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s);\n", cm.Name, cm.Request, cm.Response))
+		renderRPCWithHTTP(&sb, cm.Name, cm.Request, cm.Response, cm.HTTPAnnotation)
 	}
 	sb.WriteString("}\n\n")
 	for i := range entities {
@@ -79,6 +79,10 @@ func rewriteHTTPPathForService(e *ir.EntityIR, svcName string) {
 		if ann == nil || ann.Path == "" {
 			return
 		}
+		// Always rewrite the service-name segment so each service's
+		// routes are isolated. This applies to both default paths and
+		// user-declared override paths — the service segment is always
+		// the segment right before the entity-name segment.
 		ann.Path = replaceServiceSegment(ann.Path, svcName)
 	}
 	if e.Create != nil {
@@ -459,7 +463,20 @@ func generateExemptions(entities []ir.EntityIR, httpEnabled bool) []string {
 	// HTTP-specific exemptions (only when HTTP is enabled).
 	if httpEnabled {
 		if hasCreate {
-			exemptions = append(exemptions, "core::0133::http-body")
+			// core::0133::http-body exemption is needed only when Create
+			// uses body:"*" (wrapper style). When body_style: resource is
+			// in effect (body = resource field name), the body binding is
+			// a named field, not "*", so the exemption is not needed.
+			createUsesWrapperBody := true
+			for _, e := range entities {
+				if e.Create != nil && e.Create.HTTPAnnotation != nil && e.Create.HTTPAnnotation.Body != "*" && e.Create.HTTPAnnotation.Body != "" {
+					createUsesWrapperBody = false
+					break
+				}
+			}
+			if createUsesWrapperBody {
+				exemptions = append(exemptions, "core::0133::http-body")
+			}
 		}
 		if hasBatchGet {
 			exemptions = append(exemptions, "core::0231::http-body", "core::0231::http-method")

@@ -582,15 +582,15 @@ const file_admin_service_admin_service_proto_rawDesc = "" +
 	"updateMask\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\x04R\aversion\"2\n" +
 	"\x16UpdateBookMetaResponse\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\x04R\aversion2\x80\b\n" +
+	"\aversion\x18\x01 \x01(\x04R\aversion2\xfd\a\n" +
 	"\fAdminService\x12\xa2\x01\n" +
 	"\n" +
 	"CreateBook\x125.demo.business.book.admin_service.CreateBookRequest\x1a6.demo.business.book.admin_service.CreateBookResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/library/AdminService/book\x12\x88\x01\n" +
 	"\n" +
 	"DeleteBook\x125.demo.business.book.admin_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\"+\x82\xd3\xe4\x93\x02%*#/library/AdminService/book/{key.id}\x12\x95\x01\n" +
 	"\x0eDeleteBookSoft\x129.demo.business.book.admin_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\"0\x82\xd3\xe4\x93\x02*:\x01*\"%/library/AdminService/book/deleteSoft\x12\xb0\x01\n" +
-	"\vGetBookMeta\x126.demo.business.book.admin_service.GetBookMetaRequest\x1a7.demo.business.book.admin_service.GetBookMetaResponse\"0\x82\xd3\xe4\x93\x02*\x12(/library/AdminService/book/{key.id}/meta\x12\xb5\x01\n" +
-	"\rListBookMetas\x128.demo.business.book.admin_service.ListBookMetasRequest\x1a9.demo.business.book.admin_service.ListBookMetasResponse\"/\x82\xd3\xe4\x93\x02):\x01*\"$/library/AdminService/book/meta/list\x12\xbc\x01\n" +
+	"\vGetBookMeta\x126.demo.business.book.admin_service.GetBookMetaRequest\x1a7.demo.business.book.admin_service.GetBookMetaResponse\"0\x82\xd3\xe4\x93\x02*\x12(/library/AdminService/book/{key.id}/meta\x12\xb2\x01\n" +
+	"\rListBookMetas\x128.demo.business.book.admin_service.ListBookMetasRequest\x1a9.demo.business.book.admin_service.ListBookMetasResponse\",\x82\xd3\xe4\x93\x02&\x12$/library/AdminService/book/meta/list\x12\xbc\x01\n" +
 	"\x0eUpdateBookMeta\x129.demo.business.book.admin_service.UpdateBookMetaRequest\x1a:.demo.business.book.admin_service.UpdateBookMetaResponse\"3\x82\xd3\xe4\x93\x02-:\x01*2(/library/AdminService/book/{key.id}/metaBFZDgithub.com/acme/demo-book/generated/go/admin_service;admin_serviceb\x06proto3"
 
 var (

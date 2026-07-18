@@ -100,3 +100,108 @@ func TestGenerateImports(t *testing.T) {
 		})
 	}
 }
+
+// TestRenderCustomMethodHTTP: custom method with HTTPAnnotation renders
+// the google.api.http option inside the RPC body.
+func TestRenderCustomMethodHTTP(t *testing.T) {
+	irData := &ir.IR{PackageName: "test"}
+	svc := ir.ServiceIR{
+		Name:          "LibraryService",
+		ProtoPackage:  "test.library_service",
+		GoPackage:     "library_service",
+		Entities:      []ir.ServiceEntityIR{},
+		CustomMethods: []ir.CustomMethodIR{{
+			Name:     "ArchiveBook",
+			Request:  "ArchiveBookRequest",
+			Response: "ArchiveBookResponse",
+			HTTPAnnotation: &ir.HTTPAnnotation{
+				Verb: "POST",
+				Path: "/library/LibraryService/book/{book_id}:archive",
+				Body: "*",
+			},
+		}},
+	}
+	output, err := RenderServiceProto(irData, svc)
+	if err != nil {
+		t.Fatalf("RenderServiceProto failed: %v", err)
+	}
+	// The RPC should have the HTTP annotation inside the body.
+	expectedRPC := `  rpc ArchiveBook(ArchiveBookRequest) returns (ArchiveBookResponse) {
+    option (google.api.http) = { post: "/library/LibraryService/book/{book_id}:archive" body: "*" };
+  }`
+	if !strings.Contains(output, expectedRPC) {
+		t.Errorf("output does not contain expected custom method RPC with HTTP annotation.\nExpected:\n%s\nGot:\n%s", expectedRPC, output)
+	}
+}
+
+// TestExemptionsBodyStyle: body_style:resource suppresses core::0133::http-body
+// exemption for Create; body_style:wrapper emits it.
+func TestExemptionsBodyStyle(t *testing.T) {
+	t.Run("wrapper emits http-body exemption", func(t *testing.T) {
+		entities := []ir.EntityIR{{
+			Name: "book", PascalName: "Book", KeyType: "test.BookId",
+			Create: &ir.CreateIR{
+				RPCName: "CreateBook", RequestName: "CreateBookRequest", ResponseName: "CreateBookResponse",
+				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Path: "/svc/book", Body: "*"},
+			},
+		}}
+		exemptions := generateExemptions(entities, true)
+		found := false
+		for _, e := range exemptions {
+			if e == "core::0133::http-body" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("core::0133::http-body exemption should be emitted for body_style: wrapper (body: *), got: %v", exemptions)
+		}
+	})
+
+	t.Run("resource suppresses http-body exemption", func(t *testing.T) {
+		entities := []ir.EntityIR{{
+			Name: "book", PascalName: "Book", KeyType: "test.BookId",
+			Create: &ir.CreateIR{
+				RPCName: "CreateBook", RequestName: "CreateBookRequest", ResponseName: "CreateBookResponse",
+				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Path: "/svc/book", Body: "meta"},
+			},
+		}}
+		exemptions := generateExemptions(entities, true)
+		for _, e := range exemptions {
+			if e == "core::0133::http-body" {
+				t.Errorf("core::0133::http-body exemption should NOT be emitted for body_style: resource (body: meta), got: %v", exemptions)
+			}
+		}
+	})
+}
+
+// TestUserPathServiceRewrite: user-declared http.path (IsOverride=true) still
+// gets its service-name segment rewritten so each service's routes are isolated.
+func TestUserPathServiceRewrite(t *testing.T) {
+	irData := &ir.IR{PackageName: "test", HTTPEnabled: true}
+	irData.Entities = []ir.EntityIR{{
+		Name: "book", PascalName: "Book", KeyType: "test.BookId",
+		Resources: []ir.ResourceIR{{
+			Name: "meta", PascalName: "Meta", Type: "test.BookMeta",
+			Version: ir.VersionIR{Kind: "NONE"},
+			List: &ir.ListIR{
+				RPCName: "ListBookMetas", RequestName: "ListBookMetasRequest", ResponseName: "ListBookMetasResponse",
+				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "GET", Path: "/svc/LibraryService/book/meta/list", Body: "", IsOverride: true},
+			},
+		}},
+	}}
+	svc := ir.ServiceIR{
+		Name:         "AdminService",
+		ProtoPackage: "test.admin_service",
+		GoPackage:    "admin_service",
+		Entities:     []ir.ServiceEntityIR{{Name: "book"}},
+	}
+	output, err := RenderServiceProto(irData, svc)
+	if err != nil {
+		t.Fatalf("RenderServiceProto failed: %v", err)
+	}
+	// Service segment "LibraryService" should be rewritten to "AdminService".
+	if !strings.Contains(output, `get: "/svc/AdminService/book/meta/list"`) {
+		t.Errorf("service segment should be rewritten; output should contain AdminService path, got:\n%s", output)
+	}
+}

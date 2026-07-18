@@ -821,7 +821,7 @@ const file_library_service_library_service_proto_rawDesc = "" +
 	"\fbook_content\x18\x01 \x01(\v2!.demo.business.book.BookContentR\vbookContent\"\x87\x01\n" +
 	"\x18UpdateBookContentRequest\x12;\n" +
 	"\acontent\x18\x01 \x01(\v2!.demo.business.book.BookContentR\acontent\x12.\n" +
-	"\x03key\x18\x02 \x01(\v2\x1c.demo.business.book.BookIdR\x03key2\xdd\f\n" +
+	"\x03key\x18\x02 \x01(\v2\x1c.demo.business.book.BookIdR\x03key2\xfa\r\n" +
 	"\x0eLibraryService\x12\xa8\x01\n" +
 	"\n" +
 	"CreateBook\x127.demo.business.book.library_service.CreateBookRequest\x1a8.demo.business.book.library_service.CreateBookResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/library/LibraryService/book\x12\x8c\x01\n" +
@@ -829,11 +829,12 @@ const file_library_service_library_service_proto_rawDesc = "" +
 	"DeleteBook\x127.demo.business.book.library_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\"-\x82\xd3\xe4\x93\x02'*%/library/LibraryService/book/{key.id}\x12\x99\x01\n" +
 	"\x0eDeleteBookSoft\x12;.demo.business.book.library_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\"2\x82\xd3\xe4\x93\x02,:\x01*\"'/library/LibraryService/book/deleteSoft\x12\xb6\x01\n" +
 	"\vGetBookMeta\x128.demo.business.book.library_service.GetBookMetaRequest\x1a9.demo.business.book.library_service.GetBookMetaResponse\"2\x82\xd3\xe4\x93\x02,\x12*/library/LibraryService/book/{key.id}/meta\x12\xcb\x01\n" +
-	"\x11BatchGetBookMetas\x12>.demo.business.book.library_service.BatchGetBookMetasRequest\x1a?.demo.business.book.library_service.BatchGetBookMetasResponse\"5\x82\xd3\xe4\x93\x02/:\x01*\"*/library/LibraryService/book/meta/batchGet\x12\xbb\x01\n" +
-	"\rListBookMetas\x12:.demo.business.book.library_service.ListBookMetasRequest\x1a;.demo.business.book.library_service.ListBookMetasResponse\"1\x82\xd3\xe4\x93\x02+:\x01*\"&/library/LibraryService/book/meta/list\x12\xc2\x01\n" +
+	"\x11BatchGetBookMetas\x12>.demo.business.book.library_service.BatchGetBookMetasRequest\x1a?.demo.business.book.library_service.BatchGetBookMetasResponse\"5\x82\xd3\xe4\x93\x02/:\x01*\"*/library/LibraryService/book/meta/batchGet\x12\xb8\x01\n" +
+	"\rListBookMetas\x12:.demo.business.book.library_service.ListBookMetasRequest\x1a;.demo.business.book.library_service.ListBookMetasResponse\".\x82\xd3\xe4\x93\x02(\x12&/library/LibraryService/book/meta/list\x12\xc2\x01\n" +
 	"\x0eUpdateBookMeta\x12;.demo.business.book.library_service.UpdateBookMetaRequest\x1a<.demo.business.book.library_service.UpdateBookMetaResponse\"5\x82\xd3\xe4\x93\x02/:\x01*2*/library/LibraryService/book/{key.id}/meta\x12\xc2\x01\n" +
 	"\x0eGetBookContent\x12;.demo.business.book.library_service.GetBookContentRequest\x1a<.demo.business.book.library_service.GetBookContentResponse\"5\x82\xd3\xe4\x93\x02/\x12-/library/LibraryService/book/{key.id}/content\x12\xa5\x01\n" +
-	"\x11UpdateBookContent\x12>.demo.business.book.library_service.UpdateBookContentRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x022:\x01*2-/library/LibraryService/book/{key.id}/contentBJZHgithub.com/acme/demo-book/generated/go/library_service;library_serviceb\x06proto3"
+	"\x11UpdateBookContent\x12>.demo.business.book.library_service.UpdateBookContentRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x022:\x01*2-/library/LibraryService/book/{key.id}/content\x12\x9d\x01\n" +
+	"\vArchiveBook\x12(.demo.business.book.ArchiveBookRequest\x1a).demo.business.book.ArchiveBookResponse\"9\x82\xd3\xe4\x93\x023:\x01*\"./library/LibraryService/book/{book_id}:archiveBJZHgithub.com/acme/demo-book/generated/go/library_service;library_serviceb\x06proto3"
 
 var (
 	file_library_service_library_service_proto_rawDescOnce sync.Once
@@ -868,7 +869,9 @@ var file_library_service_library_service_proto_goTypes = []any{
 	(*book.BookContent)(nil),          // 16: demo.business.book.BookContent
 	(*book.BookId)(nil),               // 17: demo.business.book.BookId
 	(*fieldmaskpb.FieldMask)(nil),     // 18: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),             // 19: google.protobuf.Empty
+	(*book.ArchiveBookRequest)(nil),   // 19: demo.business.book.ArchiveBookRequest
+	(*emptypb.Empty)(nil),             // 20: google.protobuf.Empty
+	(*book.ArchiveBookResponse)(nil),  // 21: demo.business.book.ArchiveBookResponse
 }
 var file_library_service_library_service_proto_depIdxs = []int32{
 	15, // 0: demo.business.book.library_service.CreateBookRequest.meta:type_name -> demo.business.book.BookMeta
@@ -897,17 +900,19 @@ var file_library_service_library_service_proto_depIdxs = []int32{
 	10, // 23: demo.business.book.library_service.LibraryService.UpdateBookMeta:input_type -> demo.business.book.library_service.UpdateBookMetaRequest
 	12, // 24: demo.business.book.library_service.LibraryService.GetBookContent:input_type -> demo.business.book.library_service.GetBookContentRequest
 	14, // 25: demo.business.book.library_service.LibraryService.UpdateBookContent:input_type -> demo.business.book.library_service.UpdateBookContentRequest
-	1,  // 26: demo.business.book.library_service.LibraryService.CreateBook:output_type -> demo.business.book.library_service.CreateBookResponse
-	19, // 27: demo.business.book.library_service.LibraryService.DeleteBook:output_type -> google.protobuf.Empty
-	19, // 28: demo.business.book.library_service.LibraryService.DeleteBookSoft:output_type -> google.protobuf.Empty
-	5,  // 29: demo.business.book.library_service.LibraryService.GetBookMeta:output_type -> demo.business.book.library_service.GetBookMetaResponse
-	7,  // 30: demo.business.book.library_service.LibraryService.BatchGetBookMetas:output_type -> demo.business.book.library_service.BatchGetBookMetasResponse
-	9,  // 31: demo.business.book.library_service.LibraryService.ListBookMetas:output_type -> demo.business.book.library_service.ListBookMetasResponse
-	11, // 32: demo.business.book.library_service.LibraryService.UpdateBookMeta:output_type -> demo.business.book.library_service.UpdateBookMetaResponse
-	13, // 33: demo.business.book.library_service.LibraryService.GetBookContent:output_type -> demo.business.book.library_service.GetBookContentResponse
-	19, // 34: demo.business.book.library_service.LibraryService.UpdateBookContent:output_type -> google.protobuf.Empty
-	26, // [26:35] is the sub-list for method output_type
-	17, // [17:26] is the sub-list for method input_type
+	19, // 26: demo.business.book.library_service.LibraryService.ArchiveBook:input_type -> demo.business.book.ArchiveBookRequest
+	1,  // 27: demo.business.book.library_service.LibraryService.CreateBook:output_type -> demo.business.book.library_service.CreateBookResponse
+	20, // 28: demo.business.book.library_service.LibraryService.DeleteBook:output_type -> google.protobuf.Empty
+	20, // 29: demo.business.book.library_service.LibraryService.DeleteBookSoft:output_type -> google.protobuf.Empty
+	5,  // 30: demo.business.book.library_service.LibraryService.GetBookMeta:output_type -> demo.business.book.library_service.GetBookMetaResponse
+	7,  // 31: demo.business.book.library_service.LibraryService.BatchGetBookMetas:output_type -> demo.business.book.library_service.BatchGetBookMetasResponse
+	9,  // 32: demo.business.book.library_service.LibraryService.ListBookMetas:output_type -> demo.business.book.library_service.ListBookMetasResponse
+	11, // 33: demo.business.book.library_service.LibraryService.UpdateBookMeta:output_type -> demo.business.book.library_service.UpdateBookMetaResponse
+	13, // 34: demo.business.book.library_service.LibraryService.GetBookContent:output_type -> demo.business.book.library_service.GetBookContentResponse
+	20, // 35: demo.business.book.library_service.LibraryService.UpdateBookContent:output_type -> google.protobuf.Empty
+	21, // 36: demo.business.book.library_service.LibraryService.ArchiveBook:output_type -> demo.business.book.ArchiveBookResponse
+	27, // [27:37] is the sub-list for method output_type
+	17, // [17:27] is the sub-list for method input_type
 	17, // [17:17] is the sub-list for extension type_name
 	17, // [17:17] is the sub-list for extension extendee
 	0,  // [0:17] is the sub-list for field type_name

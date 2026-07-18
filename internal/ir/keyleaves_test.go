@@ -414,3 +414,37 @@ func TestKeyLeaves_NoCycleNested(t *testing.T) {
 		t.Errorf("expected 1 leaf 'b.v', got %+v", leaves)
 	}
 }
+
+// TestValidatePathVariables tests that ValidatePathVariables accepts paths
+// whose key.* variables are reachable in the key leaf set, and rejects
+// unreachable ones.
+func TestValidatePathVariables(t *testing.T) {
+	leaves := []KeyLeaf{
+		{DotPath: "id", FieldType: "string"},
+		{DotPath: "org.oid", FieldType: "string"},
+		{DotPath: "org.qid", FieldType: "int32"},
+	}
+	tests := []struct {
+		name      string
+		path      string
+		wantError bool
+	}{
+		{"simple key var", "/svc/book/{key.id}/meta", false},
+		{"compound key var", "/svc/book/{key.org.oid}/{key.org.qid}/{key.id}", false},
+		{"non-key var (custom)", "/svc/book/{book_id}:archive", false},
+		{"no vars", "/svc/book/meta", false},
+		{"unreachable key var", "/svc/book/{key.nonexistent}/meta", true},
+		{"unreachable nested key var", "/svc/book/{key.org.bad}/meta", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidatePathVariables(tt.path, leaves)
+			if tt.wantError && err == nil {
+				t.Errorf("ValidatePathVariables(%q) should fail, got nil", tt.path)
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("ValidatePathVariables(%q) should pass, got: %v", tt.path, err)
+			}
+		})
+	}
+}

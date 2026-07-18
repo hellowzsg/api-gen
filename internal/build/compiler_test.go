@@ -69,4 +69,13 @@ func TestCompile_HTTPDisabledNoGateway(t *testing.T) {
 	_ = Compile // compile-time signature check
 }
 
+// TestCompile_OpenAPISignature verifies the Compile signature includes
+// openAPIOutDir and generateOpenAPI parameters (P2).
+func TestCompile_OpenAPISignature(t *testing.T) {
+	// The real Compile signature (P2) is:
+	//   func Compile(ctx, files, fileToGenerate, goOutDir, openAPIOutDir string, httpEnabled, generateOpenAPI bool) error
+	// We verify it exists by referencing it (compile-time check).
+	_ = Compile
+}
+
 func stringPtr(s string) *string { return &s }

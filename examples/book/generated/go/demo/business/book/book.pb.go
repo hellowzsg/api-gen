@@ -177,6 +177,94 @@ func (x *BookContent) GetCoverImage() []byte {
 	return nil
 }
 
+type ArchiveBookRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BookId        string                 `protobuf:"bytes,1,opt,name=book_id,json=bookId,proto3" json:"book_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ArchiveBookRequest) Reset() {
+	*x = ArchiveBookRequest{}
+	mi := &file_demo_business_book_book_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArchiveBookRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArchiveBookRequest) ProtoMessage() {}
+
+func (x *ArchiveBookRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_demo_business_book_book_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ArchiveBookRequest.ProtoReflect.Descriptor instead.
+func (*ArchiveBookRequest) Descriptor() ([]byte, []int) {
+	return file_demo_business_book_book_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ArchiveBookRequest) GetBookId() string {
+	if x != nil {
+		return x.BookId
+	}
+	return ""
+}
+
+type ArchiveBookResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Archived      bool                   `protobuf:"varint,1,opt,name=archived,proto3" json:"archived,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ArchiveBookResponse) Reset() {
+	*x = ArchiveBookResponse{}
+	mi := &file_demo_business_book_book_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArchiveBookResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArchiveBookResponse) ProtoMessage() {}
+
+func (x *ArchiveBookResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_demo_business_book_book_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ArchiveBookResponse.ProtoReflect.Descriptor instead.
+func (*ArchiveBookResponse) Descriptor() ([]byte, []int) {
+	return file_demo_business_book_book_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ArchiveBookResponse) GetArchived() bool {
+	if x != nil {
+		return x.Archived
+	}
+	return false
+}
+
 var File_demo_business_book_book_proto protoreflect.FileDescriptor
 
 const file_demo_business_book_book_proto_rawDesc = "" +
@@ -191,7 +279,11 @@ const file_demo_business_book_book_proto_rawDesc = "" +
 	"\vBookContent\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x1f\n" +
 	"\vcover_image\x18\x02 \x01(\fR\n" +
-	"coverImageBDZBgithub.com/acme/demo-book/generated/go/demo/business/book;bookb\x06proto3"
+	"coverImage\"-\n" +
+	"\x12ArchiveBookRequest\x12\x17\n" +
+	"\abook_id\x18\x01 \x01(\tR\x06bookId\"1\n" +
+	"\x13ArchiveBookResponse\x12\x1a\n" +
+	"\barchived\x18\x01 \x01(\bR\barchivedBDZBgithub.com/acme/demo-book/generated/go/demo/business/book;bookb\x06proto3"
 
 var (
 	file_demo_business_book_book_proto_rawDescOnce sync.Once
@@ -205,11 +297,13 @@ func file_demo_business_book_book_proto_rawDescGZIP() []byte {
 	return file_demo_business_book_book_proto_rawDescData
 }
 
-var file_demo_business_book_book_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_demo_business_book_book_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_demo_business_book_book_proto_goTypes = []any{
-	(*BookId)(nil),      // 0: demo.business.book.BookId
-	(*BookMeta)(nil),    // 1: demo.business.book.BookMeta
-	(*BookContent)(nil), // 2: demo.business.book.BookContent
+	(*BookId)(nil),              // 0: demo.business.book.BookId
+	(*BookMeta)(nil),            // 1: demo.business.book.BookMeta
+	(*BookContent)(nil),         // 2: demo.business.book.BookContent
+	(*ArchiveBookRequest)(nil),  // 3: demo.business.book.ArchiveBookRequest
+	(*ArchiveBookResponse)(nil), // 4: demo.business.book.ArchiveBookResponse
 }
 var file_demo_business_book_book_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -230,7 +324,7 @@ func file_demo_business_book_book_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_demo_business_book_book_proto_rawDesc), len(file_demo_business_book_book_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

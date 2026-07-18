@@ -21,3 +21,13 @@ message BookContent {
   string text = 1;
   bytes  cover_image = 2;
 }
+
+// ArchiveBookRequest 是 ArchiveBook 自定义方法的请求。
+message ArchiveBookRequest {
+  string book_id = 1;
+}
+
+// ArchiveBookResponse 是 ArchiveBook 自定义方法的响应。
+message ArchiveBookResponse {
+  bool archived = 1;
+}

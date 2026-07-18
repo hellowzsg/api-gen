@@ -171,3 +171,98 @@ entities:
 		t.Error("DeleteSoft is nil, want non-nil")
 	}
 }
+
+// TestParseHTTPOverride 测试 reader.http / writer.update.http /
+// custom_methods[].http 的解析。
+func TestParseHTTPOverride(t *testing.T) {
+	input := `
+syntax: v1
+name: demo.business.book
+import_protos:
+  - path: "proto/**/*.proto"
+settings:
+  go_repo: github.com/acme/demo-book
+  out:
+    proto: generated/proto
+    go: generated/go
+entities:
+  - name: book
+    key:
+      type_: BookId
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: STRONG, type: U64 }
+        reader:
+          list: true
+          http:
+            verb: get
+            path: /library/LibraryService/book/{key.id}/metadata
+        writer:
+          update:
+            mask: true
+            http:
+              verb: put
+              body_style: resource
+services:
+  - name: LibraryService
+    entities:
+      - name: book
+    custom_methods:
+      - name: ArchiveBook
+        request: ArchiveBookRequest
+        response: ArchiveBookResponse
+        http:
+          verb: post
+          path: /library/LibraryService/book/{book_id}:archive
+          body: "*"
+`
+	cfg, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+
+	// 验证 reader.http
+	r := cfg.Entities[0].Resources[0]
+	if r.Reader == nil || r.Reader.HTTP == nil {
+		t.Fatalf("Reader.HTTP is nil, want non-nil")
+	}
+	if r.Reader.HTTP.Verb != "get" {
+		t.Errorf("Reader.HTTP.Verb = %q, want %q", r.Reader.HTTP.Verb, "get")
+	}
+	if r.Reader.HTTP.Path != "/library/LibraryService/book/{key.id}/metadata" {
+		t.Errorf("Reader.HTTP.Path = %q, want %q", r.Reader.HTTP.Path, "/library/LibraryService/book/{key.id}/metadata")
+	}
+
+	// 验证 writer.update.http
+	if r.Writer == nil || r.Writer.Update == nil || r.Writer.Update.HTTP == nil {
+		t.Fatalf("Writer.Update.HTTP is nil, want non-nil")
+	}
+	if r.Writer.Update.HTTP.Verb != "put" {
+		t.Errorf("Writer.Update.HTTP.Verb = %q, want %q", r.Writer.Update.HTTP.Verb, "put")
+	}
+	if r.Writer.Update.HTTP.BodyStyle != "resource" {
+		t.Errorf("Writer.Update.HTTP.BodyStyle = %q, want %q", r.Writer.Update.HTTP.BodyStyle, "resource")
+	}
+
+	// 验证 custom_methods[].http
+	if len(cfg.Services) != 1 {
+		t.Fatalf("len(Services) = %d, want 1", len(cfg.Services))
+	}
+	cms := cfg.Services[0].CustomMethods
+	if len(cms) != 1 {
+		t.Fatalf("len(CustomMethods) = %d, want 1", len(cms))
+	}
+	if cms[0].HTTP == nil {
+		t.Fatalf("CustomMethods[0].HTTP is nil, want non-nil")
+	}
+	if cms[0].HTTP.Verb != "post" {
+		t.Errorf("CustomMethods[0].HTTP.Verb = %q, want %q", cms[0].HTTP.Verb, "post")
+	}
+	if cms[0].HTTP.Path != "/library/LibraryService/book/{book_id}:archive" {
+		t.Errorf("CustomMethods[0].HTTP.Path = %q, want %q", cms[0].HTTP.Path, "/library/LibraryService/book/{book_id}:archive")
+	}
+	if cms[0].HTTP.Body != "*" {
+		t.Errorf("CustomMethods[0].HTTP.Body = %q, want %q", cms[0].HTTP.Body, "*")
+	}
+}

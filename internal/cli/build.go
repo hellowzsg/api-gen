@@ -36,6 +36,17 @@ func runBuild(ctx context.Context, apiYAMLPath string) error {
 	cacheDir := filepath.Join(baseDir, ".apigen_cache")
 	genProtoDir := filepath.Join(baseDir, cfg.Settings.Out.Proto)
 	goOutDir := filepath.Join(baseDir, cfg.Settings.Out.Go)
+	// OpenAPI output dir: explicit setting or default "generated/openapi".
+	openAPIOutDir := ""
+	generateOpenAPI := false
+	if cfg.Settings.HTTP != nil && cfg.Settings.HTTP.Enable && cfg.Settings.HTTP.GenerateOpenAPI {
+		generateOpenAPI = true
+		openAPISubDir := cfg.Settings.Out.OpenAPI
+		if openAPISubDir == "" {
+			openAPISubDir = "generated/openapi"
+		}
+		openAPIOutDir = filepath.Join(baseDir, openAPISubDir)
+	}
 
 	// Step 2: collect the service proto files to generate Go code for.
 	var serviceProtoFiles []string
@@ -139,7 +150,7 @@ func runBuild(ctx context.Context, apiYAMLPath string) error {
 			_ = os.RemoveAll(staging)
 		}
 	}()
-	if err := build.Compile(ctx, files, fileToGenerate, staging, cfg.Settings.HTTP != nil && cfg.Settings.HTTP.Enable); err != nil {
+	if err := build.Compile(ctx, files, fileToGenerate, staging, openAPIOutDir, cfg.Settings.HTTP != nil && cfg.Settings.HTTP.Enable, generateOpenAPI); err != nil {
 		return fmt.Errorf("compile: %w", err)
 	}
 	if err := commitDir(staging, goOutDir); err != nil {

@@ -2,6 +2,7 @@ package ir
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -150,4 +151,28 @@ func scalarKindName(k protoreflect.Kind) string {
 	default:
 		return fmt.Sprintf("kind_%d", int(k))
 	}
+}
+
+// pathKeyVarPattern matches {key.xxx} variables in a path, capturing the
+// dot-path after "key.".
+var pathKeyVarPattern = regexp.MustCompile(`\{key\.([^}]+)\}`)
+
+// ValidatePathVariables validates that every {key.xxx.yyy} variable in path
+// refers to a dot-path that exists in keyLeaves (i.e. is a reachable scalar
+// leaf in the key type tree). Non-key variables (e.g. {book_id}) are not
+// validated here — their existence in custom request messages is deferred to
+// the gateway plugin compile time.
+func ValidatePathVariables(path string, keyLeaves []KeyLeaf) error {
+	leafSet := make(map[string]bool, len(keyLeaves))
+	for _, l := range keyLeaves {
+		leafSet[l.DotPath] = true
+	}
+	matches := pathKeyVarPattern.FindAllStringSubmatch(path, -1)
+	for _, m := range matches {
+		dotPath := m[1]
+		if !leafSet[dotPath] {
+			return fmt.Errorf("path variable {key.%s} in %q is not a reachable scalar leaf in the key type", dotPath, path)
+		}
+	}
+	return nil
 }

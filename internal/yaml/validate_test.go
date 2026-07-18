@@ -130,7 +130,7 @@ func TestValidateServiceNarrowingNotAllowed(t *testing.T) {
 
 // --- HTTP 配置校验测试（P1） ---
 
-// TestValidateHTTP_BodyStyleResource 报错 body_style: resource 在 P1 不支持。
+// TestValidateHTTP_BodyStyleResource body_style: resource 在 P2 通过。
 func TestValidateHTTP_BodyStyleResource(t *testing.T) {
 	cfg := &Config{
 		Syntax: "v1",
@@ -150,15 +150,12 @@ func TestValidateHTTP_BodyStyleResource(t *testing.T) {
 		},
 	}
 	err := cfg.ValidateReferences()
-	if err == nil {
-		t.Fatal("ValidateReferences should fail for body_style: resource in P1")
-	}
-	if !strings.Contains(err.Error(), "body_style") || !strings.Contains(err.Error(), "resource") {
-		t.Errorf("error should mention body_style resource, got: %v", err)
+	if err != nil {
+		t.Fatalf("ValidateReferences should pass for body_style: resource in P2, got: %v", err)
 	}
 }
 
-// TestValidateHTTP_GenerateOpenAPI 报错 generate_openapi 在 P1 不支持。
+// TestValidateHTTP_GenerateOpenAPI generate_openapi 在 P2 通过。
 func TestValidateHTTP_GenerateOpenAPI(t *testing.T) {
 	cfg := &Config{
 		Syntax: "v1",
@@ -178,11 +175,8 @@ func TestValidateHTTP_GenerateOpenAPI(t *testing.T) {
 		},
 	}
 	err := cfg.ValidateReferences()
-	if err == nil {
-		t.Fatal("ValidateReferences should fail for generate_openapi in P1")
-	}
-	if !strings.Contains(err.Error(), "openapi") {
-		t.Errorf("error should mention openapi, got: %v", err)
+	if err != nil {
+		t.Fatalf("ValidateReferences should pass for generate_openapi in P2, got: %v", err)
 	}
 }
 
@@ -335,5 +329,58 @@ func TestValidateHTTP_BodyStyleWrapperDefault(t *testing.T) {
 	cfg.Settings.HTTP.BodyStyle = "wrapper"
 	if err := cfg.ValidateReferences(); err != nil {
 		t.Fatalf("ValidateReferences should pass with body_style=wrapper: %v", err)
+	}
+}
+
+// TestValidateHTTPOverridePath 校验逐方法 http 覆盖的 path 变量语法。
+func TestValidateHTTPOverridePath(t *testing.T) {
+	tests := []struct {
+		name      string
+		path      string
+		wantError bool
+	}{
+		{"valid simple var", "/library/LibraryService/book/{key.id}/meta", false},
+		{"valid compound var", "/library/LibraryService/book/{key.org.oid}/{key.id}/meta", false},
+		{"valid custom var", "/library/LibraryService/book/{book_id}:archive", false},
+		{"empty var", "/library/LibraryService/book/{}/meta", true},
+		{"dangling dot var", "/library/LibraryService/book/{key.}/meta", true},
+		{"no brace", "/library/LibraryService/book/meta", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{
+				Syntax: "v1",
+				Name:   "foo",
+				ImportProtos: []Import{
+					{Path: "third_party/google/api/annotations.proto"},
+				},
+				Settings: Settings{
+					HTTP: &HTTPConfig{Enable: true},
+				},
+				Entities: []Entity{
+					{
+						Name: "book",
+						Key:  KeyDef{Type: "BookId"},
+						Resources: []Resource{
+							{
+								Name:    "meta",
+								Type:    "BookMeta",
+								Version: VersionDef{Kind: "NONE"},
+								Reader: &ReaderDef{
+									HTTP: &HTTPOverride{Verb: "get", Path: tt.path},
+								},
+							},
+						},
+					},
+				},
+			}
+			err := cfg.ValidateReferences()
+			if tt.wantError && err == nil {
+				t.Errorf("ValidateReferences should fail for path %q, got nil", tt.path)
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("ValidateReferences should pass for path %q, got: %v", tt.path, err)
+			}
+		})
 	}
 }
