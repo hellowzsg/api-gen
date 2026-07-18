@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package demo.business.book;
+
+// BookId 是 Book 实体的主键类型。
+// 工具视为不透明符号（gRPC 下黑盒，HTTP 下递归解析标量叶子做路径绑定）。
+message BookId {
+  string id = 1;
+}
+
+// BookMeta 是 Book 的元数据面资源。
+message BookMeta {
+  string title = 1;
+  string author = 2;
+  string isbn = 3;
+}
+
+// BookContent 是 Book 的内容面资源。
+message BookContent {
+  string text = 1;
+  bytes  cover_image = 2;
+}

@@ -1,0 +1,80 @@
+// (-- api-linter: core::0131::response-message-name=disabled --)
+// (-- api-linter: core::0131::request-name-field=disabled --)
+// (-- api-linter: core::0133::response-message-name=disabled --)
+// (-- api-linter: core::0133::request-parent-field=disabled --)
+// (-- api-linter: core::0133::field-numbers=disabled --)
+// (-- api-linter: core::0134::response-message-name=disabled --)
+// (-- api-linter: core::0134::request-unknown-fields=disabled --)
+// (-- api-linter: core::0135::request-name-field=disabled --)
+// (-- api-linter: core::0231::response-message-name=disabled --)
+// (-- api-linter: core::0231::method-name=disabled --)
+syntax = "proto3";
+package demo.business.book.library_service;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/field_mask.proto";
+import "demo/business/book/book.proto";
+
+option go_package = "github.com/acme/demo-book/generated/go/library_service;library_service";
+
+service LibraryService {
+  rpc CreateBook(CreateBookRequest) returns (CreateBookResponse);
+  rpc DeleteBook(DeleteBookRequest) returns (google.protobuf.Empty);
+  rpc DeleteBookSoft(DeleteBookSoftRequest) returns (google.protobuf.Empty);
+  rpc GetBookMeta(GetBookMetaRequest) returns (GetBookMetaResponse);
+  rpc BatchGetBookMetas(BatchGetBookMetasRequest) returns (BatchGetBookMetasResponse);
+  rpc ListBookMetas(ListBookMetasRequest) returns (ListBookMetasResponse);
+  rpc UpdateBookMeta(UpdateBookMetaRequest) returns (UpdateBookMetaResponse);
+  rpc GetBookContent(GetBookContentRequest) returns (GetBookContentResponse);
+  rpc UpdateBookContent(UpdateBookContentRequest) returns (google.protobuf.Empty);
+}
+
+// ===== 实体级 Create：各资源字段可选，支持部分创建 =====
+message CreateBookRequest {
+  demo.business.book.BookMeta    meta    = 1;
+  demo.business.book.BookContent content = 2;
+}
+message CreateBookResponse { demo.business.book.BookId key = 1; }
+
+message DeleteBookRequest     { demo.business.book.BookId key = 1; }
+message DeleteBookSoftRequest { demo.business.book.BookId key = 1; }
+
+// ===== 资源级 · meta（STRONG/U64）=====
+message GetBookMetaRequest  { demo.business.book.BookId key = 1; }
+message GetBookMetaResponse {
+  demo.business.book.BookMeta book_meta = 1;
+  uint64 version = 2;
+}
+
+message BatchGetBookMetasRequest  { repeated demo.business.book.BookId keys = 1; }
+message BatchGetBookMetasResponse { repeated demo.business.book.BookMeta metas = 1; }
+
+message ListBookMetasRequest {
+  int32  page_size  = 1;
+  string page_token = 2;
+  string filter     = 3;
+  string order_by   = 4;
+}
+message ListBookMetasResponse {
+  repeated demo.business.book.BookMeta metas = 1;
+  string next_page_token = 2;
+  int32  total_size = 3;
+}
+
+message UpdateBookMetaRequest {
+  demo.business.book.BookMeta         book_meta   = 1;
+  demo.business.book.BookId           key         = 2;
+  google.protobuf.FieldMask             update_mask = 3;
+  uint64                                version     = 4;
+}
+message UpdateBookMetaResponse { uint64 version = 1; }
+
+// ===== 资源级 · content（NONE）=====
+message GetBookContentRequest  { demo.business.book.BookId key = 1; }
+message GetBookContentResponse { demo.business.book.BookContent book_content = 1; }
+
+message UpdateBookContentRequest {
+  demo.business.book.BookContent book_content = 1;
+  demo.business.book.BookId      key          = 2;
+  google.protobuf.FieldMask        update_mask  = 3;
+}

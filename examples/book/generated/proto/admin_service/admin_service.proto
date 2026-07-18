@@ -1,0 +1,24 @@
+// (-- api-linter: core::0231::response-message-name=disabled --)
+// (-- api-linter: core::0231::method-name=disabled --)
+syntax = "proto3";
+package demo.business.book.admin_service;
+
+import "demo/business/book/book.proto";
+
+option go_package = "github.com/acme/demo-book/generated/go/admin_service;admin_service";
+
+service AdminService {
+  rpc ListBookMetas(ListBookMetasRequest) returns (ListBookMetasResponse);
+}
+
+message ListBookMetasRequest {
+  int32  page_size  = 1;
+  string page_token = 2;
+  string filter     = 3;
+  string order_by   = 4;
+}
+message ListBookMetasResponse {
+  repeated demo.business.book.BookMeta metas = 1;
+  string next_page_token = 2;
+  int32  total_size = 3;
+}
