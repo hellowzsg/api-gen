@@ -1,9 +1,9 @@
 ## 1. 项目骨架与 CLI 框架 <!-- 轻量任务组：跳过独立审查，变更纳入后续任务组统一审查 -->
 
-- [ ] 1.1 初始化 Go module 与项目结构 <!-- 非 TDD 任务 -->
-  - [ ] 1.1.1 执行变更：`go.mod`、`cmd/apigen/main.go`、`internal/cli/`（cobra CLI 框架，注册 generate/build/dep/entity 子命令骨架）、`README.md`
-  - [ ] 1.1.2 验证无回归（运行：`go build ./...`，确认编译通过）
-  - [ ] 1.1.3 检查：确认 go.mod 含 protocompile/go-git 依赖，CLI 骨架子命令注册完整
+- [x] 1.1 初始化 Go module 与项目结构 <!-- 非 TDD 任务 -->
+  - [x] 1.1.1 执行变更：`go.mod`、`cmd/apigen/main.go`、`internal/cli/`（cobra CLI 框架，注册 generate/build/dep/entity 子命令骨架）、`README.md`
+  - [x] 1.1.2 验证无回归（运行：`go build ./...`，确认编译通过）
+  - [x] 1.1.3 检查：确认 go.mod 含 protocompile/go-git 依赖，CLI 骨架子命令注册完整
 
 ## 2. YAML schema 解析与校验
 
