@@ -120,35 +120,35 @@
 
 ## 5. 编译与后置校验
 
-- [ ] 5.1 编译 subprocess（protoc-gen-go/go-grpc） <!-- TDD 任务 -->
-  - [ ] 5.1.1 写失败测试：`internal/build/compiler_test.go`（测试 CodeGeneratorRequest 组装、subprocess 调用 protoc-gen-go/go-grpc、插件未安装检测、go install 自动安装、版本一致性校验、插件崩溃错误处理、gofmt 整理）
-  - [ ] 5.1.2 验证测试失败（运行：`go test ./internal/build/ -run TestCompiler -v`，确认失败）
-  - [ ] 5.1.3 写最小实现：`internal/build/compiler.go`（CodeGeneratorRequest 组装、subprocess 调用、插件管理、CodeGeneratorResponse 解析落盘、gofmt）
-  - [ ] 5.1.4 验证测试通过（运行：`go test ./internal/build/ -run TestCompiler -v`，确认通过）
-  - [ ] 5.1.5 重构：提取插件管理器、统一 subprocess 调用封装
+- [x] 5.1 编译 subprocess（protoc-gen-go/go-grpc） <!-- TDD 任务 -->
+  - [x] 5.1.1 写失败测试：`internal/build/compiler_test.go`（测试 CodeGeneratorRequest 组装、subprocess 调用 protoc-gen-go/go-grpc、插件未安装检测、go install 自动安装、版本一致性校验、插件崩溃错误处理、gofmt 整理）
+  - [x] 5.1.2 验证测试失败（运行：`go test ./internal/build/ -run TestCompiler -v`，确认失败）
+  - [x] 5.1.3 写最小实现：`internal/build/compiler.go`（CodeGeneratorRequest 组装、subprocess 调用、插件管理、CodeGeneratorResponse 解析落盘、gofmt）
+  - [x] 5.1.4 验证测试通过（运行：`go test ./internal/build/ -run TestCompiler -v`，确认通过）
+  - [x] 5.1.5 重构：提取插件管理器、统一 subprocess 调用封装
 
-- [ ] 5.2 build 命令集成（复用 generate FDSet） <!-- TDD 任务 -->
-  - [ ] 5.2.1 写失败测试：`internal/cli/build_test.go`（测试 build 命令端到端：generate + 编译、复用同一 FDSet 零二次解析、产物落盘 generated/go/<service>/、可编译性形式化保证）
-  - [ ] 5.2.2 验证测试失败（运行：`go test ./internal/cli/ -run TestBuild -v`，确认失败）
-  - [ ] 5.2.3 写最小实现：`internal/cli/build.go`（编排 generate + build、FDSet 复用、产物布局）
-  - [ ] 5.2.4 验证测试通过（运行：`go test ./internal/cli/ -run TestBuild -v`，确认通过）
-  - [ ] 5.2.5 重构：提取 FDSet 复用机制、统一产物布局规则
+- [x] 5.2 build 命令集成（复用 generate FDSet） <!-- TDD 任务 -->
+  - [x] 5.2.1 写失败测试：`internal/cli/build_test.go`（测试 build 命令端到端：generate + 编译、复用同一 FDSet 零二次解析、产物落盘 generated/go/<service>/、可编译性形式化保证）
+  - [x] 5.2.2 验证测试失败（运行：`go test ./internal/cli/ -run TestBuild -v`，确认失败）
+  - [x] 5.2.3 写最小实现：`internal/cli/build.go`（编排 generate + build、FDSet 复用、产物布局）
+  - [x] 5.2.4 验证测试通过（运行：`go test ./internal/cli/ -run TestBuild -v`，确认通过）
+  - [x] 5.2.5 重构：提取 FDSet 复用机制、统一产物布局规则
 
-- [ ] 5.3 api-linter 豁免生成与调用 <!-- TDD 任务 -->
-  - [ ] 5.3.1 写失败测试：`internal/lint/linter_test.go`（测试 api-linter 豁免注释按实际触发裁剪、subprocess 调用 api-linter、豁免规则覆盖 core::0131/0133/0134/0135/0231 等、api-linter 未安装处理）
-  - [ ] 5.3.2 验证测试失败（运行：`go test ./internal/lint/ -run TestLinter -v`，确认失败）
-  - [ ] 5.3.3 写最小实现：`internal/lint/linter.go`（豁免规则映射、按触发裁剪、subprocess 调用 api-linter）
-  - [ ] 5.3.4 验证测试通过（运行：`go test ./internal/lint/ -run TestLinter -v`，确认通过）
-  - [ ] 5.3.5 重构：提取豁免规则表、统一 subprocess 调用
+- [x] 5.3 api-linter 豁免生成与调用 <!-- TDD 任务 -->
+  - [x] 5.3.1 写失败测试：`internal/lint/linter_test.go`（测试 api-linter 豁免注释按实际触发裁剪、subprocess 调用 api-linter、豁免规则覆盖 core::0131/0133/0134/0135/0231 等、api-linter 未安装处理）
+  - [x] 5.3.2 验证测试失败（运行：`go test ./internal/lint/ -run TestLinter -v`，确认失败）
+  - [x] 5.3.3 写最小实现：`internal/lint/linter.go`（豁免规则映射、按触发裁剪、subprocess 调用 api-linter）
+  - [x] 5.3.4 验证测试通过（运行：`go test ./internal/lint/ -run TestLinter -v`，确认通过）
+  - [x] 5.3.5 重构：提取豁免规则表、统一 subprocess 调用
 
-- [ ] 5.4 buf breaking 后置校验 <!-- TDD 任务 -->
-  - [ ] 5.4.1 写失败测试：`internal/lint/breaking_test.go`（测试 buf breaking 调用（仅 BSR 依赖时）、buf.yaml breaking 配置、subprocess 调用 buf breaking、无 BSR 依赖时跳过）
-  - [ ] 5.4.2 验证测试失败（运行：`go test ./internal/lint/ -run TestBreaking -v`，确认失败）
-  - [ ] 5.4.3 写最小实现：`internal/lint/breaking.go`（BSR 依赖检测、buf breaking subprocess 调用、结果处理）
-  - [ ] 5.4.4 验证测试通过（运行：`go test ./internal/lint/ -run TestBreaking -v`，确认通过）
-  - [ ] 5.4.5 重构：统一后置校验编排
+- [x] 5.4 buf breaking 后置校验 <!-- TDD 任务 -->
+  - [x] 5.4.1 写失败测试：`internal/lint/breaking_test.go`（测试 buf breaking 调用（仅 BSR 依赖时）、buf.yaml breaking 配置、subprocess 调用 buf breaking、无 BSR 依赖时跳过）
+  - [x] 5.4.2 验证测试失败（运行：`go test ./internal/lint/ -run TestBreaking -v`，确认失败）
+  - [x] 5.4.3 写最小实现：`internal/lint/breaking.go`（BSR 依赖检测、buf breaking subprocess 调用、结果处理）
+  - [x] 5.4.4 验证测试通过（运行：`go test ./internal/lint/ -run TestBreaking -v`，确认通过）
+  - [x] 5.4.5 重构：统一后置校验编排
 
-- [ ] 5.5 代码审查
+- [x] 5.5 代码审查
   - 前置验证：调用 superpowers:verification-before-completion 运行全量测试，确认输出干净后才继续
   - 调用 superpowers:requesting-code-review 审查本任务组所有变更，占位符映射：
     - `{PLAN_OR_REQUIREMENTS}` → `openspec/changes/apigen-core/specs/apigen.md` 和 `openspec/changes/apigen-core/tasks.md`
