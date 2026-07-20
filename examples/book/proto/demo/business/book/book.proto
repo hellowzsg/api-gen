@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package demo.business.book;
 
+import "demo/common/types.proto";
+
 option go_package = "github.com/acme/demo-book/generated/go/demo/business/book;book";
 
 // BookId 是 Book 实体的主键类型。
@@ -14,6 +16,8 @@ message BookMeta {
   string title = 1;
   string author = 2;
   string isbn = 3;
+  // 创建时间，引用 common.Timestamp
+  demo.common.Timestamp create_time = 4;
 }
 
 // BookContent 是 Book 的内容面资源。

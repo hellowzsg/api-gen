@@ -4,13 +4,15 @@
 
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Timestamp } from "../../common/types_pb";
+import { file_demo_common_types } from "../../common/types_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file demo/business/book/book.proto.
  */
 export const file_demo_business_book_book: GenFile = /*@__PURE__*/
-  fileDesc("Ch1kZW1vL2J1c2luZXNzL2Jvb2svYm9vay5wcm90bxISZGVtby5idXNpbmVzcy5ib29rIhQKBkJvb2tJZBIKCgJpZBgBIAEoCSI3CghCb29rTWV0YRINCgV0aXRsZRgBIAEoCRIOCgZhdXRob3IYAiABKAkSDAoEaXNibhgDIAEoCSIwCgtCb29rQ29udGVudBIMCgR0ZXh0GAEgASgJEhMKC2NvdmVyX2ltYWdlGAIgASgMIiUKEkFyY2hpdmVCb29rUmVxdWVzdBIPCgdib29rX2lkGAEgASgJIicKE0FyY2hpdmVCb29rUmVzcG9uc2USEAoIYXJjaGl2ZWQYASABKAhCQFo+Z2l0aHViLmNvbS9hY21lL2RlbW8tYm9vay9nZW5lcmF0ZWQvZ28vZGVtby9idXNpbmVzcy9ib29rO2Jvb2tiBnByb3RvMw");
+  fileDesc("Ch1kZW1vL2J1c2luZXNzL2Jvb2svYm9vay5wcm90bxISZGVtby5idXNpbmVzcy5ib29rIhQKBkJvb2tJZBIKCgJpZBgBIAEoCSJkCghCb29rTWV0YRINCgV0aXRsZRgBIAEoCRIOCgZhdXRob3IYAiABKAkSDAoEaXNibhgDIAEoCRIrCgtjcmVhdGVfdGltZRgEIAEoCzIWLmRlbW8uY29tbW9uLlRpbWVzdGFtcCIwCgtCb29rQ29udGVudBIMCgR0ZXh0GAEgASgJEhMKC2NvdmVyX2ltYWdlGAIgASgMIiUKEkFyY2hpdmVCb29rUmVxdWVzdBIPCgdib29rX2lkGAEgASgJIicKE0FyY2hpdmVCb29rUmVzcG9uc2USEAoIYXJjaGl2ZWQYASABKAhCQFo+Z2l0aHViLmNvbS9hY21lL2RlbW8tYm9vay9nZW5lcmF0ZWQvZ28vZGVtby9idXNpbmVzcy9ib29rO2Jvb2tiBnByb3RvMw", [file_demo_common_types]);
 
 /**
  * @generated from message demo.business.book.BookId
@@ -47,6 +49,11 @@ export type BookMeta = Message<"demo.business.book.BookMeta"> & {
    * @generated from field: string isbn = 3;
    */
   isbn: string;
+
+  /**
+   * @generated from field: demo.common.Timestamp create_time = 4;
+   */
+  createTime?: Timestamp | undefined;
 };
 
 /**

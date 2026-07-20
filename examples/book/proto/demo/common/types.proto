@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package demo.common;
+
+option go_package = "github.com/acme/demo-book/generated/go/demo/common;common";
+
+// Timestamp 是通用的时间戳消息，用于表示精确到毫秒的时间点。
+message Timestamp {
+  int64 seconds = 1;
+  int32 millis = 2;
+}

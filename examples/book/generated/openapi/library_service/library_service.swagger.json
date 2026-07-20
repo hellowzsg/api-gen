@@ -437,6 +437,22 @@
         },
         "isbn": {
           "type": "string"
+        },
+        "create_time": {
+          "$ref": "#/definitions/commonTimestamp"
+        }
+      }
+    },
+    "commonTimestamp": {
+      "type": "object",
+      "properties": {
+        "seconds": {
+          "type": "string",
+          "format": "int64"
+        },
+        "millis": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

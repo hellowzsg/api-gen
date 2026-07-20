@@ -7,6 +7,7 @@
 package book
 
 import (
+	common "github.com/acme/demo-book/generated/go/demo/common"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -70,6 +71,7 @@ type BookMeta struct {
 	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
 	Author        string                 `protobuf:"bytes,2,opt,name=author,proto3" json:"author,omitempty"`
 	Isbn          string                 `protobuf:"bytes,3,opt,name=isbn,proto3" json:"isbn,omitempty"`
+	CreateTime    *common.Timestamp      `protobuf:"bytes,4,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -123,6 +125,13 @@ func (x *BookMeta) GetIsbn() string {
 		return x.Isbn
 	}
 	return ""
+}
+
+func (x *BookMeta) GetCreateTime() *common.Timestamp {
+	if x != nil {
+		return x.CreateTime
+	}
+	return nil
 }
 
 type BookContent struct {
@@ -269,13 +278,15 @@ var File_demo_business_book_book_proto protoreflect.FileDescriptor
 
 const file_demo_business_book_book_proto_rawDesc = "" +
 	"\n" +
-	"\x1ddemo/business/book/book.proto\x12\x12demo.business.book\"\x18\n" +
+	"\x1ddemo/business/book/book.proto\x12\x12demo.business.book\x1a\x17demo/common/types.proto\"\x18\n" +
 	"\x06BookId\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"L\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x85\x01\n" +
 	"\bBookMeta\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x16\n" +
 	"\x06author\x18\x02 \x01(\tR\x06author\x12\x12\n" +
-	"\x04isbn\x18\x03 \x01(\tR\x04isbn\"B\n" +
+	"\x04isbn\x18\x03 \x01(\tR\x04isbn\x127\n" +
+	"\vcreate_time\x18\x04 \x01(\v2\x16.demo.common.TimestampR\n" +
+	"createTime\"B\n" +
 	"\vBookContent\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x1f\n" +
 	"\vcover_image\x18\x02 \x01(\fR\n" +
@@ -304,13 +315,15 @@ var file_demo_business_book_book_proto_goTypes = []any{
 	(*BookContent)(nil),         // 2: demo.business.book.BookContent
 	(*ArchiveBookRequest)(nil),  // 3: demo.business.book.ArchiveBookRequest
 	(*ArchiveBookResponse)(nil), // 4: demo.business.book.ArchiveBookResponse
+	(*common.Timestamp)(nil),    // 5: demo.common.Timestamp
 }
 var file_demo_business_book_book_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	5, // 0: demo.business.book.BookMeta.create_time:type_name -> demo.common.Timestamp
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_demo_business_book_book_proto_init() }
