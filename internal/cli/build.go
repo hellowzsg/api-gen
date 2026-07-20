@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/acme/apigen/internal/build"
 	"github.com/acme/apigen/internal/dep"
@@ -42,17 +43,38 @@ func runBuild(ctx context.Context, apiYAMLPath string) error {
 		return fmt.Errorf("resolve proto for build: %w", err)
 	}
 	seedFiles := collectSeedFiles(cfg, baseDir)
-	// Convert absolute seed paths to import-root-relative so they match
-	// linker.File.Path() keys used inside CollectTransitiveClosure.
-	relSeeds := make([]string, 0, len(seedFiles))
+	// FileToGenerate should contain ONLY the user's own protos —
+	// generated service protos AND local protos declared via
+	// import_protos.path — but NOT remote dependencies (git/BSR) or WKT
+	// (google/api/*, google/protobuf/*).  The transitive closure is
+	// already walked inside BuildCodeGeneratorRequest to populate ProtoFile
+	// (the dependency set passed to plugins).  If google/remote protos end
+	// up in FileToGenerate, plugins emit generated code for them under
+	// generated/<lang>/google/, which is undesirable.
+	fileToGenerate := make([]string, 0, len(seedFiles))
+	// 1. Generated service protos: paths relative to protoOutDir.
 	for _, s := range seedFiles {
 		rel, err := filepath.Rel(protoOutDir, s)
 		if err != nil {
 			rel = s
 		}
-		relSeeds = append(relSeeds, rel)
+		fileToGenerate = append(fileToGenerate, rel)
 	}
-	fileToGenerate := cr.CollectTransitiveClosure(relSeeds)
+	// 2. Local protos from import_protos.path: convert absolute paths to
+	// import-root-relative paths (matching linker.File.Path() keys).
+	if pathResolver != nil {
+		localFiles, _ := pathResolver.ResolveFiles()
+		for _, f := range localFiles {
+			rel := f
+			for _, ip := range importPaths {
+				if relPath, err := filepath.Rel(ip, f); err == nil && !strings.HasPrefix(relPath, "..") {
+					rel = relPath
+					break
+				}
+			}
+			fileToGenerate = append(fileToGenerate, rel)
+		}
+	}
 	goOut := filepath.Join(baseDir, cfg.Settings.Out.Go)
 	openAPIOut := ""
 	if cfg.Settings.Out.OpenAPI != "" {
