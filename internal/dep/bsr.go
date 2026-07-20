@@ -25,13 +25,15 @@ type BSRResolver struct {
 }
 
 // NewBSRResolver creates a BSRResolver.
-func NewBSRResolver(deps []BSRDep, workDir string) *BSRResolver {
-	return &BSRResolver{deps: deps, workDir: workDir, bufCmd: "buf"}
+// cacheDir is the apigen cache root (e.g. ~/.cache/apigen); BSR exports are
+// stored under <cacheDir>/bsr/.
+func NewBSRResolver(deps []BSRDep, workDir, cacheDir string) *BSRResolver {
+	return &BSRResolver{deps: deps, workDir: workDir, cacheDir: cacheDir, bufCmd: "buf"}
 }
 
 // NewBSRResolverWithBufCmd creates a BSRResolver with a custom buf binary path.
-func NewBSRResolverWithBufCmd(deps []BSRDep, workDir, bufCmd string) *BSRResolver {
-	r := NewBSRResolver(deps, workDir)
+func NewBSRResolverWithBufCmd(deps []BSRDep, workDir, cacheDir, bufCmd string) *BSRResolver {
+	r := NewBSRResolver(deps, workDir, cacheDir)
 	r.bufCmd = bufCmd
 	return r
 }
@@ -105,15 +107,17 @@ func (r *BSRResolver) Fetch() ([]string, error) {
 	if output, err := updateCmd.CombinedOutput(); err != nil {
 		return nil, fmt.Errorf("buf dep update failed: %w\n%s", err, string(output))
 	}
-	cacheDir := filepath.Join(r.workDir, ".apigen_cache", "bsr")
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+	bsrCacheDir := filepath.Join(r.cacheDir, "bsr")
+	if err := os.MkdirAll(bsrCacheDir, 0755); err != nil {
 		return nil, fmt.Errorf("create bsr cache dir: %w", err)
 	}
-	r.cacheDir = cacheDir
+	// After Fetch, r.cacheDir points to the bsr subdirectory so that
+	// ImportPaths() can enumerate module export directories.
+	r.cacheDir = bsrCacheDir
 	var importPaths []string
 	seen := make(map[string]bool)
 	for _, d := range r.deps {
-		exportDir := filepath.Join(cacheDir, strings.ReplaceAll(d.Module, "/", "_"))
+		exportDir := filepath.Join(bsrCacheDir, strings.ReplaceAll(d.Module, "/", "_"))
 		exportCmd := exec.Command(r.bufCmd, "export", d.Module, "--output", exportDir)
 		exportCmd.Dir = r.workDir
 		if output, err := exportCmd.CombinedOutput(); err != nil {

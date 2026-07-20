@@ -20,7 +20,7 @@ func runBuild(ctx context.Context, apiYAMLPath string) error {
 		return err
 	}
 	baseDir := filepath.Dir(apiYAMLPath)
-	cacheDir := filepath.Join(baseDir, ".apigen_cache")
+	cacheDir := defaultCacheDir()
 	importPaths, err := resolveDependencies(cfg, baseDir, cacheDir)
 	if err != nil {
 		return err

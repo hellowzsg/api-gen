@@ -41,6 +41,15 @@ func NewGitResolver(dep GitDep, cacheDir string) *GitResolver {
 var gitRefPattern = regexp.MustCompile(`^[a-zA-Z0-9._/:-]+$`)
 
 // Fetch clones the repo and extracts proto files.
+//
+// Cache key strategy (content-addressed, inspired by buf):
+//   - If dep.ResolvedCommit is non-empty (from api.lock), the cache key is
+//     SHA256(URL + ResolvedCommit). Because a commit SHA is immutable, this
+//     guarantees the cached clone always matches the locked content — no
+//     staleness even when Ref is a moving branch like "master".
+//   - If ResolvedCommit is empty (first run, no api.lock yet), fall back to
+//     SHA256(URL + Ref) so the first clone succeeds; after clone we resolve
+//     HEAD and the caller is expected to persist it via WriteAPILock.
 func (r *GitResolver) Fetch() ([]string, error) {
 	if err := validateGitInput(r.dep.URL); err != nil {
 		return nil, fmt.Errorf("git url: %w", err)
@@ -49,7 +58,11 @@ func (r *GitResolver) Fetch() ([]string, error) {
 		return nil, fmt.Errorf("invalid git ref %q: illegal characters", r.dep.Ref)
 	}
 
-	h := sha256.Sum256([]byte(r.dep.URL + r.dep.Ref))
+	key := r.dep.ResolvedCommit
+	if key == "" {
+		key = r.dep.Ref
+	}
+	h := sha256.Sum256([]byte(r.dep.URL + key))
 	r.cloneDir = filepath.Join(r.cacheDir, hex.EncodeToString(h[:])[:16])
 
 	if _, err := os.Stat(r.cloneDir); os.IsNotExist(err) {
@@ -63,6 +76,20 @@ func (r *GitResolver) Fetch() ([]string, error) {
 		return nil, err
 	}
 	r.resolvedCommit = commit
+
+	// If we cloned by ref (no locked commit) but the resolved HEAD differs
+	// from a previously recorded commit, the cache may be stale for moving
+	// refs. For immutability, when ResolvedCommit was provided we additionally
+	// verify the cloned HEAD matches it; mismatch indicates cache corruption.
+	if r.dep.ResolvedCommit != "" && r.dep.ResolvedCommit != commit {
+		// Cache corruption or race: re-clone from scratch.
+		os.RemoveAll(r.cloneDir)
+		if err := r.cloneByCommit(r.dep.ResolvedCommit); err != nil {
+			return nil, err
+		}
+		commit = r.dep.ResolvedCommit
+		r.resolvedCommit = commit
+	}
 
 	subdirPath := r.cloneDir
 	if r.dep.Subdir != "" {
@@ -134,6 +161,27 @@ func (r *GitResolver) clone() error {
 				return fmt.Errorf("git checkout %s: %w\n%s", ref, err, string(output3))
 			}
 		}
+	}
+	return nil
+}
+
+// cloneByCommit performs a full clone and checks out the specific commit SHA.
+// Used when ResolvedCommit is known and the ref-based cache is absent/stale.
+func (r *GitResolver) cloneByCommit(commit string) error {
+	if err := os.MkdirAll(r.cacheDir, 0755); err != nil {
+		return fmt.Errorf("create cache dir: %w", err)
+	}
+	args := []string{"clone", r.dep.URL, r.cloneDir}
+	cmd := exec.Command("git", args...)
+	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	if output, err := cmd.CombinedOutput(); err != nil {
+		os.RemoveAll(r.cloneDir)
+		return fmt.Errorf("git clone failed: %w\n%s", err, string(output))
+	}
+	checkout := exec.Command("git", "checkout", commit)
+	checkout.Dir = r.cloneDir
+	if output, err := checkout.CombinedOutput(); err != nil {
+		return fmt.Errorf("git checkout %s: %w\n%s", commit, err, string(output))
 	}
 	return nil
 }

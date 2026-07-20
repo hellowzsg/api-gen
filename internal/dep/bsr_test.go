@@ -9,7 +9,7 @@ import (
 // TestBSRResolver_BufYAMLGeneration 测试 buf.yaml(v2) 生成。
 func TestBSRResolver_BufYAMLGeneration(t *testing.T) {
 	dir := t.TempDir()
-	r := NewBSRResolver([]BSRDep{{Module: "buf.build/googleapis/googleapis"}}, dir)
+	r := NewBSRResolver([]BSRDep{{Module: "buf.build/googleapis/googleapis"}}, dir, t.TempDir())
 	if err := r.GenerateBufYAML(); err != nil {
 		t.Fatalf("GenerateBufYAML failed: %v", err)
 	}
@@ -29,7 +29,7 @@ func TestBSRResolver_BufYAMLGeneration(t *testing.T) {
 // TestBSRResolver_BufNotInstalled 测试 buf 未安装检测。
 func TestBSRResolver_BufNotInstalled(t *testing.T) {
 	dir := t.TempDir()
-	r := NewBSRResolverWithBufCmd([]BSRDep{{Module: "buf.build/googleapis/googleapis"}}, dir, "/nonexistent/buf")
+	r := NewBSRResolverWithBufCmd([]BSRDep{{Module: "buf.build/googleapis/googleapis"}}, dir, t.TempDir(), "/nonexistent/buf")
 	_, err := r.Fetch()
 	if err == nil {
 		t.Fatal("Fetch should fail when buf not installed")
@@ -64,7 +64,7 @@ func TestBSRResolver_ValidateModule(t *testing.T) {
 // TestBSRResolver_NoDeps 测试无 BSR 依赖时不生成 buf.yaml。
 func TestBSRResolver_NoDeps(t *testing.T) {
 	dir := t.TempDir()
-	r := NewBSRResolver(nil, dir)
+	r := NewBSRResolver(nil, dir, t.TempDir())
 	if err := r.GenerateBufYAML(); err != nil {
 		t.Errorf("GenerateBufYAML with no deps should not error, got: %v", err)
 	}

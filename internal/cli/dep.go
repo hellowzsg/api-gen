@@ -17,19 +17,45 @@ func runDepUpdate(ctx context.Context, apiYAMLPath string) error {
 		return err
 	}
 	baseDir := filepath.Dir(apiYAMLPath)
-	cacheDir := filepath.Join(baseDir, ".apigen_cache")
+	cacheDir := defaultCacheDir()
+	lockPath := filepath.Join(baseDir, "api.lock")
+
+	// Load existing lock so we preserve any previously resolved commits and
+	// only re-fetch when necessary.
+	existing, _ := dep.ReadAPILock(lockPath)
+	commitByURL := make(map[string]string, len(existing))
+	for _, d := range existing {
+		commitByURL[d.URL] = d.ResolvedCommit
+	}
+
+	var updated []dep.GitDep
 	for _, imp := range cfg.ImportProtos {
 		switch {
 		case imp.Git != "":
-			r := dep.NewGitResolver(dep.GitDep{URL: imp.Git, Ref: imp.Ref, Subdir: imp.Subdir}, filepath.Join(cacheDir, "git"))
+			gd := dep.GitDep{URL: imp.Git, Ref: imp.Ref, Subdir: imp.Subdir}
+			if c, ok := commitByURL[imp.Git]; ok {
+				gd.ResolvedCommit = c
+			}
+			r := dep.NewGitResolver(gd, filepath.Join(cacheDir, "git"))
 			if _, err := r.Fetch(); err != nil {
 				return fmt.Errorf("git fetch %s: %w", imp.Git, err)
 			}
+			updated = append(updated, dep.GitDep{
+				URL:            imp.Git,
+				Ref:            imp.Ref,
+				Subdir:         imp.Subdir,
+				ResolvedCommit: r.ResolvedCommit(),
+			})
 		case imp.BSR != "":
-			r := dep.NewBSRResolver([]dep.BSRDep{{Module: imp.BSR, Version: imp.Version}}, baseDir)
+			r := dep.NewBSRResolver([]dep.BSRDep{{Module: imp.BSR, Version: imp.Version}}, baseDir, cacheDir)
 			if _, err := r.Fetch(); err != nil {
 				return fmt.Errorf("bsr fetch %s: %w", imp.BSR, err)
 			}
+		}
+	}
+	if len(updated) > 0 {
+		if err := dep.WriteAPILock(lockPath, updated); err != nil {
+			return fmt.Errorf("write api.lock: %w", err)
 		}
 	}
 	return nil

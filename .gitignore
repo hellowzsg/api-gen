@@ -33,6 +33,3 @@ go.work.sum
 
 ### PreCI ###
 .codecc
-
-### apigen dependency cache (git/BSR remote protos) ###
-.apigen_cache/

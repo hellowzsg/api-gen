@@ -24,7 +24,7 @@ func runGenerate(ctx context.Context, apiYAMLPath string) error {
 		return fmt.Errorf("validate references: %w", err)
 	}
 	baseDir := filepath.Dir(apiYAMLPath)
-	cacheDir := filepath.Join(baseDir, ".apigen_cache")
+	cacheDir := defaultCacheDir()
 	importPaths, err := resolveDependencies(cfg, baseDir, cacheDir)
 	if err != nil {
 		return fmt.Errorf("resolve dependencies: %w", err)
@@ -125,6 +125,14 @@ func buildIR(cfg *apigenyaml.Config, cr *dep.CompositeResolver) (*ir.IR, error) 
 }
 
 func resolveDependencies(cfg *apigenyaml.Config, baseDir, cacheDir string) ([]string, error) {
+	// Load resolved commits from api.lock so git deps use content-addressed
+	// cache keys (URL+commit) instead of moving refs (URL+branch).
+	lockedCommits, _ := dep.ReadAPILock(filepath.Join(baseDir, "api.lock"))
+	commitByURL := make(map[string]string, len(lockedCommits))
+	for _, d := range lockedCommits {
+		commitByURL[d.URL] = d.ResolvedCommit
+	}
+
 	var importPaths []string
 	for _, imp := range cfg.ImportProtos {
 		switch {
@@ -135,14 +143,18 @@ func resolveDependencies(cfg *apigenyaml.Config, baseDir, cacheDir string) ([]st
 			}
 			importPaths = append(importPaths, r.ImportPaths()...)
 		case imp.Git != "":
-			r := dep.NewGitResolver(dep.GitDep{URL: imp.Git, Ref: imp.Ref, Subdir: imp.Subdir}, filepath.Join(cacheDir, "git"))
+			gd := dep.GitDep{URL: imp.Git, Ref: imp.Ref, Subdir: imp.Subdir}
+			if c, ok := commitByURL[imp.Git]; ok {
+				gd.ResolvedCommit = c
+			}
+			r := dep.NewGitResolver(gd, filepath.Join(cacheDir, "git"))
 			paths, err := r.Fetch()
 			if err != nil {
 				return nil, fmt.Errorf("git dependency %q: %w", imp.Git, err)
 			}
 			importPaths = append(importPaths, paths...)
 		case imp.BSR != "":
-			r := dep.NewBSRResolver([]dep.BSRDep{{Module: imp.BSR, Version: imp.Version}}, baseDir)
+			r := dep.NewBSRResolver([]dep.BSRDep{{Module: imp.BSR, Version: imp.Version}}, baseDir, cacheDir)
 			paths, err := r.Fetch()
 			if err != nil {
 				return nil, fmt.Errorf("bsr dependency %q: %w", imp.BSR, err)

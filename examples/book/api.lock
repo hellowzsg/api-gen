@@ -1,0 +1,6 @@
+# api.lock — 由 apigen 自动生成，请勿手改
+git_deps:
+    - url: https://github.com/googleapis/googleapis
+      ref: master
+      subdir: ""
+      resolved_commit: e82c753169134e7eb263394d5e77ba6ec28596c2
