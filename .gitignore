@@ -31,5 +31,8 @@ go.work.sum
 # .idea/
 # .vscode/
 
+# design doc (not tracked)
+design-v2.md
+
 ### PreCI ###
 .codecc
