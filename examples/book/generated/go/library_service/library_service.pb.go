@@ -777,64 +777,64 @@ var File_library_service_library_service_proto protoreflect.FileDescriptor
 
 const file_library_service_library_service_proto_rawDesc = "" +
 	"\n" +
-	"%library_service/library_service.proto\x12$demo.business.book.library_service\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fdemo/business/book/book.proto\"\x84\x01\n" +
-	"\x11CreateBookRequest\x122\n" +
-	"\x04meta\x18\x01 \x01(\v2\x1e.demo.business.book.BookMetaR\x04meta\x12;\n" +
-	"\acontent\x18\x02 \x01(\v2!.demo.business.book.BookContentR\acontent\"D\n" +
-	"\x12CreateBookResponse\x12.\n" +
-	"\x03key\x18\x01 \x01(\v2\x1c.demo.business.book.BookIdR\x03key\"C\n" +
-	"\x11DeleteBookRequest\x12.\n" +
-	"\x03key\x18\x01 \x01(\v2\x1c.demo.business.book.BookIdR\x03key\"G\n" +
-	"\x15DeleteBookSoftRequest\x12.\n" +
-	"\x03key\x18\x01 \x01(\v2\x1c.demo.business.book.BookIdR\x03key\"D\n" +
-	"\x12GetBookMetaRequest\x12.\n" +
-	"\x03key\x18\x01 \x01(\v2\x1c.demo.business.book.BookIdR\x03key\"l\n" +
-	"\x13GetBookMetaResponse\x12;\n" +
-	"\tbook_meta\x18\x01 \x01(\v2\x1e.demo.business.book.BookMetaR\bbookMeta\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\x04R\aversion\"L\n" +
-	"\x18BatchGetBookMetasRequest\x120\n" +
-	"\x04keys\x18\x01 \x03(\v2\x1c.demo.business.book.BookIdR\x04keys\"Q\n" +
-	"\x19BatchGetBookMetasResponse\x124\n" +
-	"\x05metas\x18\x01 \x03(\v2\x1e.demo.business.book.BookMetaR\x05metas\"\x85\x01\n" +
+	"%library_service/library_service.proto\x12\"demo.business.book.library_service\x1a\x1ddemo/business/book/book.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\"\x80\x01\n" +
+	"\x11CreateBookRequest\x120\n" +
+	"\x04meta\x18\x01 \x01(\v2\x1c.demo.business.book.BookMetaR\x04meta\x129\n" +
+	"\acontent\x18\x02 \x01(\v2\x1f.demo.business.book.BookContentR\acontent\"B\n" +
+	"\x12CreateBookResponse\x12,\n" +
+	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"A\n" +
+	"\x11DeleteBookRequest\x12,\n" +
+	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"E\n" +
+	"\x15DeleteBookSoftRequest\x12,\n" +
+	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"B\n" +
+	"\x12GetBookMetaRequest\x12,\n" +
+	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"j\n" +
+	"\x13GetBookMetaResponse\x129\n" +
+	"\tbook_meta\x18\x01 \x01(\v2\x1c.demo.business.book.BookMetaR\bbookMeta\x12\x18\n" +
+	"\aversion\x18\x02 \x01(\x04R\aversion\"J\n" +
+	"\x18BatchGetBookMetasRequest\x12.\n" +
+	"\x04keys\x18\x01 \x03(\v2\x1a.demo.business.book.BookIdR\x04keys\"O\n" +
+	"\x19BatchGetBookMetasResponse\x122\n" +
+	"\x05metas\x18\x01 \x03(\v2\x1c.demo.business.book.BookMetaR\x05metas\"\x85\x01\n" +
 	"\x14ListBookMetasRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x12\x16\n" +
 	"\x06filter\x18\x03 \x01(\tR\x06filter\x12\x19\n" +
-	"\border_by\x18\x04 \x01(\tR\aorderBy\"\x94\x01\n" +
-	"\x15ListBookMetasResponse\x124\n" +
-	"\x05metas\x18\x01 \x03(\v2\x1e.demo.business.book.BookMetaR\x05metas\x12&\n" +
+	"\border_by\x18\x04 \x01(\tR\aorderBy\"\x92\x01\n" +
+	"\x15ListBookMetasResponse\x122\n" +
+	"\x05metas\x18\x01 \x03(\v2\x1c.demo.business.book.BookMetaR\x05metas\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xd2\x01\n" +
-	"\x15UpdateBookMetaRequest\x122\n" +
-	"\x04meta\x18\x01 \x01(\v2\x1e.demo.business.book.BookMetaR\x04meta\x12.\n" +
-	"\x03key\x18\x02 \x01(\v2\x1c.demo.business.book.BookIdR\x03key\x12;\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xce\x01\n" +
+	"\x15UpdateBookMetaRequest\x120\n" +
+	"\x04meta\x18\x01 \x01(\v2\x1c.demo.business.book.BookMetaR\x04meta\x12,\n" +
+	"\x03key\x18\x02 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\x12;\n" +
 	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\x04R\aversion\"2\n" +
 	"\x16UpdateBookMetaResponse\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\x04R\aversion\"G\n" +
-	"\x15GetBookContentRequest\x12.\n" +
-	"\x03key\x18\x01 \x01(\v2\x1c.demo.business.book.BookIdR\x03key\"^\n" +
-	"\x16GetBookContentResponse\x12D\n" +
-	"\fbook_content\x18\x01 \x01(\v2!.demo.business.book.BookContentR\vbookContent\"\x87\x01\n" +
-	"\x18UpdateBookContentRequest\x12;\n" +
-	"\acontent\x18\x01 \x01(\v2!.demo.business.book.BookContentR\acontent\x12.\n" +
-	"\x03key\x18\x02 \x01(\v2\x1c.demo.business.book.BookIdR\x03key2\xfa\r\n" +
-	"\x0eLibraryService\x12\xa8\x01\n" +
+	"\aversion\x18\x01 \x01(\x04R\aversion\"E\n" +
+	"\x15GetBookContentRequest\x12,\n" +
+	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"\\\n" +
+	"\x16GetBookContentResponse\x12B\n" +
+	"\fbook_content\x18\x01 \x01(\v2\x1f.demo.business.book.BookContentR\vbookContent\"\x83\x01\n" +
+	"\x18UpdateBookContentRequest\x129\n" +
+	"\acontent\x18\x01 \x01(\v2\x1f.demo.business.book.BookContentR\acontent\x12,\n" +
+	"\x03key\x18\x02 \x01(\v2\x1a.demo.business.book.BookIdR\x03key2\xd8\r\n" +
+	"\x0eLibraryService\x12\xa4\x01\n" +
 	"\n" +
-	"CreateBook\x127.demo.business.book.library_service.CreateBookRequest\x1a8.demo.business.book.library_service.CreateBookResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/library/LibraryService/book\x12\x8c\x01\n" +
+	"CreateBook\x125.demo.business.book.library_service.CreateBookRequest\x1a6.demo.business.book.library_service.CreateBookResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/library/LibraryService/book\x12\x8a\x01\n" +
 	"\n" +
-	"DeleteBook\x127.demo.business.book.library_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\"-\x82\xd3\xe4\x93\x02'*%/library/LibraryService/book/{key.id}\x12\x99\x01\n" +
-	"\x0eDeleteBookSoft\x12;.demo.business.book.library_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\"2\x82\xd3\xe4\x93\x02,:\x01*\"'/library/LibraryService/book/deleteSoft\x12\xb6\x01\n" +
-	"\vGetBookMeta\x128.demo.business.book.library_service.GetBookMetaRequest\x1a9.demo.business.book.library_service.GetBookMetaResponse\"2\x82\xd3\xe4\x93\x02,\x12*/library/LibraryService/book/{key.id}/meta\x12\xcb\x01\n" +
-	"\x11BatchGetBookMetas\x12>.demo.business.book.library_service.BatchGetBookMetasRequest\x1a?.demo.business.book.library_service.BatchGetBookMetasResponse\"5\x82\xd3\xe4\x93\x02/:\x01*\"*/library/LibraryService/book/meta/batchGet\x12\xb8\x01\n" +
-	"\rListBookMetas\x12:.demo.business.book.library_service.ListBookMetasRequest\x1a;.demo.business.book.library_service.ListBookMetasResponse\".\x82\xd3\xe4\x93\x02(\x12&/library/LibraryService/book/meta/list\x12\xc2\x01\n" +
-	"\x0eUpdateBookMeta\x12;.demo.business.book.library_service.UpdateBookMetaRequest\x1a<.demo.business.book.library_service.UpdateBookMetaResponse\"5\x82\xd3\xe4\x93\x02/:\x01*2*/library/LibraryService/book/{key.id}/meta\x12\xc2\x01\n" +
-	"\x0eGetBookContent\x12;.demo.business.book.library_service.GetBookContentRequest\x1a<.demo.business.book.library_service.GetBookContentResponse\"5\x82\xd3\xe4\x93\x02/\x12-/library/LibraryService/book/{key.id}/content\x12\xa5\x01\n" +
-	"\x11UpdateBookContent\x12>.demo.business.book.library_service.UpdateBookContentRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x022:\x01*2-/library/LibraryService/book/{key.id}/content\x12\x9d\x01\n" +
-	"\vArchiveBook\x12(.demo.business.book.ArchiveBookRequest\x1a).demo.business.book.ArchiveBookResponse\"9\x82\xd3\xe4\x93\x023:\x01*\"./library/LibraryService/book/{book_id}:archiveBJZHgithub.com/acme/demo-book/generated/go/library_service;library_serviceb\x06proto3"
+	"DeleteBook\x125.demo.business.book.library_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\"-\x82\xd3\xe4\x93\x02'*%/library/LibraryService/book/{key.id}\x12\x97\x01\n" +
+	"\x0eDeleteBookSoft\x129.demo.business.book.library_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\"2\x82\xd3\xe4\x93\x02,:\x01*\"'/library/LibraryService/book/deleteSoft\x12\xb2\x01\n" +
+	"\vGetBookMeta\x126.demo.business.book.library_service.GetBookMetaRequest\x1a7.demo.business.book.library_service.GetBookMetaResponse\"2\x82\xd3\xe4\x93\x02,\x12*/library/LibraryService/book/{key.id}/meta\x12\xc7\x01\n" +
+	"\x11BatchGetBookMetas\x12<.demo.business.book.library_service.BatchGetBookMetasRequest\x1a=.demo.business.book.library_service.BatchGetBookMetasResponse\"5\x82\xd3\xe4\x93\x02/:\x01*\"*/library/LibraryService/book/meta/batchGet\x12\xb4\x01\n" +
+	"\rListBookMetas\x128.demo.business.book.library_service.ListBookMetasRequest\x1a9.demo.business.book.library_service.ListBookMetasResponse\".\x82\xd3\xe4\x93\x02(\x12&/library/LibraryService/book/meta/list\x12\xbe\x01\n" +
+	"\x0eUpdateBookMeta\x129.demo.business.book.library_service.UpdateBookMetaRequest\x1a:.demo.business.book.library_service.UpdateBookMetaResponse\"5\x82\xd3\xe4\x93\x02/:\x01*2*/library/LibraryService/book/{key.id}/meta\x12\xbe\x01\n" +
+	"\x0eGetBookContent\x129.demo.business.book.library_service.GetBookContentRequest\x1a:.demo.business.book.library_service.GetBookContentResponse\"5\x82\xd3\xe4\x93\x02/\x12-/library/LibraryService/book/{key.id}/content\x12\xa3\x01\n" +
+	"\x11UpdateBookContent\x12<.demo.business.book.library_service.UpdateBookContentRequest\x1a\x16.google.protobuf.Empty\"8\x82\xd3\xe4\x93\x022:\x01*2-/library/LibraryService/book/{key.id}/content\x12\x99\x01\n" +
+	"\vArchiveBook\x12&.demo.business.book.ArchiveBookRequest\x1a'.demo.business.book.ArchiveBookResponse\"9\x82\xd3\xe4\x93\x023:\x01*\"./library/LibraryService/book/{book_id}:archiveBHZFgithub.com/acme/demo-book/generated/go/library_service;library_serviceb\x06proto3"
 
 var (
 	file_library_service_library_service_proto_rawDescOnce sync.Once

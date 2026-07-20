@@ -269,7 +269,7 @@ var File_demo_business_book_book_proto protoreflect.FileDescriptor
 
 const file_demo_business_book_book_proto_rawDesc = "" +
 	"\n" +
-	"\x1fdemo/business/book/book.proto\x12\x14demo.business.book\"\x18\n" +
+	"\x1ddemo/business/book/book.proto\x12\x12demo.business.book\"\x18\n" +
 	"\x06BookId\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"L\n" +
 	"\bBookMeta\x12\x14\n" +
@@ -283,7 +283,7 @@ const file_demo_business_book_book_proto_rawDesc = "" +
 	"\x12ArchiveBookRequest\x12\x17\n" +
 	"\abook_id\x18\x01 \x01(\tR\x06bookId\"1\n" +
 	"\x13ArchiveBookResponse\x12\x1a\n" +
-	"\barchived\x18\x01 \x01(\bR\barchivedBDZBgithub.com/acme/demo-book/generated/go/demo/business/book;bookb\x06proto3"
+	"\barchived\x18\x01 \x01(\bR\barchivedB@Z>github.com/acme/demo-book/generated/go/demo/business/book;bookb\x06proto3"
 
 var (
 	file_demo_business_book_book_proto_rawDescOnce sync.Once

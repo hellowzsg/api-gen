@@ -549,49 +549,49 @@ var File_admin_service_admin_service_proto protoreflect.FileDescriptor
 
 const file_admin_service_admin_service_proto_rawDesc = "" +
 	"\n" +
-	"!admin_service/admin_service.proto\x12\"demo.business.book.admin_service\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\x1a\x1fdemo/business/book/book.proto\"\x84\x01\n" +
-	"\x11CreateBookRequest\x122\n" +
-	"\x04meta\x18\x01 \x01(\v2\x1e.demo.business.book.BookMetaR\x04meta\x12;\n" +
-	"\acontent\x18\x02 \x01(\v2!.demo.business.book.BookContentR\acontent\"D\n" +
-	"\x12CreateBookResponse\x12.\n" +
-	"\x03key\x18\x01 \x01(\v2\x1c.demo.business.book.BookIdR\x03key\"C\n" +
-	"\x11DeleteBookRequest\x12.\n" +
-	"\x03key\x18\x01 \x01(\v2\x1c.demo.business.book.BookIdR\x03key\"G\n" +
-	"\x15DeleteBookSoftRequest\x12.\n" +
-	"\x03key\x18\x01 \x01(\v2\x1c.demo.business.book.BookIdR\x03key\"D\n" +
-	"\x12GetBookMetaRequest\x12.\n" +
-	"\x03key\x18\x01 \x01(\v2\x1c.demo.business.book.BookIdR\x03key\"l\n" +
-	"\x13GetBookMetaResponse\x12;\n" +
-	"\tbook_meta\x18\x01 \x01(\v2\x1e.demo.business.book.BookMetaR\bbookMeta\x12\x18\n" +
+	"!admin_service/admin_service.proto\x12 demo.business.book.admin_service\x1a\x1ddemo/business/book/book.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a google/protobuf/field_mask.proto\"\x80\x01\n" +
+	"\x11CreateBookRequest\x120\n" +
+	"\x04meta\x18\x01 \x01(\v2\x1c.demo.business.book.BookMetaR\x04meta\x129\n" +
+	"\acontent\x18\x02 \x01(\v2\x1f.demo.business.book.BookContentR\acontent\"B\n" +
+	"\x12CreateBookResponse\x12,\n" +
+	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"A\n" +
+	"\x11DeleteBookRequest\x12,\n" +
+	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"E\n" +
+	"\x15DeleteBookSoftRequest\x12,\n" +
+	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"B\n" +
+	"\x12GetBookMetaRequest\x12,\n" +
+	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"j\n" +
+	"\x13GetBookMetaResponse\x129\n" +
+	"\tbook_meta\x18\x01 \x01(\v2\x1c.demo.business.book.BookMetaR\bbookMeta\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x04R\aversion\"\x85\x01\n" +
 	"\x14ListBookMetasRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x12\x16\n" +
 	"\x06filter\x18\x03 \x01(\tR\x06filter\x12\x19\n" +
-	"\border_by\x18\x04 \x01(\tR\aorderBy\"\x94\x01\n" +
-	"\x15ListBookMetasResponse\x124\n" +
-	"\x05metas\x18\x01 \x03(\v2\x1e.demo.business.book.BookMetaR\x05metas\x12&\n" +
+	"\border_by\x18\x04 \x01(\tR\aorderBy\"\x92\x01\n" +
+	"\x15ListBookMetasResponse\x122\n" +
+	"\x05metas\x18\x01 \x03(\v2\x1c.demo.business.book.BookMetaR\x05metas\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
 	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xd2\x01\n" +
-	"\x15UpdateBookMetaRequest\x122\n" +
-	"\x04meta\x18\x01 \x01(\v2\x1e.demo.business.book.BookMetaR\x04meta\x12.\n" +
-	"\x03key\x18\x02 \x01(\v2\x1c.demo.business.book.BookIdR\x03key\x12;\n" +
+	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xce\x01\n" +
+	"\x15UpdateBookMetaRequest\x120\n" +
+	"\x04meta\x18\x01 \x01(\v2\x1c.demo.business.book.BookMetaR\x04meta\x12,\n" +
+	"\x03key\x18\x02 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\x12;\n" +
 	"\vupdate_mask\x18\x03 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\x04R\aversion\"2\n" +
 	"\x16UpdateBookMetaResponse\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\x04R\aversion2\xfd\a\n" +
-	"\fAdminService\x12\xa2\x01\n" +
+	"\aversion\x18\x01 \x01(\x04R\aversion2\xe9\a\n" +
+	"\fAdminService\x12\x9e\x01\n" +
 	"\n" +
-	"CreateBook\x125.demo.business.book.admin_service.CreateBookRequest\x1a6.demo.business.book.admin_service.CreateBookResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/library/AdminService/book\x12\x88\x01\n" +
+	"CreateBook\x123.demo.business.book.admin_service.CreateBookRequest\x1a4.demo.business.book.admin_service.CreateBookResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/library/AdminService/book\x12\x86\x01\n" +
 	"\n" +
-	"DeleteBook\x125.demo.business.book.admin_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\"+\x82\xd3\xe4\x93\x02%*#/library/AdminService/book/{key.id}\x12\x95\x01\n" +
-	"\x0eDeleteBookSoft\x129.demo.business.book.admin_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\"0\x82\xd3\xe4\x93\x02*:\x01*\"%/library/AdminService/book/deleteSoft\x12\xb0\x01\n" +
-	"\vGetBookMeta\x126.demo.business.book.admin_service.GetBookMetaRequest\x1a7.demo.business.book.admin_service.GetBookMetaResponse\"0\x82\xd3\xe4\x93\x02*\x12(/library/AdminService/book/{key.id}/meta\x12\xb2\x01\n" +
-	"\rListBookMetas\x128.demo.business.book.admin_service.ListBookMetasRequest\x1a9.demo.business.book.admin_service.ListBookMetasResponse\",\x82\xd3\xe4\x93\x02&\x12$/library/AdminService/book/meta/list\x12\xbc\x01\n" +
-	"\x0eUpdateBookMeta\x129.demo.business.book.admin_service.UpdateBookMetaRequest\x1a:.demo.business.book.admin_service.UpdateBookMetaResponse\"3\x82\xd3\xe4\x93\x02-:\x01*2(/library/AdminService/book/{key.id}/metaBFZDgithub.com/acme/demo-book/generated/go/admin_service;admin_serviceb\x06proto3"
+	"DeleteBook\x123.demo.business.book.admin_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\"+\x82\xd3\xe4\x93\x02%*#/library/AdminService/book/{key.id}\x12\x93\x01\n" +
+	"\x0eDeleteBookSoft\x127.demo.business.book.admin_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\"0\x82\xd3\xe4\x93\x02*:\x01*\"%/library/AdminService/book/deleteSoft\x12\xac\x01\n" +
+	"\vGetBookMeta\x124.demo.business.book.admin_service.GetBookMetaRequest\x1a5.demo.business.book.admin_service.GetBookMetaResponse\"0\x82\xd3\xe4\x93\x02*\x12(/library/AdminService/book/{key.id}/meta\x12\xae\x01\n" +
+	"\rListBookMetas\x126.demo.business.book.admin_service.ListBookMetasRequest\x1a7.demo.business.book.admin_service.ListBookMetasResponse\",\x82\xd3\xe4\x93\x02&\x12$/library/AdminService/book/meta/list\x12\xb8\x01\n" +
+	"\x0eUpdateBookMeta\x127.demo.business.book.admin_service.UpdateBookMetaRequest\x1a8.demo.business.book.admin_service.UpdateBookMetaResponse\"3\x82\xd3\xe4\x93\x02-:\x01*2(/library/AdminService/book/{key.id}/metaBDZBgithub.com/acme/demo-book/generated/go/admin_service;admin_serviceb\x06proto3"
 
 var (
 	file_admin_service_admin_service_proto_rawDescOnce sync.Once
