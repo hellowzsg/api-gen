@@ -15,6 +15,10 @@ import (
 //     - macOS/Linux: $HOME/.cache/apigen
 //     - Windows:     %LocalAppData%/apigen
 //
+// The returned path is the cache ROOT; resolvers append a version directory
+// (e.g. ~/.cache/apigen/v1/module-proxy/...) so that bumping
+// dep.CacheVersion invalidates old caches without manual cleanup.
+//
 // The returned path is NOT created; callers (resolvers) create it on demand.
 func defaultCacheDir() string {
 	if v := os.Getenv("APIGEN_CACHE_DIR"); v != "" {

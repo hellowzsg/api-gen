@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -285,5 +286,108 @@ func TestGitResolver_LockRoundTrip(t *testing.T) {
 	}
 	if r2.ResolvedCommit() != locked[0].ResolvedCommit {
 		t.Errorf("ResolvedCommit = %q, want %q", r2.ResolvedCommit(), locked[0].ResolvedCommit)
+	}
+}
+
+// TestGitCacheSubpath verifies that human-readable host/owner/repo paths are
+// extracted from various git URL forms, mirroring buf's module-proxy layout.
+func TestGitCacheSubpath(t *testing.T) {
+	cases := []struct {
+		name string
+		url  string
+		want []string
+	}{
+		{"https with .git", "https://github.com/googleapis/googleapis.git", []string{"github.com", "googleapis", "googleapis"}},
+		{"https without .git", "https://github.com/googleapis/googleapis", []string{"github.com", "googleapis", "googleapis"}},
+		{"http", "http://example.com/owner/repo.git", []string{"example.com", "owner", "repo"}},
+		{"scp-style", "git@github.com:owner/repo.git", []string{"github.com", "owner", "repo"}},
+		{"ssh with userinfo", "ssh://git@gitlab.com/owner/repo.git", []string{"gitlab.com", "owner", "repo"}},
+		{"ssh with port", "ssh://git@gitlab.com:2222/owner/repo.git", []string{"gitlab.com", "owner", "repo"}},
+		{"https with port", "https://gitea.example.com:3000/owner/repo.git", []string{"gitea.example.com", "owner", "repo"}},
+		{"deep path truncated", "https://github.com/owner/repo/sub/deep.git", []string{"github.com", "owner", "repo"}},
+		// Bare local paths (used in tests) cannot be parsed → nil fallback.
+		{"local bare path", "/tmp/test/remote.git", nil},
+		{"local relative", "remote.git", nil},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := gitCacheSubpath(tc.url)
+			if !equalSlices(got, tc.want) {
+				t.Errorf("gitCacheSubpath(%q) = %v, want %v", tc.url, got, tc.want)
+			}
+		})
+	}
+}
+
+func equalSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// TestGitResolver_BufStyleCacheLayout verifies that computeCloneDir produces
+// buf-style module-proxy paths:
+//
+//	<cacheDir>/<version>/module-proxy/commit/<host>/<owner>/<repo>/<commit>
+//	<cacheDir>/<version>/module-proxy/remote/<host>/<owner>/<repo>/<ref>
+//	<cacheDir>/<version>/module-proxy/local/<hash>   (fallback)
+func TestGitResolver_BufStyleCacheLayout(t *testing.T) {
+	cacheDir := "/home/user/.cache/apigen"
+	url := "https://github.com/acme/example.git"
+
+	// Commit-keyed (immutable).
+	r1 := NewGitResolver(GitDep{
+		URL:            url,
+		Ref:            "main",
+		ResolvedCommit: "abc123def456",
+	}, cacheDir)
+	got := r1.computeCloneDir()
+	want := filepath.Join(cacheDir, CacheVersion, "module-proxy", "commit",
+		"github.com", "acme", "example", "abc123def456")
+	if got != want {
+		t.Errorf("commit-keyed cloneDir:\n  got  %q\n  want %q", got, want)
+	}
+
+	// Ref-keyed (moving ref).
+	r2 := NewGitResolver(GitDep{
+		URL: url,
+		Ref: "main",
+	}, cacheDir)
+	got = r2.computeCloneDir()
+	want = filepath.Join(cacheDir, CacheVersion, "module-proxy", "remote",
+		"github.com", "acme", "example", "main")
+	if got != want {
+		t.Errorf("ref-keyed cloneDir:\n  got  %q\n  want %q", got, want)
+	}
+
+	// Ref with slashes (e.g. "feature/foo") is sanitised.
+	r3 := NewGitResolver(GitDep{
+		URL: url,
+		Ref: "feature/foo",
+	}, cacheDir)
+	got = r3.computeCloneDir()
+	// Slashes are stripped by sanitisePathSegment, producing "featurefoo".
+	want = filepath.Join(cacheDir, CacheVersion, "module-proxy", "remote",
+		"github.com", "acme", "example", "featurefoo")
+	if got != want {
+		t.Errorf("ref-with-slash cloneDir:\n  got  %q\n  want %q", got, want)
+	}
+
+	// Local path fallback (no host/owner/repo).
+	r4 := NewGitResolver(GitDep{
+		URL: "/tmp/remote.git",
+		Ref: "main",
+	}, cacheDir)
+	got = r4.computeCloneDir()
+	// Must be under .../module-proxy/local/<hash>.
+	prefix := filepath.Join(cacheDir, CacheVersion, "module-proxy", "local") + "/"
+	if !strings.HasPrefix(got, prefix) {
+		t.Errorf("local fallback cloneDir:\n  got  %q\n  want prefix %q", got, prefix)
 	}
 }

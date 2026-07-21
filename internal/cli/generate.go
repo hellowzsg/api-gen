@@ -147,7 +147,7 @@ func resolveDependencies(cfg *apigenyaml.Config, baseDir, cacheDir string) ([]st
 			if c, ok := commitByURL[imp.Git]; ok {
 				gd.ResolvedCommit = c
 			}
-			r := dep.NewGitResolver(gd, filepath.Join(cacheDir, "git"))
+			r := dep.NewGitResolver(gd, cacheDir)
 			paths, err := r.Fetch()
 			if err != nil {
 				return nil, fmt.Errorf("git dependency %q: %w", imp.Git, err)

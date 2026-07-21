@@ -36,7 +36,7 @@ func runDepUpdate(ctx context.Context, apiYAMLPath string) error {
 			if c, ok := commitByURL[imp.Git]; ok {
 				gd.ResolvedCommit = c
 			}
-			r := dep.NewGitResolver(gd, filepath.Join(cacheDir, "git"))
+			r := dep.NewGitResolver(gd, cacheDir)
 			if _, err := r.Fetch(); err != nil {
 				return fmt.Errorf("git fetch %s: %w", imp.Git, err)
 			}

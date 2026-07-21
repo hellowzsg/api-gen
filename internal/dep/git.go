@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io/fs"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,6 +14,15 @@ import (
 
 	"gopkg.in/yaml.v3"
 )
+
+// CacheVersion is the cache layout version. Bumping this invalidates all
+// existing caches and forces a fresh fetch, mirroring buf's cache version
+// directory (e.g. ~/.cache/buf/<version>/...).
+const CacheVersion = "v1"
+
+// moduleProxyDir is the sub-namespace under <cacheDir>/<version>/ that holds
+// git dependency clones, mirroring buf's "module-proxy" directory.
+const moduleProxyDir = "module-proxy"
 
 // GitDep declares a git proto dependency.
 type GitDep struct {
@@ -42,14 +52,27 @@ var gitRefPattern = regexp.MustCompile(`^[a-zA-Z0-9._/:-]+$`)
 
 // Fetch clones the repo and extracts proto files.
 //
-// Cache key strategy (content-addressed, inspired by buf):
-//   - If dep.ResolvedCommit is non-empty (from api.lock), the cache key is
-//     SHA256(URL + ResolvedCommit). Because a commit SHA is immutable, this
-//     guarantees the cached clone always matches the locked content — no
-//     staleness even when Ref is a moving branch like "master".
-//   - If ResolvedCommit is empty (first run, no api.lock yet), fall back to
-//     SHA256(URL + Ref) so the first clone succeeds; after clone we resolve
-//     HEAD and the caller is expected to persist it via WriteAPILock.
+// Cache layout (mirrors buf's module-proxy structure):
+//
+//	<cacheDir>/<CacheVersion>/module-proxy/commit/<host>/<owner>/<repo>/<commit>
+//	<cacheDir>/<CacheVersion>/module-proxy/remote/<host>/<owner>/<repo>/<sanitised-ref>
+//
+// The "commit" namespace holds immutable, content-addressed clones keyed by
+// the full commit SHA (from api.lock). Because a commit SHA is immutable,
+// this guarantees the cached clone always matches the locked content — no
+// staleness even when Ref is a moving branch like "master".
+//
+// The "remote" namespace holds ref-keyed clones used during the first run
+// (before api.lock exists). After cloning we resolve HEAD and the caller is
+// expected to persist it via WriteAPILock so subsequent runs use the
+// immutable "commit" namespace.
+//
+// If the git URL cannot be parsed into host/owner/repo (e.g. a bare local
+// filesystem path used in tests), the layout falls back to:
+//
+//	<cacheDir>/<CacheVersion>/module-proxy/local/<short-hash>
+//
+// where <short-hash> = SHA256(URL+key)[:16] for disambiguation.
 func (r *GitResolver) Fetch() ([]string, error) {
 	if err := validateGitInput(r.dep.URL); err != nil {
 		return nil, fmt.Errorf("git url: %w", err)
@@ -58,16 +81,17 @@ func (r *GitResolver) Fetch() ([]string, error) {
 		return nil, fmt.Errorf("invalid git ref %q: illegal characters", r.dep.Ref)
 	}
 
-	key := r.dep.ResolvedCommit
-	if key == "" {
-		key = r.dep.Ref
-	}
-	h := sha256.Sum256([]byte(r.dep.URL + key))
-	r.cloneDir = filepath.Join(r.cacheDir, hex.EncodeToString(h[:])[:16])
+	r.cloneDir = r.computeCloneDir()
 
 	if _, err := os.Stat(r.cloneDir); os.IsNotExist(err) {
-		if err := r.clone(); err != nil {
-			return nil, err
+		if r.dep.ResolvedCommit != "" {
+			if err := r.cloneByCommit(r.dep.ResolvedCommit); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := r.clone(); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -130,8 +154,45 @@ func (r *GitResolver) Fetch() ([]string, error) {
 	return r.importPaths, nil
 }
 
+// computeCloneDir builds the cache directory path for this dependency,
+// following buf's module-proxy layout. See Fetch docs for the full spec.
+func (r *GitResolver) computeCloneDir() string {
+	base := filepath.Join(r.cacheDir, CacheVersion, moduleProxyDir)
+	subpath := gitCacheSubpath(r.dep.URL)
+
+	// Fallback for unparseable URLs (e.g. local filesystem paths in tests):
+	// use a flat hash under the "local" namespace.
+	if len(subpath) == 0 {
+		key := r.dep.ResolvedCommit
+		if key == "" {
+			key = r.dep.Ref
+		}
+		h := sha256Short(r.dep.URL + key)
+		return filepath.Join(base, "local", h)
+	}
+
+	if r.dep.ResolvedCommit != "" {
+		// Immutable, content-addressed by commit SHA.
+		return filepath.Join(append([]string{base, "commit"}, append(subpath, r.dep.ResolvedCommit)...)...)
+	}
+
+	// Ref-keyed (moving ref). Sanitise the ref for filesystem safety.
+	ref := r.dep.Ref
+	if ref == "" {
+		ref = "HEAD"
+	}
+	sanitisedRef := sanitisePathSegment(ref)
+	return filepath.Join(append([]string{base, "remote"}, append(subpath, sanitisedRef)...)...)
+}
+
+// sha256Short returns the first 16 hex characters of SHA256(s).
+func sha256Short(s string) string {
+	h := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(h[:])[:16]
+}
+
 func (r *GitResolver) clone() error {
-	if err := os.MkdirAll(r.cacheDir, 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(r.cloneDir), 0755); err != nil {
 		return fmt.Errorf("create cache dir: %w", err)
 	}
 	ref := r.dep.Ref
@@ -168,7 +229,7 @@ func (r *GitResolver) clone() error {
 // cloneByCommit performs a full clone and checks out the specific commit SHA.
 // Used when ResolvedCommit is known and the ref-based cache is absent/stale.
 func (r *GitResolver) cloneByCommit(commit string) error {
-	if err := os.MkdirAll(r.cacheDir, 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(r.cloneDir), 0755); err != nil {
 		return fmt.Errorf("create cache dir: %w", err)
 	}
 	args := []string{"clone", r.dep.URL, r.cloneDir}
@@ -219,6 +280,106 @@ func validateGitInput(url string) error {
 		}
 	}
 	return nil
+}
+
+// sanitisePathSegment keeps only filesystem-safe characters ([a-zA-Z0-9._-])
+// and strips a trailing ".git". This is used for both URL-derived cache path
+// segments and git refs, preventing path traversal or illegal characters
+// from reaching the filesystem.
+func sanitisePathSegment(s string) string {
+	s = strings.TrimSuffix(s, ".git")
+	var b strings.Builder
+	for _, ch := range s {
+		if (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+			(ch >= '0' && ch <= '9') || ch == '.' || ch == '-' || ch == '_' {
+			b.WriteRune(ch)
+		}
+	}
+	return b.String()
+}
+
+// gitCacheSubpath parses a git URL and returns a human-readable relative path
+// slice (e.g. ["github.com", "googleapis", "googleapis"]) suitable for nesting
+// under the git cache root. This mirrors buf's module-proxy layout where the
+// cache directory preserves host/owner/repo for debuggability.
+//
+// Supported URL forms:
+//   - https://github.com/owner/repo.git         → ["github.com", "owner", "repo"]
+//   - http://github.com/owner/repo              → ["github.com", "owner", "repo"]
+//   - git@github.com:owner/repo.git             → ["github.com", "owner", "repo"]
+//   - ssh://git@gitlab.com:2222/owner/repo.git  → ["gitlab.com", "owner", "repo"]
+//
+// If the URL cannot be parsed into at least host/owner/repo (e.g. a bare local
+// filesystem path like /tmp/remote.git used in tests), an empty slice is
+// returned and the caller falls back to a flat <short-hash> cache entry.
+func gitCacheSubpath(gitURL string) []string {
+	var host, path string
+
+	// Detect the scheme to decide how to split host from path.
+	switch {
+	case strings.HasPrefix(gitURL, "https://"),
+		strings.HasPrefix(gitURL, "http://"),
+		strings.HasPrefix(gitURL, "ssh://"),
+		strings.HasPrefix(gitURL, "git://"),
+		strings.HasPrefix(gitURL, "ftp://"):
+		// Scheme-based URL: use net/url for robust parsing.
+		// We avoid url.Parse directly because git URLs with ports/userinfo
+		// are handled correctly by it.
+		u, err := url.Parse(gitURL)
+		if err != nil || u.Host == "" {
+			return nil
+		}
+		host = u.Hostname() // strips port and userinfo
+		path = u.Path
+	case strings.Contains(gitURL, "@") && strings.Contains(gitURL, ":"):
+		// SCP-style: user@host:owner/repo.git
+		// Strip userinfo.
+		rest := gitURL
+		if _, after, found := strings.Cut(rest, "@"); found {
+			rest = after
+		}
+		// First ':' separates host from path.
+		if h, p, found := strings.Cut(rest, ":"); found {
+			host = h
+			path = p
+		} else {
+			return nil
+		}
+	default:
+		// Bare local path — not a remote git URL we can decompose.
+		return nil
+	}
+
+	// Strip .git suffix and query/fragment from path.
+	path = strings.TrimSuffix(path, ".git")
+	if i := strings.IndexAny(path, "?#"); i >= 0 {
+		path = path[:i]
+	}
+
+	host = sanitisePathSegment(host)
+	if host == "" {
+		return nil
+	}
+
+	var result []string
+	result = append(result, host)
+	for p := range strings.SplitSeq(strings.Trim(path, "/"), "/") {
+		p = sanitisePathSegment(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+
+	// Need at least host/owner/repo (3 segments) for a meaningful layout.
+	if len(result) < 3 {
+		return nil
+	}
+	// Keep only the first 3 segments (host, owner, repo); deeper paths are
+	// collapsed into the hash suffix to avoid excessively long cache paths.
+	if len(result) > 3 {
+		result = result[:3]
+	}
+	return result
 }
 
 // WriteAPILock writes git dependencies to api.lock file.

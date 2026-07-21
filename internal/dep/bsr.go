@@ -26,7 +26,7 @@ type BSRResolver struct {
 
 // NewBSRResolver creates a BSRResolver.
 // cacheDir is the apigen cache root (e.g. ~/.cache/apigen); BSR exports are
-// stored under <cacheDir>/bsr/.
+// stored under <cacheDir>/<CacheVersion>/module-proxy/bsr/.
 func NewBSRResolver(deps []BSRDep, workDir, cacheDir string) *BSRResolver {
 	return &BSRResolver{deps: deps, workDir: workDir, cacheDir: cacheDir, bufCmd: "buf"}
 }
@@ -107,7 +107,7 @@ func (r *BSRResolver) Fetch() ([]string, error) {
 	if output, err := updateCmd.CombinedOutput(); err != nil {
 		return nil, fmt.Errorf("buf dep update failed: %w\n%s", err, string(output))
 	}
-	bsrCacheDir := filepath.Join(r.cacheDir, "bsr")
+	bsrCacheDir := filepath.Join(r.cacheDir, CacheVersion, moduleProxyDir, "bsr")
 	if err := os.MkdirAll(bsrCacheDir, 0755); err != nil {
 		return nil, fmt.Errorf("create bsr cache dir: %w", err)
 	}
