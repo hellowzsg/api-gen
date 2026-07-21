@@ -1,0 +1,157 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # ---- Job 1: Unit tests for internal packages ----
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Run internal unit tests
+        run: go test ./internal/... -v -count=1
+
+      - name: Run go vet
+        run: go vet ./...
+
+  # ---- Job 2: Verify example proto generation (no plugins required) ----
+  example-generate:
+    name: Example Generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Build apigen CLI
+        run: go build -o /tmp/apigen ./cmd/apigen
+
+      - name: Generate simple example
+        run: /tmp/apigen generate -f examples/simple/api.yaml
+
+      - name: Verify simple example output
+        run: |
+          test -f examples/simple/generated/proto/config_service/config_service.proto
+          grep -q "service ConfigService" examples/simple/generated/proto/config_service/config_service.proto
+          grep -q "rpc GetConfigEntry" examples/simple/generated/proto/config_service/config_service.proto
+          grep -q "rpc UpdateConfigEntry" examples/simple/generated/proto/config_service/config_service.proto
+
+      - name: Generate book example
+        run: /tmp/apigen generate -f examples/book/api.yaml
+
+      - name: Verify book example output
+        run: |
+          test -f examples/book/generated/proto/library_service/library_service.proto
+          test -f examples/book/generated/proto/admin_service/admin_service.proto
+          grep -q "service LibraryService" examples/book/generated/proto/library_service/library_service.proto
+          grep -q "rpc CreateBook" examples/book/generated/proto/library_service/library_service.proto
+          grep -q "rpc ArchiveBook" examples/book/generated/proto/library_service/library_service.proto
+
+      - name: Entity list (simple)
+        run: /tmp/apigen entity list -f examples/simple/api.yaml
+
+      - name: Entity list (book)
+        run: /tmp/apigen entity list -f examples/book/api.yaml
+
+  # ---- Job 3: Build book example with Go plugins + HTTP + OpenAPI ----
+  example-build-book:
+    name: Example Build (book)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Install protoc-gen-go
+        run: go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+
+      - name: Install protoc-gen-go-grpc
+        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+      - name: Install protoc-gen-grpc-gateway
+        run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
+
+      - name: Install protoc-gen-openapiv2
+        run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
+
+      - name: Build apigen CLI
+        run: go build -o /tmp/apigen ./cmd/apigen
+
+      - name: Build book example (generate + compile Go + HTTP + OpenAPI)
+        working-directory: examples/book
+        run: /tmp/apigen build -f api.yaml
+
+      - name: Verify generated Go stubs
+        run: |
+          test -f examples/book/generated/go/library_service/library_service.pb.go
+          test -f examples/book/generated/go/library_service/library_service_grpc.pb.go
+          test -f examples/book/generated/go/library_service/library_service.pb.gw.go
+          test -f examples/book/generated/go/admin_service/admin_service.pb.go
+          test -f examples/book/generated/go/admin_service/admin_service_grpc.pb.go
+          test -f examples/book/generated/go/admin_service/admin_service.pb.gw.go
+          test -f examples/book/generated/go/demo/business/book/book.pb.go
+
+      - name: Verify generated OpenAPI spec
+        run: |
+          test -f examples/book/generated/openapi/library_service/library_service.swagger.json
+          test -f examples/book/generated/openapi/admin_service/admin_service.swagger.json
+
+      - name: Run book e2e tests
+        working-directory: examples/book
+        run: go test -v -count=1 ./...
+
+  # ---- Job 4: Build simple example with Go plugins (P0 only) ----
+  example-build-simple:
+    name: Example Build (simple)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Install protoc-gen-go
+        run: go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+
+      - name: Install protoc-gen-go-grpc
+        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+      - name: Build apigen CLI
+        run: go build -o /tmp/apigen ./cmd/apigen
+
+      - name: Build simple example
+        working-directory: examples/simple
+        run: /tmp/apigen build -f api.yaml
+
+      - name: Verify generated Go stubs
+        run: |
+          test -f examples/simple/generated/go/config_service/config_service.pb.go
+          test -f examples/simple/generated/go/config_service/config_service_grpc.pb.go
+          test -f examples/simple/generated/go/config.pb.go
+
+      - name: Verify no gateway files (P0, no HTTP)
+        run: |
+          if ls examples/simple/generated/go/config_service/*.pb.gw.go 1>/dev/null 2>&1; then
+            echo "ERROR: gateway files should not exist for P0 example"
+            exit 1
+          fi
+          echo "OK: no gateway files (P0 as expected)"

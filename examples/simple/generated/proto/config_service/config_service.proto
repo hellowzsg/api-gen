@@ -1,0 +1,26 @@
+// (-- api-linter: core::0131::response-message-name=disabled --)
+// (-- api-linter: core::0131::request-name-field=disabled --)
+// (-- api-linter: core::0134::response-message-name=disabled --)
+// (-- api-linter: core::0134::request-unknown-fields=disabled --)
+syntax = "proto3";
+package simple.config.config_service;
+
+import "config.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/acme/simple-config/generated/go/config_service;config_service";
+
+service ConfigService {
+  rpc GetConfigEntry(GetConfigEntryRequest) returns (GetConfigEntryResponse);
+  rpc UpdateConfigEntry(UpdateConfigEntryRequest) returns (google.protobuf.Empty);
+}
+
+message GetConfigEntryRequest { simple.config.ConfigId key = 1; }
+message GetConfigEntryResponse {
+  simple.config.ConfigEntry config_entry = 1;
+}
+message UpdateConfigEntryRequest {
+  simple.config.ConfigEntry entry = 1;
+  simple.config.ConfigId key = 2;
+}
+

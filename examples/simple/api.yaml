@@ -1,0 +1,36 @@
+syntax: v1
+
+name: simple.config
+
+import_protos:
+  - path: "proto/**/*.proto"
+
+settings:
+  go_repo: github.com/acme/simple-config
+  out:
+    proto: generated/proto
+    go: generated/go
+
+# 最小可用配置：
+# - 单实体、单资源
+# - 仅 reader{} (Get) + writer.update{} (Update, 无 mask)
+# - 无 Create / Delete / DeleteSoft
+# - 版本 NONE (Update 返回 Empty，无乐观锁)
+# - 无 HTTP / OpenAPI / JS
+entities:
+  - name: config
+    key:
+      type_: ConfigId
+
+    resources:
+      - name: entry
+        type_: ConfigEntry
+        version: { kind: NONE }
+        reader: {}
+        writer:
+          update: {}
+
+services:
+  - name: ConfigService
+    entities:
+      - name: config
