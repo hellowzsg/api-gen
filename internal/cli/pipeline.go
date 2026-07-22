@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/acme/apigen/internal/dep"
-	"github.com/acme/apigen/internal/ir"
-	apigenyaml "github.com/acme/apigen/internal/yaml"
+	"github.com/hellowzsg/api-gen/internal/dep"
+	"github.com/hellowzsg/api-gen/internal/ir"
+	apigenyaml "github.com/hellowzsg/api-gen/internal/yaml"
 )
 
 // Pipeline holds the shared products of the config → resolve → compile → IR

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/acme/apigen/internal/dep"
+	"github.com/hellowzsg/api-gen/internal/dep"
 )
 
 // initTestGitRepo creates a local git repo (bare remote + push) containing

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/acme/apigen/internal/ir"
+	"github.com/hellowzsg/api-gen/internal/ir"
 )
 
 func TestRenderProto_BasicService(t *testing.T) {

@@ -3,7 +3,7 @@ package ir
 import (
 	"testing"
 
-	apigenyaml "github.com/acme/apigen/internal/yaml"
+	apigenyaml "github.com/hellowzsg/api-gen/internal/yaml"
 )
 
 // TestBuildMultiEntity: multiple entities in a single config, each with

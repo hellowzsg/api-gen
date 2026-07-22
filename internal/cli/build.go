@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/acme/apigen/internal/build"
-	"github.com/acme/apigen/internal/dep"
-	"github.com/acme/apigen/internal/ir"
-	apigenyaml "github.com/acme/apigen/internal/yaml"
+	"github.com/hellowzsg/api-gen/internal/build"
+	"github.com/hellowzsg/api-gen/internal/dep"
+	"github.com/hellowzsg/api-gen/internal/ir"
+	apigenyaml "github.com/hellowzsg/api-gen/internal/yaml"
 )
 
 // Test seams: allow tests to count Prepare invocations and capture compiler

@@ -1,4 +1,4 @@
-module github.com/acme/apigen
+module github.com/hellowzsg/api-gen
 
 go 1.24
 

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	apigenyaml "github.com/acme/apigen/internal/yaml"
+	apigenyaml "github.com/hellowzsg/api-gen/internal/yaml"
 )
 
 var validOptionTargets = map[string]bool{

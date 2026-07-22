@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/acme/apigen/internal/ir"
-	apigenyaml "github.com/acme/apigen/internal/yaml"
+	"github.com/hellowzsg/api-gen/internal/ir"
+	apigenyaml "github.com/hellowzsg/api-gen/internal/yaml"
 )
 
 // TestRenderHTTPAnnotation_Format tests the google.api.http option format.

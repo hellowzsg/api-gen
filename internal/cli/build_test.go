@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/acme/apigen/internal/build"
+	"github.com/hellowzsg/api-gen/internal/build"
 )
 
 // TestBuild_EndToEnd tests the build command (generate + compile).

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/acme/apigen/internal/cli"
+	"github.com/hellowzsg/api-gen/internal/cli"
 )
 
 func main() {

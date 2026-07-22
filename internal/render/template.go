@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/acme/apigen/internal/ir"
+	"github.com/hellowzsg/api-gen/internal/ir"
 )
 
 // RenderServiceProto renders a service proto file from IR.

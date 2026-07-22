@@ -8,8 +8,8 @@ import (
 
 	"github.com/bufbuild/protocompile/linker"
 
-	"github.com/acme/apigen/internal/build"
-	apigenyaml "github.com/acme/apigen/internal/yaml"
+	"github.com/hellowzsg/api-gen/internal/build"
+	apigenyaml "github.com/hellowzsg/api-gen/internal/yaml"
 )
 
 // TestPrepare_Basic verifies that Prepare returns the shared pipeline

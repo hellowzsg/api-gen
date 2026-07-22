@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
 
-	apigenyaml "github.com/acme/apigen/internal/yaml"
+	apigenyaml "github.com/hellowzsg/api-gen/internal/yaml"
 )
 
 // strPtr returns a pointer to s.

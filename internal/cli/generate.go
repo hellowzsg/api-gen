@@ -9,10 +9,10 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/acme/apigen/internal/dep"
-	"github.com/acme/apigen/internal/ir"
-	"github.com/acme/apigen/internal/render"
-	apigenyaml "github.com/acme/apigen/internal/yaml"
+	"github.com/hellowzsg/api-gen/internal/dep"
+	"github.com/hellowzsg/api-gen/internal/ir"
+	"github.com/hellowzsg/api-gen/internal/render"
+	apigenyaml "github.com/hellowzsg/api-gen/internal/yaml"
 )
 
 func runGenerate(ctx context.Context, apiYAMLPath string) error {

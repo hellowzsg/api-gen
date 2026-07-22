@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/acme/apigen/internal/ir"
+	"github.com/hellowzsg/api-gen/internal/ir"
 )
 
 // TestRenderProto_DeleteSoft: DeleteSoft RPC rendered with correct signature.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/acme/apigen/internal/ir"
+	"github.com/hellowzsg/api-gen/internal/ir"
 )
 
 // httpRenderContext carries the per-service values needed to resolve HTTP

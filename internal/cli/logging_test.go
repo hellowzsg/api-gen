@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/acme/apigen/internal/build"
+	"github.com/hellowzsg/api-gen/internal/build"
 )
 
 // swapSlog installs a buffer-backed default logger at the given level and

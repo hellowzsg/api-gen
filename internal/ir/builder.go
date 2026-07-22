@@ -8,7 +8,7 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	apigenyaml "github.com/acme/apigen/internal/yaml"
+	apigenyaml "github.com/hellowzsg/api-gen/internal/yaml"
 )
 
 // IR is the intermediate representation for code generation.
