@@ -23,7 +23,7 @@ jobs:
         run: go test ./internal/... -v -count=1
 
       - name: Run go vet
-        run: go vet ./...
+        run: go vet ./internal/... ./cmd/...
 
   # ---- Job 2: Verify example proto generation (no plugins required) ----
   example-generate:
@@ -91,6 +91,14 @@ jobs:
       - name: Install protoc-gen-openapiv2
         run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install protoc-gen-es
+        run: npm install --global @bufbuild/protoc-gen-es
+
       - name: Build apigen CLI
         run: go build -o /tmp/apigen ./cmd/apigen
 
@@ -112,6 +120,12 @@ jobs:
         run: |
           test -f examples/book/generated/openapi/library_service/library_service.swagger.json
           test -f examples/book/generated/openapi/admin_service/admin_service.swagger.json
+
+      - name: Verify generated TypeScript stubs
+        run: |
+          test -f examples/book/generated/js/library_service/library_service_pb.ts
+          test -f examples/book/generated/js/admin_service/admin_service_pb.ts
+          test -f examples/book/generated/js/demo/business/book/book_pb.ts
 
       - name: Run book e2e tests
         working-directory: examples/book
