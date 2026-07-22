@@ -40,10 +40,7 @@ entities:
           list: true
           list_config:
             total_size: true
-          # P2: 逐方法 http 覆盖 — List 用 GET 而非默认 POST
-          http:
-            verb: get
-            path: /library/LibraryService/book/meta/list
+            filter_type: BookMetaFilter
         writer:
           update: { mask: true }
 

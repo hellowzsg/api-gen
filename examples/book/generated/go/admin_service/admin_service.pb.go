@@ -309,7 +309,7 @@ type ListBookMetasRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	Filter        string                 `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
+	Filter        *book.BookMetaFilter   `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
 	OrderBy       string                 `protobuf:"bytes,4,opt,name=order_by,json=orderBy,proto3" json:"order_by,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -359,11 +359,11 @@ func (x *ListBookMetasRequest) GetPageToken() string {
 	return ""
 }
 
-func (x *ListBookMetasRequest) GetFilter() string {
+func (x *ListBookMetasRequest) GetFilter() *book.BookMetaFilter {
 	if x != nil {
 		return x.Filter
 	}
-	return ""
+	return nil
 }
 
 func (x *ListBookMetasRequest) GetOrderBy() string {
@@ -563,12 +563,12 @@ const file_admin_service_admin_service_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"j\n" +
 	"\x13GetBookMetaResponse\x129\n" +
 	"\tbook_meta\x18\x01 \x01(\v2\x1c.demo.business.book.BookMetaR\bbookMeta\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\x04R\aversion\"\x85\x01\n" +
+	"\aversion\x18\x02 \x01(\x04R\aversion\"\xa9\x01\n" +
 	"\x14ListBookMetasRequest\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12\x16\n" +
-	"\x06filter\x18\x03 \x01(\tR\x06filter\x12\x19\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\x12:\n" +
+	"\x06filter\x18\x03 \x01(\v2\".demo.business.book.BookMetaFilterR\x06filter\x12\x19\n" +
 	"\border_by\x18\x04 \x01(\tR\aorderBy\"\x92\x01\n" +
 	"\x15ListBookMetasResponse\x122\n" +
 	"\x05metas\x18\x01 \x03(\v2\x1c.demo.business.book.BookMetaR\x05metas\x12&\n" +
@@ -582,15 +582,15 @@ const file_admin_service_admin_service_proto_rawDesc = "" +
 	"updateMask\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\x04R\aversion\"2\n" +
 	"\x16UpdateBookMetaResponse\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\x04R\aversion2\xe9\a\n" +
+	"\aversion\x18\x01 \x01(\x04R\aversion2\xec\a\n" +
 	"\fAdminService\x12\x9e\x01\n" +
 	"\n" +
 	"CreateBook\x123.demo.business.book.admin_service.CreateBookRequest\x1a4.demo.business.book.admin_service.CreateBookResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/library/AdminService/book\x12\x86\x01\n" +
 	"\n" +
 	"DeleteBook\x123.demo.business.book.admin_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\"+\x82\xd3\xe4\x93\x02%*#/library/AdminService/book/{key.id}\x12\x93\x01\n" +
 	"\x0eDeleteBookSoft\x127.demo.business.book.admin_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\"0\x82\xd3\xe4\x93\x02*:\x01*\"%/library/AdminService/book/deleteSoft\x12\xac\x01\n" +
-	"\vGetBookMeta\x124.demo.business.book.admin_service.GetBookMetaRequest\x1a5.demo.business.book.admin_service.GetBookMetaResponse\"0\x82\xd3\xe4\x93\x02*\x12(/library/AdminService/book/{key.id}/meta\x12\xae\x01\n" +
-	"\rListBookMetas\x126.demo.business.book.admin_service.ListBookMetasRequest\x1a7.demo.business.book.admin_service.ListBookMetasResponse\",\x82\xd3\xe4\x93\x02&\x12$/library/AdminService/book/meta/list\x12\xb8\x01\n" +
+	"\vGetBookMeta\x124.demo.business.book.admin_service.GetBookMetaRequest\x1a5.demo.business.book.admin_service.GetBookMetaResponse\"0\x82\xd3\xe4\x93\x02*\x12(/library/AdminService/book/{key.id}/meta\x12\xb1\x01\n" +
+	"\rListBookMetas\x126.demo.business.book.admin_service.ListBookMetasRequest\x1a7.demo.business.book.admin_service.ListBookMetasResponse\"/\x82\xd3\xe4\x93\x02):\x01*\"$/library/AdminService/book/meta/list\x12\xb8\x01\n" +
 	"\x0eUpdateBookMeta\x127.demo.business.book.admin_service.UpdateBookMetaRequest\x1a8.demo.business.book.admin_service.UpdateBookMetaResponse\"3\x82\xd3\xe4\x93\x02-:\x01*2(/library/AdminService/book/{key.id}/metaBDZBgithub.com/acme/demo-book/generated/go/admin_service;admin_serviceb\x06proto3"
 
 var (
@@ -620,8 +620,9 @@ var file_admin_service_admin_service_proto_goTypes = []any{
 	(*book.BookMeta)(nil),          // 10: demo.business.book.BookMeta
 	(*book.BookContent)(nil),       // 11: demo.business.book.BookContent
 	(*book.BookId)(nil),            // 12: demo.business.book.BookId
-	(*fieldmaskpb.FieldMask)(nil),  // 13: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),          // 14: google.protobuf.Empty
+	(*book.BookMetaFilter)(nil),    // 13: demo.business.book.BookMetaFilter
+	(*fieldmaskpb.FieldMask)(nil),  // 14: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),          // 15: google.protobuf.Empty
 }
 var file_admin_service_admin_service_proto_depIdxs = []int32{
 	10, // 0: demo.business.book.admin_service.CreateBookRequest.meta:type_name -> demo.business.book.BookMeta
@@ -631,27 +632,28 @@ var file_admin_service_admin_service_proto_depIdxs = []int32{
 	12, // 4: demo.business.book.admin_service.DeleteBookSoftRequest.key:type_name -> demo.business.book.BookId
 	12, // 5: demo.business.book.admin_service.GetBookMetaRequest.key:type_name -> demo.business.book.BookId
 	10, // 6: demo.business.book.admin_service.GetBookMetaResponse.book_meta:type_name -> demo.business.book.BookMeta
-	10, // 7: demo.business.book.admin_service.ListBookMetasResponse.metas:type_name -> demo.business.book.BookMeta
-	10, // 8: demo.business.book.admin_service.UpdateBookMetaRequest.meta:type_name -> demo.business.book.BookMeta
-	12, // 9: demo.business.book.admin_service.UpdateBookMetaRequest.key:type_name -> demo.business.book.BookId
-	13, // 10: demo.business.book.admin_service.UpdateBookMetaRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 11: demo.business.book.admin_service.AdminService.CreateBook:input_type -> demo.business.book.admin_service.CreateBookRequest
-	2,  // 12: demo.business.book.admin_service.AdminService.DeleteBook:input_type -> demo.business.book.admin_service.DeleteBookRequest
-	3,  // 13: demo.business.book.admin_service.AdminService.DeleteBookSoft:input_type -> demo.business.book.admin_service.DeleteBookSoftRequest
-	4,  // 14: demo.business.book.admin_service.AdminService.GetBookMeta:input_type -> demo.business.book.admin_service.GetBookMetaRequest
-	6,  // 15: demo.business.book.admin_service.AdminService.ListBookMetas:input_type -> demo.business.book.admin_service.ListBookMetasRequest
-	8,  // 16: demo.business.book.admin_service.AdminService.UpdateBookMeta:input_type -> demo.business.book.admin_service.UpdateBookMetaRequest
-	1,  // 17: demo.business.book.admin_service.AdminService.CreateBook:output_type -> demo.business.book.admin_service.CreateBookResponse
-	14, // 18: demo.business.book.admin_service.AdminService.DeleteBook:output_type -> google.protobuf.Empty
-	14, // 19: demo.business.book.admin_service.AdminService.DeleteBookSoft:output_type -> google.protobuf.Empty
-	5,  // 20: demo.business.book.admin_service.AdminService.GetBookMeta:output_type -> demo.business.book.admin_service.GetBookMetaResponse
-	7,  // 21: demo.business.book.admin_service.AdminService.ListBookMetas:output_type -> demo.business.book.admin_service.ListBookMetasResponse
-	9,  // 22: demo.business.book.admin_service.AdminService.UpdateBookMeta:output_type -> demo.business.book.admin_service.UpdateBookMetaResponse
-	17, // [17:23] is the sub-list for method output_type
-	11, // [11:17] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	13, // 7: demo.business.book.admin_service.ListBookMetasRequest.filter:type_name -> demo.business.book.BookMetaFilter
+	10, // 8: demo.business.book.admin_service.ListBookMetasResponse.metas:type_name -> demo.business.book.BookMeta
+	10, // 9: demo.business.book.admin_service.UpdateBookMetaRequest.meta:type_name -> demo.business.book.BookMeta
+	12, // 10: demo.business.book.admin_service.UpdateBookMetaRequest.key:type_name -> demo.business.book.BookId
+	14, // 11: demo.business.book.admin_service.UpdateBookMetaRequest.update_mask:type_name -> google.protobuf.FieldMask
+	0,  // 12: demo.business.book.admin_service.AdminService.CreateBook:input_type -> demo.business.book.admin_service.CreateBookRequest
+	2,  // 13: demo.business.book.admin_service.AdminService.DeleteBook:input_type -> demo.business.book.admin_service.DeleteBookRequest
+	3,  // 14: demo.business.book.admin_service.AdminService.DeleteBookSoft:input_type -> demo.business.book.admin_service.DeleteBookSoftRequest
+	4,  // 15: demo.business.book.admin_service.AdminService.GetBookMeta:input_type -> demo.business.book.admin_service.GetBookMetaRequest
+	6,  // 16: demo.business.book.admin_service.AdminService.ListBookMetas:input_type -> demo.business.book.admin_service.ListBookMetasRequest
+	8,  // 17: demo.business.book.admin_service.AdminService.UpdateBookMeta:input_type -> demo.business.book.admin_service.UpdateBookMetaRequest
+	1,  // 18: demo.business.book.admin_service.AdminService.CreateBook:output_type -> demo.business.book.admin_service.CreateBookResponse
+	15, // 19: demo.business.book.admin_service.AdminService.DeleteBook:output_type -> google.protobuf.Empty
+	15, // 20: demo.business.book.admin_service.AdminService.DeleteBookSoft:output_type -> google.protobuf.Empty
+	5,  // 21: demo.business.book.admin_service.AdminService.GetBookMeta:output_type -> demo.business.book.admin_service.GetBookMetaResponse
+	7,  // 22: demo.business.book.admin_service.AdminService.ListBookMetas:output_type -> demo.business.book.admin_service.ListBookMetasResponse
+	9,  // 23: demo.business.book.admin_service.AdminService.UpdateBookMeta:output_type -> demo.business.book.admin_service.UpdateBookMetaResponse
+	18, // [18:24] is the sub-list for method output_type
+	12, // [12:18] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_admin_service_admin_service_proto_init() }

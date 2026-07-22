@@ -102,6 +102,11 @@ func (c *Config) validateTypeReferences() error {
 			if err := validateTypeName(r.Type); err != nil {
 				return fmt.Errorf("entities[%d].resources[%d].type_: %w", i, j, err)
 			}
+			if r.Reader != nil && r.Reader.ListConfig != nil && r.Reader.ListConfig.FilterType != "" {
+				if err := validateTypeName(r.Reader.ListConfig.FilterType); err != nil {
+					return fmt.Errorf("entities[%d].resources[%d].reader.list_config.filter_type: %w", i, j, err)
+				}
+			}
 		}
 	}
 	return nil

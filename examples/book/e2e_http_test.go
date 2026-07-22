@@ -255,18 +255,23 @@ func TestLibraryServiceHTTP_AllMethods(t *testing.T) {
 		}
 	})
 
-	t.Run("ListBookMetas GET /meta/list (overridden)", func(t *testing.T) {
-		// P2: List verb overridden to GET via reader.http; query params
-		// are bound by grpc-gateway from the URL query string.
-		resp := doReq(t, ts, "GET", "/library/LibraryService/book/meta/list?page_size=10&page_token=p1&filter=author%3D%3D%22X%22&order_by=title", nil)
+	t.Run("ListBookMetas POST /meta/list body=*", func(t *testing.T) {
+		// List uses default POST + body:"*"; filter is a structured message
+		// passed via JSON body.
+		resp := doReq(t, ts, "POST", "/library/LibraryService/book/meta/list", map[string]any{
+			"page_size":  10,
+			"page_token": "p1",
+			"filter":     map[string]any{"author": "X"},
+			"order_by":   "title",
+		})
 		if resp.StatusCode != http.StatusOK {
 			t.Fatalf("status=%d", resp.StatusCode)
 		}
 		if got := srv.lastListReq.GetPageSize(); got != 10 {
 			t.Errorf("page_size=%d want 10", got)
 		}
-		if got := srv.lastListReq.GetFilter(); got != "author==\"X\"" {
-			t.Errorf("filter=%q", got)
+		if got := srv.lastListReq.GetFilter().GetAuthor(); got != "X" {
+			t.Errorf("filter.author=%q want X", got)
 		}
 		body := mustReadJSON(t, resp)
 		if body["totalSize"] != float64(1) {
@@ -340,8 +345,10 @@ func TestAdminServiceHTTP_NarrowedRoutes(t *testing.T) {
 	defer ts.Close()
 
 	t.Run("ListBookMetas 在 AdminService 上可调用", func(t *testing.T) {
-		// P2: List verb overridden to GET; AdminService inherits the override.
-		resp := doReq(t, ts, "GET", "/library/AdminService/book/meta/list?page_size=5", nil)
+		// List uses default POST + body:"*"; AdminService inherits the default.
+		resp := doReq(t, ts, "POST", "/library/AdminService/book/meta/list", map[string]any{
+			"page_size": 5,
+		})
 		if resp.StatusCode != http.StatusOK {
 			t.Fatalf("status=%d", resp.StatusCode)
 		}
@@ -416,9 +423,9 @@ func TestE2EHTTPPerMethodOverride(t *testing.T) {
 	ts := httptest.NewServer(mux)
 	defer ts.Close()
 
-	t.Run("List overridden to GET /meta/list", func(t *testing.T) {
-		// reader.http 覆盖 List 为 GET /library/LibraryService/book/meta/list
-		resp := doReq(t, ts, "GET", "/library/LibraryService/book/meta/list", nil)
+	t.Run("List POST /meta/list", func(t *testing.T) {
+		// List uses default POST + body:"*"
+		resp := doReq(t, ts, "POST", "/library/LibraryService/book/meta/list", map[string]any{})
 		if resp.StatusCode != http.StatusOK {
 			t.Fatalf("status=%d", resp.StatusCode)
 		}

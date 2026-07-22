@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file demo/business/book/book.proto.
  */
 export const file_demo_business_book_book: GenFile = /*@__PURE__*/
-  fileDesc("Ch1kZW1vL2J1c2luZXNzL2Jvb2svYm9vay5wcm90bxISZGVtby5idXNpbmVzcy5ib29rIhQKBkJvb2tJZBIKCgJpZBgBIAEoCSJkCghCb29rTWV0YRINCgV0aXRsZRgBIAEoCRIOCgZhdXRob3IYAiABKAkSDAoEaXNibhgDIAEoCRIrCgtjcmVhdGVfdGltZRgEIAEoCzIWLmRlbW8uY29tbW9uLlRpbWVzdGFtcCIwCgtCb29rQ29udGVudBIMCgR0ZXh0GAEgASgJEhMKC2NvdmVyX2ltYWdlGAIgASgMIiUKEkFyY2hpdmVCb29rUmVxdWVzdBIPCgdib29rX2lkGAEgASgJIicKE0FyY2hpdmVCb29rUmVzcG9uc2USEAoIYXJjaGl2ZWQYASABKAhCQFo+Z2l0aHViLmNvbS9hY21lL2RlbW8tYm9vay9nZW5lcmF0ZWQvZ28vZGVtby9idXNpbmVzcy9ib29rO2Jvb2tiBnByb3RvMw", [file_demo_common_types]);
+  fileDesc("Ch1kZW1vL2J1c2luZXNzL2Jvb2svYm9vay5wcm90bxISZGVtby5idXNpbmVzcy5ib29rIhQKBkJvb2tJZBIKCgJpZBgBIAEoCSJkCghCb29rTWV0YRINCgV0aXRsZRgBIAEoCRIOCgZhdXRob3IYAiABKAkSDAoEaXNibhgDIAEoCRIrCgtjcmVhdGVfdGltZRgEIAEoCzIWLmRlbW8uY29tbW9uLlRpbWVzdGFtcCIwCgtCb29rQ29udGVudBIMCgR0ZXh0GAEgASgJEhMKC2NvdmVyX2ltYWdlGAIgASgMIiUKEkFyY2hpdmVCb29rUmVxdWVzdBIPCgdib29rX2lkGAEgASgJIicKE0FyY2hpdmVCb29rUmVzcG9uc2USEAoIYXJjaGl2ZWQYASABKAgiYQoOQm9va01ldGFGaWx0ZXISDgoGYXV0aG9yGAEgASgJEg0KBXRpdGxlGAIgASgJEhEKCXllYXJfZnJvbRgDIAEoDRIPCgd5ZWFyX3RvGAQgASgNEgwKBHRhZ3MYBSADKAlCQFo+Z2l0aHViLmNvbS9hY21lL2RlbW8tYm9vay9nZW5lcmF0ZWQvZ28vZGVtby9idXNpbmVzcy9ib29rO2Jvb2tiBnByb3RvMw", [file_demo_common_types]);
 
 /**
  * @generated from message demo.business.book.BookId
@@ -118,4 +118,41 @@ export type ArchiveBookResponse = Message<"demo.business.book.ArchiveBookRespons
  */
 export const ArchiveBookResponseSchema: GenMessage<ArchiveBookResponse> = /*@__PURE__*/
   messageDesc(file_demo_business_book_book, 4);
+
+/**
+ * @generated from message demo.business.book.BookMetaFilter
+ */
+export type BookMetaFilter = Message<"demo.business.book.BookMetaFilter"> & {
+  /**
+   * @generated from field: string author = 1;
+   */
+  author: string;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * @generated from field: uint32 year_from = 3;
+   */
+  yearFrom: number;
+
+  /**
+   * @generated from field: uint32 year_to = 4;
+   */
+  yearTo: number;
+
+  /**
+   * @generated from field: repeated string tags = 5;
+   */
+  tags: string[];
+};
+
+/**
+ * Describes the message demo.business.book.BookMetaFilter.
+ * Use `create(BookMetaFilterSchema)` to create a new message.
+ */
+export const BookMetaFilterSchema: GenMessage<BookMetaFilter> = /*@__PURE__*/
+  messageDesc(file_demo_business_book_book, 5);
 

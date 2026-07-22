@@ -120,7 +120,8 @@ type ReaderDef struct {
 
 // ListConfig holds List sub-configuration.
 type ListConfig struct {
-	TotalSize bool `yaml:"total_size"`
+	TotalSize  bool   `yaml:"total_size"`
+	FilterType string `yaml:"filter_type,omitempty"`
 }
 
 // WriterDef declares resource-level write methods.

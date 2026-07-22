@@ -172,7 +172,7 @@ func renderMessages(sb *strings.Builder, e *ir.EntityIR) {
 			sb.WriteString(fmt.Sprintf("message %s {\n", r.List.RequestName))
 			sb.WriteString(fmt.Sprintf("  int32 page_size = %d;\n", r.List.PageSize.Number))
 			sb.WriteString(fmt.Sprintf("  string page_token = %d;\n", r.List.PageToken.Number))
-			sb.WriteString(fmt.Sprintf("  string filter = %d;\n", r.List.Filter.Number))
+			sb.WriteString(fmt.Sprintf("  %s filter = %d;\n", r.List.Filter.Type, r.List.Filter.Number))
 			sb.WriteString(fmt.Sprintf("  string order_by = %d;\n", r.List.OrderBy.Number))
 			sb.WriteString("}\n")
 			sb.WriteString(fmt.Sprintf("message %s {\n", r.List.ResponseName))

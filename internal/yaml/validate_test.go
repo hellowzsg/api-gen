@@ -385,6 +385,65 @@ func TestValidateHTTPOverridePath(t *testing.T) {
 	}
 }
 
+// TestValidateFilterType 校验 list_config.filter_type 语法。
+func TestValidateFilterType(t *testing.T) {
+	tests := []struct {
+		name        string
+		filterType  string
+		wantError   bool
+		errSubstr   string
+	}{
+		{"valid short name", "BookMetaFilter", false, ""},
+		{"valid FQMN", "demo.business.book.BookMetaFilter", false, ""},
+		{"valid dotted alias", "common.BookMetaFilter", false, ""},
+		{"empty filter_type (backward compat)", "", false, ""},
+		{"starts with dot", ".BookMetaFilter", true, "filter_type"},
+		{"starts with digit", "1Filter", true, "filter_type"},
+		{"illegal char", "BookMeta Filter!", true, "filter_type"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{
+				Syntax: "v1",
+				Name:   "foo",
+				Entities: []Entity{
+					{
+						Name: "book",
+						Key:  KeyDef{Type: "BookId"},
+						Resources: []Resource{
+							{
+								Name:    "meta",
+								Type:    "BookMeta",
+								Version: VersionDef{Kind: "NONE"},
+								Reader: &ReaderDef{
+									List: true,
+									ListConfig: &ListConfig{
+										TotalSize:  true,
+										FilterType: tt.filterType,
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			err := cfg.ValidateReferences()
+			if tt.wantError {
+				if err == nil {
+					t.Fatalf("ValidateReferences should fail for filter_type=%q, got nil", tt.filterType)
+				}
+				if !strings.Contains(err.Error(), tt.errSubstr) {
+					t.Errorf("error should contain %q, got: %v", tt.errSubstr, err)
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("ValidateReferences should pass for filter_type=%q, got: %v", tt.filterType, err)
+				}
+			}
+		})
+	}
+}
+
 // TestValidatePluginsJS 测试 plugins.js 元素校验。
 func TestValidatePluginsJS(t *testing.T) {
 	baseEntity := Entity{

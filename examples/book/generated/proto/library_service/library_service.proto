@@ -42,7 +42,7 @@ service LibraryService {
     option (google.api.http) = { post: "/library/LibraryService/book/meta/batchGet" body: "*" };
   }
   rpc ListBookMetas(ListBookMetasRequest) returns (ListBookMetasResponse) {
-    option (google.api.http) = { get: "/library/LibraryService/book/meta/list" };
+    option (google.api.http) = { post: "/library/LibraryService/book/meta/list" body: "*" };
   }
   rpc UpdateBookMeta(UpdateBookMetaRequest) returns (UpdateBookMetaResponse) {
     option (google.api.http) = { patch: "/library/LibraryService/book/{key.id}/meta" body: "*" };
@@ -76,7 +76,7 @@ message BatchGetBookMetasResponse { repeated demo.business.book.BookMeta metas =
 message ListBookMetasRequest {
   int32 page_size = 1;
   string page_token = 2;
-  string filter = 3;
+  BookMetaFilter filter = 3;
   string order_by = 4;
 }
 message ListBookMetasResponse {

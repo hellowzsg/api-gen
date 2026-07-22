@@ -634,13 +634,17 @@ func buildBatchGet(entityName, resourcePascal, resourceType, keyType string) *Ba
 }
 
 func buildList(entityName, resourcePascal, resourceType string, lc *apigenyaml.ListConfig) *ListIR {
+	filterType := "string"
+	if lc != nil && lc.FilterType != "" {
+		filterType = lc.FilterType
+	}
 	l := &ListIR{
 		RPCName:        "List" + entityName + resourcePascal + "s",
 		RequestName:    "List" + entityName + resourcePascal + "sRequest",
 		ResponseName:   "List" + entityName + resourcePascal + "sResponse",
 		PageSize:       FieldIR{Name: "page_size", Type: "int32", Number: 1},
 		PageToken:      FieldIR{Name: "page_token", Type: "string", Number: 2},
-		Filter:         FieldIR{Name: "filter", Type: "string", Number: 3},
+		Filter:         FieldIR{Name: "filter", Type: filterType, Number: 3},
 		OrderBy:        FieldIR{Name: "order_by", Type: "string", Number: 4},
 		ResourcesField: FieldIR{Name: strings.ToLower(resourcePascal) + "s", Type: resourceType, Number: 1, Repeated: true},
 		NextPageToken:  FieldIR{Name: "next_page_token", Type: "string", Number: 2},

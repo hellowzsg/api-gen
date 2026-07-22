@@ -123,7 +123,7 @@ func TestLibraryServiceGRPC_AllMethods(t *testing.T) {
 		resp, err := libCli.ListBookMetas(ctx, &libpb.ListBookMetasRequest{
 			PageSize:  10,
 			PageToken: "p1",
-			Filter:    `author=="X"`,
+			Filter:    &bookpb.BookMetaFilter{Author: "X"},
 			OrderBy:   "title",
 		})
 		if err != nil {
@@ -138,8 +138,8 @@ func TestLibraryServiceGRPC_AllMethods(t *testing.T) {
 		if srv.lastListReq.GetPageSize() != 10 {
 			t.Errorf("page_size=%d want 10", srv.lastListReq.GetPageSize())
 		}
-		if srv.lastListReq.GetFilter() != `author=="X"` {
-			t.Errorf("filter=%q", srv.lastListReq.GetFilter())
+		if srv.lastListReq.GetFilter().GetAuthor() != "X" {
+			t.Errorf("filter.author=%q want X", srv.lastListReq.GetFilter().GetAuthor())
 		}
 	})
 

@@ -82,7 +82,7 @@
       }
     },
     "/library/AdminService/book/meta/list": {
-      "get": {
+      "post": {
         "operationId": "AdminService_ListBookMetas",
         "responses": {
           "200": {
@@ -100,29 +100,12 @@
         },
         "parameters": [
           {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "page_token",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "filter",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "order_by",
-            "in": "query",
-            "required": false,
-            "type": "string"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/admin_serviceListBookMetasRequest"
+            }
           }
         ],
         "tags": [
@@ -286,6 +269,24 @@
         }
       }
     },
+    "admin_serviceListBookMetasRequest": {
+      "type": "object",
+      "properties": {
+        "page_size": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "page_token": {
+          "type": "string"
+        },
+        "filter": {
+          "$ref": "#/definitions/bookBookMetaFilter"
+        },
+        "order_by": {
+          "type": "string"
+        }
+      }
+    },
     "admin_serviceListBookMetasResponse": {
       "type": "object",
       "properties": {
@@ -348,6 +349,31 @@
         },
         "create_time": {
           "$ref": "#/definitions/commonTimestamp"
+        }
+      }
+    },
+    "bookBookMetaFilter": {
+      "type": "object",
+      "properties": {
+        "author": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "year_from": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "year_to": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

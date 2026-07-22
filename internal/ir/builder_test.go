@@ -537,6 +537,109 @@ func TestHTTPAnnotation_ResolvePath(t *testing.T) {
 	}
 }
 
+// TestBuildListFilterType: list_config.filter_type sets Filter.Type.
+func TestBuildListFilterType(t *testing.T) {
+	t.Run("filter_type declared uses custom message type", func(t *testing.T) {
+		cfg := &apigenyaml.Config{
+			Syntax: "v1", Name: "test",
+			Entities: []apigenyaml.Entity{{
+				Name: "book",
+				Key:  apigenyaml.KeyDef{Type: "BookId"},
+				Resources: []apigenyaml.Resource{{
+					Name:    "meta",
+					Type:    "BookMeta",
+					Version: apigenyaml.VersionDef{Kind: "NONE"},
+					Reader: &apigenyaml.ReaderDef{
+						List: true,
+						ListConfig: &apigenyaml.ListConfig{
+							TotalSize:  true,
+							FilterType: "BookMetaFilter",
+						},
+					},
+				}},
+			}},
+		}
+		irData, err := Build(cfg)
+		if err != nil {
+			t.Fatalf("Build failed: %v", err)
+		}
+		l := irData.Entities[0].Resources[0].List
+		if l == nil {
+			t.Fatal("List is nil")
+		}
+		if l.Filter.Type != "BookMetaFilter" {
+			t.Errorf("Filter.Type = %q, want %q", l.Filter.Type, "BookMetaFilter")
+		}
+		if l.Filter.Number != 3 {
+			t.Errorf("Filter.Number = %d, want 3", l.Filter.Number)
+		}
+	})
+
+	t.Run("filter_type omitted defaults to string", func(t *testing.T) {
+		cfg := &apigenyaml.Config{
+			Syntax: "v1", Name: "test",
+			Entities: []apigenyaml.Entity{{
+				Name: "book",
+				Key:  apigenyaml.KeyDef{Type: "BookId"},
+				Resources: []apigenyaml.Resource{{
+					Name:    "meta",
+					Type:    "BookMeta",
+					Version: apigenyaml.VersionDef{Kind: "NONE"},
+					Reader: &apigenyaml.ReaderDef{
+						List: true,
+						ListConfig: &apigenyaml.ListConfig{
+							TotalSize: true,
+						},
+					},
+				}},
+			}},
+		}
+		irData, err := Build(cfg)
+		if err != nil {
+			t.Fatalf("Build failed: %v", err)
+		}
+		l := irData.Entities[0].Resources[0].List
+		if l == nil {
+			t.Fatal("List is nil")
+		}
+		if l.Filter.Type != "string" {
+			t.Errorf("Filter.Type = %q, want %q", l.Filter.Type, "string")
+		}
+		if l.Filter.Number != 3 {
+			t.Errorf("Filter.Number = %d, want 3", l.Filter.Number)
+		}
+	})
+
+	t.Run("no list_config defaults to string", func(t *testing.T) {
+		cfg := &apigenyaml.Config{
+			Syntax: "v1", Name: "test",
+			Entities: []apigenyaml.Entity{{
+				Name: "book",
+				Key:  apigenyaml.KeyDef{Type: "BookId"},
+				Resources: []apigenyaml.Resource{{
+					Name:    "meta",
+					Type:    "BookMeta",
+					Version: apigenyaml.VersionDef{Kind: "NONE"},
+					Reader: &apigenyaml.ReaderDef{
+						List: true,
+					},
+				}},
+			}},
+		}
+		irData, err := Build(cfg)
+		if err != nil {
+			t.Fatalf("Build failed: %v", err)
+		}
+		l := irData.Entities[0].Resources[0].List
+		if l == nil {
+			t.Fatal("List is nil")
+		}
+		if l.Filter.Type != "string" {
+			t.Errorf("Filter.Type = %q, want %q", l.Filter.Type, "string")
+		}
+	})
+}
+
 // TestBuildPerMethodHTTPOverride: reader.http overrides default verb/path.
 func TestBuildPerMethodHTTPOverride(t *testing.T) {
 	cfg := &apigenyaml.Config{

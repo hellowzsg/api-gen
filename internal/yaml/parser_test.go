@@ -267,6 +267,80 @@ services:
 	}
 }
 
+// TestParseFilterType 测试 list_config.filter_type 解析。
+func TestParseFilterType(t *testing.T) {
+	input := `
+syntax: v1
+name: demo.business.book
+import_protos:
+  - path: "proto/**/*.proto"
+settings:
+  go_repo: github.com/acme/demo-book
+  out:
+    proto: generated/proto
+    go: generated/go
+entities:
+  - name: book
+    key:
+      type_: BookId
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: STRONG, type: U64 }
+        reader:
+          list: true
+          list_config:
+            total_size: true
+            filter_type: BookMetaFilter
+        writer:
+          update: { mask: true }
+`
+	cfg, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	r := cfg.Entities[0].Resources[0]
+	if r.Reader == nil || r.Reader.ListConfig == nil {
+		t.Fatalf("Reader.ListConfig is nil, want non-nil")
+	}
+	if r.Reader.ListConfig.FilterType != "BookMetaFilter" {
+		t.Errorf("ListConfig.FilterType = %q, want %q", r.Reader.ListConfig.FilterType, "BookMetaFilter")
+	}
+	if !r.Reader.ListConfig.TotalSize {
+		t.Errorf("ListConfig.TotalSize = false, want true")
+	}
+}
+
+// TestParseFilterTypeOmitted 测试 filter_type 省略时为零值。
+func TestParseFilterTypeOmitted(t *testing.T) {
+	input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+        reader:
+          list: true
+          list_config:
+            total_size: true
+`
+	cfg, err := Parse(strings.NewReader(input))
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	r := cfg.Entities[0].Resources[0]
+	if r.Reader == nil || r.Reader.ListConfig == nil {
+		t.Fatalf("Reader.ListConfig is nil, want non-nil")
+	}
+	if r.Reader.ListConfig.FilterType != "" {
+		t.Errorf("ListConfig.FilterType = %q, want empty", r.Reader.ListConfig.FilterType)
+	}
+}
+
 // TestParsePluginsJS 测试 settings.plugins.js 解析。
 func TestParsePluginsJS(t *testing.T) {
 	// 子测试 1：plugins.js 声明 [es]
