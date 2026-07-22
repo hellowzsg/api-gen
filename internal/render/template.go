@@ -23,16 +23,9 @@ func RenderServiceProto(irData *ir.IR, svc ir.ServiceIR) (string, error) {
 			}
 		}
 	}
-	// HTTP annotations are generated at entity level using the first
-	// referencing service's name (see ir builder). When rendering for a
-	// different service, rewrite the service-name segment in each path so
-	// that each service's REST routes are isolated (e.g.
-	// /library/AdminService/book/... vs /library/LibraryService/book/...).
-	if irData.HTTPEnabled {
-		for i := range entities {
-			rewriteHTTPPathForService(&entities[i], svc.Name)
-		}
-	}
+	// HTTP annotation paths are resolved per service from structured
+	// segments (entity/keyLeaves/resource/suffix) — no string rewriting.
+	hctx := httpRenderContext{prefix: irData.HTTPPrefix, svcName: svc.Name}
 	needEmpty, needMask, needWrapper := analyzeImports(entities)
 	needHTTP := irData.HTTPEnabled
 	typeImports := collectTypeImports(entities, irData.TypeImportPaths)
@@ -50,10 +43,10 @@ func RenderServiceProto(irData *ir.IR, svc ir.ServiceIR) (string, error) {
 	sb.WriteString(fmt.Sprintf("option go_package = %q;\n\n", buildGoPackage(svc)))
 	sb.WriteString(fmt.Sprintf("service %s {\n", svc.Name))
 	for i := range entities {
-		renderServiceRPCs(&sb, &entities[i])
+		renderServiceRPCs(&sb, &entities[i], hctx)
 	}
 	for _, cm := range svc.CustomMethods {
-		renderRPCWithHTTP(&sb, cm.Name, cm.Request, cm.Response, cm.HTTPAnnotation)
+		renderRPCWithHTTP(&sb, cm.Name, cm.Request, cm.Response, cm.HTTPAnnotation, hctx)
 	}
 	sb.WriteString("}\n\n")
 	for i := range entities {
@@ -62,129 +55,8 @@ func RenderServiceProto(irData *ir.IR, svc ir.ServiceIR) (string, error) {
 	return sb.String(), nil
 }
 
-// rewriteHTTPPathForService rewrites the service-name segment in every HTTP
-// annotation path on the entity (and its resources) so that the path matches
-// the service currently being rendered.
-//
-// The path layout is: <prefix>/<svcName>/<entity>[/{key...}][/<resource>[/...]].
-// We split off the prefix (everything up to and including the last "/" before
-// the service segment is tricky, so instead we split the path into segments
-// and replace the segment immediately after the prefix).
-//
-// To keep this self-contained, we treat the prefix as a known string passed
-// via the entity IR's HTTPPrefix. When the prefix is empty, the service name
-// is the first segment after the leading "/".
-func rewriteHTTPPathForService(e *ir.EntityIR, svcName string) {
-	rewrite := func(ann *ir.HTTPAnnotation) {
-		if ann == nil || ann.Path == "" {
-			return
-		}
-		// Always rewrite the service-name segment so each service's
-		// routes are isolated. This applies to both default paths and
-		// user-declared override paths — the service segment is always
-		// the segment right before the entity-name segment.
-		ann.Path = replaceServiceSegment(ann.Path, svcName)
-	}
-	if e.Create != nil {
-		rewrite(e.Create.HTTPAnnotation)
-	}
-	if e.Delete != nil {
-		rewrite(e.Delete.HTTPAnnotation)
-	}
-	if e.DeleteSoft != nil {
-		rewrite(e.DeleteSoft.HTTPAnnotation)
-	}
-	for i := range e.Resources {
-		r := &e.Resources[i]
-		if r.Get != nil {
-			rewrite(r.Get.HTTPAnnotation)
-		}
-		if r.BatchGet != nil {
-			rewrite(r.BatchGet.HTTPAnnotation)
-		}
-		if r.List != nil {
-			rewrite(r.List.HTTPAnnotation)
-		}
-		if r.Update != nil {
-			rewrite(r.Update.HTTPAnnotation)
-		}
-	}
-}
-
-// replaceServiceSegment replaces the service-name segment in a path. The path
-// has the form "<prefix>/<svcName>/<rest...>" where <prefix> may be empty.
-// Since the prefix itself is just a leading path component (no embedded
-// slashes in P1), we split by "/" and replace segment[1] (segment[0] is the
-// empty string from the leading "/"). When a prefix exists (e.g.
-// "/library"), segment[1] is the prefix and segment[2] is the service name.
-//
-// We detect the service segment by position: it is the segment right before
-// the entity-name segment. But simpler: the service segment is always the
-// segment at index (prefixSegCount + 1) where prefixSegCount is the number
-// of non-empty segments in the prefix.
-//
-// For P1 the prefix is a single segment (e.g. "/library"), so the service
-// segment is segment index 2 (0="", 1="library", 2="LibraryService").
-// When no prefix, service segment is index 1.
-//
-// To stay robust, we re-derive the prefix length from the IR: we don't have
-// it here, so we rely on the convention that the entity name is a known
-// segment and the service segment is the one immediately before it.
-func replaceServiceSegment(path, svcName string) string {
-	// Strip leading "/" for uniform processing.
-	trimmed := strings.TrimPrefix(path, "/")
-	segs := strings.Split(trimmed, "/")
-	if len(segs) < 2 {
-		return path
-	}
-	// The entity segment is the first segment that matches the entity
-	// name. But we don't have the entity name here. Use heuristic: the
-	// service segment is the last segment before a "{key...}" segment or
-	// a resource suffix. Simpler and correct for P1: the service segment
-	// is segs[1] when segs[0] looks like a prefix (no "{" and not the
-	// entity), otherwise segs[0].
-	//
-	// Even simpler and fully correct for P1: the service segment is the
-	// segment at index 1 if the path has a prefix (segs[0] is the prefix,
-	// non-empty, not the entity). Otherwise it's segs[0].
-	//
-	// We detect "has prefix" by checking whether segs[0] is a known
-	// service name. Since we don't have that list, fall back to: if there
-	// are >= 3 non-empty segments before the first "{" segment, the prefix
-	// exists and service is segs[1]; else service is segs[0].
-	firstBrace := -1
-	for i, s := range segs {
-		if strings.HasPrefix(s, "{") {
-			firstBrace = i
-			break
-		}
-	}
-	nonEmptyBeforeBrace := 0
-	if firstBrace == -1 {
-		nonEmptyBeforeBrace = len(segs)
-	} else {
-		nonEmptyBeforeBrace = firstBrace
-	}
-	// P1 path shapes:
-	//   /<prefix>/<svc>/<entity>/{key}/<resource>        → 5 segs before resource
-	//   /<prefix>/<svc>/<entity>/{key}                   → 4
-	//   /<prefix>/<svc>/<entity>/<resource>/batchGet     → 5 (no key)
-	//   /<prefix>/<svc>/<entity>/deleteSoft              → 4 (no key)
-	//   /<svc>/<entity>/...                              → one fewer
-	// Heuristic: if nonEmptyBeforeBrace >= 3, prefix exists (svc=index 1).
-	// If 2, no prefix (svc=index 0).
-	svcIdx := 0
-	if nonEmptyBeforeBrace >= 3 {
-		svcIdx = 1
-	}
-	if svcIdx >= len(segs) {
-		return path
-	}
-	segs[svcIdx] = svcName
-	return "/" + strings.Join(segs, "/")
-}
-//
-// Rules (per design §十一):
+// narrowEntity applies the service's resource narrowing rules (per design
+// §十一):
 //   - If se.Resources is empty, the entity's full resource set is inherited.
 //   - If se.Resources is non-empty, only the listed resources are exposed.
 //   - For each listed resource, if se's reader/writer block is present, it
@@ -241,28 +113,28 @@ func narrowEntity(e ir.EntityIR, se ir.ServiceEntityIR) ir.EntityIR {
 	return out
 }
 
-func renderServiceRPCs(sb *strings.Builder, e *ir.EntityIR) {
+func renderServiceRPCs(sb *strings.Builder, e *ir.EntityIR, hctx httpRenderContext) {
 	if e.Create != nil {
-		renderRPCWithHTTP(sb, e.Create.RPCName, e.Create.RequestName, e.Create.ResponseName, e.Create.HTTPAnnotation)
+		renderRPCWithHTTP(sb, e.Create.RPCName, e.Create.RequestName, e.Create.ResponseName, e.Create.HTTPAnnotation, hctx)
 	}
 	if e.Delete != nil {
-		renderRPCWithHTTP(sb, e.Delete.RPCName, e.Delete.RequestName, e.Delete.ResponseName, e.Delete.HTTPAnnotation)
+		renderRPCWithHTTP(sb, e.Delete.RPCName, e.Delete.RequestName, e.Delete.ResponseName, e.Delete.HTTPAnnotation, hctx)
 	}
 	if e.DeleteSoft != nil {
-		renderRPCWithHTTP(sb, e.DeleteSoft.RPCName, e.DeleteSoft.RequestName, e.DeleteSoft.ResponseName, e.DeleteSoft.HTTPAnnotation)
+		renderRPCWithHTTP(sb, e.DeleteSoft.RPCName, e.DeleteSoft.RequestName, e.DeleteSoft.ResponseName, e.DeleteSoft.HTTPAnnotation, hctx)
 	}
 	for _, r := range e.Resources {
 		if r.Get != nil {
-			renderRPCWithHTTP(sb, r.Get.RPCName, r.Get.RequestName, r.Get.ResponseName, r.Get.HTTPAnnotation)
+			renderRPCWithHTTP(sb, r.Get.RPCName, r.Get.RequestName, r.Get.ResponseName, r.Get.HTTPAnnotation, hctx)
 		}
 		if r.BatchGet != nil {
-			renderRPCWithHTTP(sb, r.BatchGet.RPCName, r.BatchGet.RequestName, r.BatchGet.ResponseName, r.BatchGet.HTTPAnnotation)
+			renderRPCWithHTTP(sb, r.BatchGet.RPCName, r.BatchGet.RequestName, r.BatchGet.ResponseName, r.BatchGet.HTTPAnnotation, hctx)
 		}
 		if r.List != nil {
-			renderRPCWithHTTP(sb, r.List.RPCName, r.List.RequestName, r.List.ResponseName, r.List.HTTPAnnotation)
+			renderRPCWithHTTP(sb, r.List.RPCName, r.List.RequestName, r.List.ResponseName, r.List.HTTPAnnotation, hctx)
 		}
 		if r.Update != nil {
-			renderRPCWithHTTP(sb, r.Update.RPCName, r.Update.RequestName, r.Update.ResponseName, r.Update.HTTPAnnotation)
+			renderRPCWithHTTP(sb, r.Update.RPCName, r.Update.RequestName, r.Update.ResponseName, r.Update.HTTPAnnotation, hctx)
 		}
 	}
 }

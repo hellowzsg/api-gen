@@ -5,12 +5,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"time"
 
 	"github.com/bufbuild/protocompile/linker"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -97,8 +100,8 @@ func BuildCodeGeneratorRequest(files linker.Files, fileToGenerate []string) (*pl
 			}
 			// If none of the above found the file, it is genuinely missing —
 			// but we do not error here because protocompile already validated
-			// the closure in the Resolve/DryRunClosure step. A missing file
-			// at this point would indicate a logic error upstream.
+			// the closure in the Resolve step. A missing file at this point
+			// would indicate a logic error upstream.
 		}
 	}
 
@@ -196,7 +199,11 @@ func RunPlugin(ctx context.Context, pluginName string, req *pluginpb.CodeGenerat
 	if err != nil {
 		return err
 	}
-	reqData, err := proto.Marshal(req)
+	// Marshal deterministically: the request may contain dynamicpb messages
+	// (e.g. interpreted google.api.http options) whose Go-map field storage
+	// would otherwise serialize in random order, making plugin output
+	// non-reproducible across runs.
+	reqData, err := proto.MarshalOptions{Deterministic: true}.Marshal(req)
 	if err != nil {
 		return fmt.Errorf("marshal request: %w", err)
 	}
@@ -235,81 +242,57 @@ func RunPlugin(ctx context.Context, pluginName string, req *pluginpb.CodeGenerat
 	return nil
 }
 
-// Compile runs protoc-gen-go and protoc-gen-go-grpc on the given files.
-// `files` must contain the full transitive closure of protos (user + generated
-// service protos + WKT). `fileToGenerate` lists the service proto paths that
-// the plugins should emit Go code for.
+// PluginSpec declares one protoc plugin invocation: which binary to run,
+// where to write output, and which CodeGeneratorRequest.parameter to pass.
+// Callers assemble the list from configuration; Compile is intentionally
+// ignorant of configuration semantics, so adding a new plugin never changes
+// its signature.
+type PluginSpec struct {
+	Name      string // e.g. protoc-gen-go, protoc-gen-go-grpc, protoc-gen-es
+	OutDir    string
+	Parameter string // e.g. "paths=source_relative" for protoc-gen-go
+}
+
+// Compile runs every PluginSpec in parallel (errgroup) on the given files.
+// `files` must contain the full transitive closure of protos (user +
+// generated service protos + WKT). `fileToGenerate` lists the proto paths
+// the plugins should emit code for.
 //
-// When httpEnabled is true, protoc-gen-grpc-gateway is also invoked to
-// generate *.pb.gw.go alongside the *.pb.go files.
-//
-// When generateOpenAPI is true (and httpEnabled is true), protoc-gen-openapiv2
-// is invoked to generate <service>.swagger.json into openAPIOutDir.
-//
-// When generateJS is true, protoc-gen-es is invoked to generate TypeScript
-// stubs (*.pb.ts) into jsOutDir with plugin parameter target=ts.
-//
-// The protoc-gen-go plugin is invoked with `paths=source_relative` so that
-// output files are placed at <goOutDir>/<proto-relative-path>.pb.go rather
-// than deriving the output directory from the go_package import path. This
-// matches the design doc's layout: generated/go/<service>/<service>.pb.go.
-// protoc-gen-go-grpc and protoc-gen-grpc-gateway follow the same parameter.
-func Compile(ctx context.Context, files linker.Files, fileToGenerate []string, goOutDir, openAPIOutDir, jsOutDir string, httpEnabled, generateOpenAPI, generateJS bool) error {
+// Each plugin receives a SHALLOW copy of the shared CodeGeneratorRequest
+// with only the Parameter field replaced — the ProtoFile slice is read-only
+// (it is marshalled inside RunPlugin), so the 5× deep-copy memory blowup of
+// the previous implementation is gone.
+func Compile(ctx context.Context, files linker.Files, fileToGenerate []string, specs []PluginSpec) error {
 	req, err := BuildCodeGeneratorRequest(files, fileToGenerate)
 	if err != nil {
 		return fmt.Errorf("build request: %w", err)
 	}
-	if err := os.MkdirAll(goOutDir, 0755); err != nil {
-		return fmt.Errorf("create go output dir: %w", err)
-	}
-	// protoc-gen-go: emit source-relative paths.
-	goReq := proto.Clone(req).(*pluginpb.CodeGeneratorRequest)
-	param := "paths=source_relative"
-	goReq.Parameter = &param
-	if err := RunPlugin(ctx, "protoc-gen-go", goReq, goOutDir); err != nil {
-		return fmt.Errorf("run protoc-gen-go: %w", err)
-	}
-	// protoc-gen-go-grpc: also use source_relative so the grpc file lands
-	// next to the .pb.go file.
-	grpcReq := proto.Clone(req).(*pluginpb.CodeGeneratorRequest)
-	grpcReq.Parameter = &param
-	if err := RunPlugin(ctx, "protoc-gen-go-grpc", grpcReq, goOutDir); err != nil {
-		return fmt.Errorf("run protoc-gen-go-grpc: %w", err)
-	}
-	// protoc-gen-grpc-gateway: only when HTTP is enabled. Generates
-	// *.pb.gw.go in the same output directory.
-	if httpEnabled {
-		gwReq := proto.Clone(req).(*pluginpb.CodeGeneratorRequest)
-		gwReq.Parameter = &param
-		if err := RunPlugin(ctx, "protoc-gen-grpc-gateway", gwReq, goOutDir); err != nil {
-			return fmt.Errorf("run protoc-gen-grpc-gateway: %w", err)
-		}
-		// protoc-gen-openapiv2: only when OpenAPI generation is enabled.
-		// Generates <service>.swagger.json into openAPIOutDir.
-		if generateOpenAPI && openAPIOutDir != "" {
-			if err := os.MkdirAll(openAPIOutDir, 0755); err != nil {
-				return fmt.Errorf("create openapi output dir: %w", err)
+	g, ctx := errgroup.WithContext(ctx)
+	for _, spec := range specs {
+		spec := spec
+		g.Go(func() error {
+			if err := os.MkdirAll(spec.OutDir, 0755); err != nil {
+				return fmt.Errorf("create output dir for %s: %w", spec.Name, err)
 			}
-			openapiReq := proto.Clone(req).(*pluginpb.CodeGeneratorRequest)
-			openapiParam := "logtostderr=false,json_names_for_fields=false"
-			openapiReq.Parameter = &openapiParam
-			if err := RunPlugin(ctx, "protoc-gen-openapiv2", openapiReq, openAPIOutDir); err != nil {
-				return fmt.Errorf("run protoc-gen-openapiv2: %w", err)
+			// Fresh request per plugin sharing the read-only descriptor
+			// slices — no deep copy, no lock copy (CodeGeneratorRequest
+			// embeds a vet-visible mutex marker via MessageState).
+			pluginReq := &pluginpb.CodeGeneratorRequest{
+				FileToGenerate:        req.FileToGenerate,
+				Parameter:             &spec.Parameter,
+				ProtoFile:             req.ProtoFile,
+				SourceFileDescriptors: req.SourceFileDescriptors,
+				CompilerVersion:       req.CompilerVersion,
 			}
-		}
+			slog.Info("plugin start", "plugin", spec.Name, "outDir", spec.OutDir)
+			start := time.Now()
+			if err := RunPlugin(ctx, spec.Name, pluginReq, spec.OutDir); err != nil {
+				slog.Error("plugin failed", "plugin", spec.Name, "duration", time.Since(start), "error", err)
+				return fmt.Errorf("run %s: %w", spec.Name, err)
+			}
+			slog.Info("plugin done", "plugin", spec.Name, "duration", time.Since(start))
+			return nil
+		})
 	}
-	// protoc-gen-es: only when JS stub generation is enabled. Generates
-	// TypeScript files (*.pb.ts) into jsOutDir with target=ts.
-	if generateJS && jsOutDir != "" {
-		if err := os.MkdirAll(jsOutDir, 0755); err != nil {
-			return fmt.Errorf("create js output dir: %w", err)
-		}
-		jsReq := proto.Clone(req).(*pluginpb.CodeGeneratorRequest)
-		jsParam := "target=ts"
-		jsReq.Parameter = &jsParam
-		if err := RunPlugin(ctx, "protoc-gen-es", jsReq, jsOutDir); err != nil {
-			return fmt.Errorf("run protoc-gen-es: %w", err)
-		}
-	}
-	return nil
+	return g.Wait()
 }

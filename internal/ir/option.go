@@ -2,6 +2,7 @@ package ir
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	apigenyaml "github.com/acme/apigen/internal/yaml"
@@ -84,9 +85,16 @@ func FormatOptionValue(value interface{}) string {
 	case string:
 		return fmt.Sprintf("%q", v)
 	case map[string]interface{}:
-		var parts []string
-		for k, val := range v {
-			parts = append(parts, fmt.Sprintf("%s: %s", k, FormatOptionValue(val)))
+		// Map iteration order in Go is random; sort keys so generated
+		// output is byte-for-byte reproducible across runs.
+		keys := make([]string, 0, len(v))
+		for k := range v {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		parts := make([]string, 0, len(keys))
+		for _, k := range keys {
+			parts = append(parts, fmt.Sprintf("%s: %s", k, FormatOptionValue(v[k])))
 		}
 		return "{" + strings.Join(parts, ", ") + "}"
 	default:

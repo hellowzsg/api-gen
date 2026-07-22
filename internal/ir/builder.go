@@ -43,6 +43,11 @@ type BuildOptions struct {
 	// map, KeyLeaves is left empty and HTTP path generation is skipped for
 	// that entity (with an error if HTTP is enabled).
 	KeyDescriptors map[string]protoreflect.MessageDescriptor
+	// LenientHTTP skips the KeyDescriptors requirement when HTTP is
+	// enabled: key-leaf extraction is skipped (annotations carry no key
+	// segments). Used by display-only commands (e.g. `entity list`) that
+	// do not need HTTP paths. generate/build keep the strict requirement.
+	LenientHTTP bool
 }
 
 type EntityIR struct {
@@ -149,20 +154,89 @@ type FieldIR struct {
 // HTTPAnnotation describes a google.api.http annotation for an RPC method.
 // Populated only when HTTP is enabled (IR.HTTPEnabled == true). When nil,
 // the renderer omits the google.api.http option for that RPC.
+//
+// The annotation is service-agnostic: it carries structured path segments
+// instead of a pre-baked path string. The final URL path is resolved per
+// service at render time via ResolvePath.
 type HTTPAnnotation struct {
 	// Verb is the HTTP method: GET, POST, PATCH, or DELETE.
 	Verb string
-	// Path is the full URL path including prefix, service, collection,
-	// key leaf segments, and optional resource suffix (e.g.
-	// "/library/LibraryService/book/{key.id}/meta").
-	Path string
 	// Body is the body binding: "" (no body), "*" (whole wrapper), or
 	// "<field>" (P2 body_style: resource). In P1, Body is either "" or "*".
 	Body string
-	// IsOverride indicates the path was user-declared via a per-method
-	// http override. When true, the renderer skips service-segment rewriting
-	// (the user explicitly chose this path).
+	// IsOverride indicates the path was user-declared (per-method http
+	// override or custom method). The override path is used verbatim unless
+	// OverrideTemplateSvc is also set (entity-level overrides are templates:
+	// the service segment is rewritten per rendering service).
 	IsOverride bool
+	// OverridePath is the full user-declared path (only when IsOverride).
+	OverridePath string
+	// OverrideTemplateSvc, when non-empty, marks the override path as a
+	// template whose path segment equal to this value is replaced by the
+	// rendering service name at ResolvePath time. Used for entity-level
+	// reader.http/writer.update.http overrides that are inherited across
+	// services via narrowing — without rewriting, two services sharing an
+	// entity would register identical routes and collide. Empty for custom
+	// method overrides (those are bound to a single service and verbatim).
+	OverrideTemplateSvc string
+	// Entity is the entity (collection) segment for default paths.
+	Entity string
+	// KeyLeaves are the scalar key leaf fields bound as URL path variables
+	// for default paths (e.g. {key.id}).
+	KeyLeaves []KeyLeaf
+	// Resource is the resource segment for resource-level methods
+	// ("" for entity-level methods).
+	Resource string
+	// Suffix is the trailing custom segment: "batchGet" / "list" /
+	// "deleteSoft" / "".
+	Suffix string
+}
+
+// ResolvePath computes the final URL path for the given service and prefix.
+//
+//   - Default paths compose as:
+//     <prefix>/<svcName>/<entity>[/{key.leaf}...][/<resource>][/<suffix>]
+//   - Verbatim overrides (custom methods) are returned as-is.
+//   - Template overrides (entity-level reader/writer http): the path segment
+//     equal to OverrideTemplateSvc is replaced by svcName so each service
+//     inheriting the entity gets an isolated route.
+func (a *HTTPAnnotation) ResolvePath(prefix, svcName string) string {
+	if a.IsOverride {
+		if a.OverrideTemplateSvc == "" || a.OverrideTemplateSvc == svcName {
+			return a.OverridePath
+		}
+		return rewriteSegment(a.OverridePath, a.OverrideTemplateSvc, svcName)
+	}
+	parts := make([]string, 0, 4+len(a.KeyLeaves))
+	parts = append(parts, svcName, a.Entity)
+	for _, l := range a.KeyLeaves {
+		parts = append(parts, "{key."+l.DotPath+"}")
+	}
+	if a.Resource != "" {
+		parts = append(parts, a.Resource)
+	}
+	if a.Suffix != "" {
+		parts = append(parts, a.Suffix)
+	}
+	path := "/" + strings.Join(parts, "/")
+	if prefix != "" {
+		path = prefix + path
+	}
+	return path
+}
+
+// rewriteSegment replaces the first path segment equal to old with new.
+// Segments are split on "/"; variable segments ({...}) and the leading
+// empty segment from the leading "/" are never matched.
+func rewriteSegment(path, old, new string) string {
+	segs := strings.Split(path, "/")
+	for i, s := range segs {
+		if s == old {
+			segs[i] = new
+			return strings.Join(segs, "/")
+		}
+	}
+	return path
 }
 
 type ServiceIR struct {
@@ -250,7 +324,8 @@ func buildEntity(e *apigenyaml.Entity, cfg *apigenyaml.Config, opts BuildOptions
 		KeyType:    cfg.ResolveTypeName(e.Key.Type),
 	}
 	// Extract key leaves for HTTP path binding when HTTP is enabled.
-	if httpEnabled {
+	// LenientHTTP (display-only commands) skips this entirely.
+	if httpEnabled && !opts.LenientHTTP {
 		keyDesc, ok := opts.KeyDescriptors[entity.KeyType]
 		if !ok {
 			return nil, fmt.Errorf("HTTP enabled but key descriptor for %q not provided in BuildOptions.KeyDescriptors", entity.KeyType)
@@ -261,47 +336,17 @@ func buildEntity(e *apigenyaml.Entity, cfg *apigenyaml.Config, opts BuildOptions
 		}
 		entity.KeyLeaves = leaves
 	}
-	// Build method-specific HTTP annotations. We need the service name for
-	// path generation, but at entity-build time we don't know which service
-	// will include this entity. The path is finalized per-service in the
-	// renderer. Here we construct annotations with a placeholder service
-	// name that the renderer overwrites. To keep it simple, we store only
-	// the verb/body and let the renderer compute the full path from
-	// KeyLeaves + service name + entity name + resource name.
-	//
-	// Actually, the design expects the full path in HTTPAnnotation. Since
-	// the path depends on the service name (which is only known at service
-	// assembly time), we generate HTTPAnnotations lazily in a post-pass.
-	// For now, build methods without HTTPAnnotation; a subsequent pass
-	// (buildServiceHTTPAnnotations) fills them per-service.
-	//
-	// However, the tests call BuildWithOptions and expect HTTPAnnotation to
-	// be populated on the *entity* IR (before service assembly). The path
-	// in tests uses the service name from cfg.Services. To satisfy both
-	// the entity-level test and the service-level rendering, we generate
-	// annotations at entity level using the *first* service that includes
-	// this entity (or empty service name if none). The renderer will use
-	// the annotation as-is if present.
-	//
-	// Simpler approach: generate annotations at entity level with the
-	// entity's own name as the "service" segment placeholder. The renderer
-	// will re-compute the path per-service. But tests check the exact path
-	// including service name...
-	//
-	// Cleanest approach: generate HTTP annotations in buildEntity using the
-	// first service that references this entity. If no service references
-	// it, use the entity name as a fallback (unlikely in practice).
-	svcName := firstServiceForEntity(cfg, e.Name)
+	// Build method-specific HTTP annotations. Annotations are
+	// service-agnostic structured segments (entity/keyLeaves/resource/
+	// suffix); the final path is resolved per service at render time via
+	// HTTPAnnotation.ResolvePath.
 	httpCtx := &httpBuildContext{
-		enabled:   httpEnabled,
-		prefix:    "",
-		svcName:   svcName,
-		entity:    e.Name,
-		keyLeaves: entity.KeyLeaves,
-		bodyStyle: "",
+		enabled:     httpEnabled,
+		entity:      e.Name,
+		keyLeaves:   entity.KeyLeaves,
+		templateSvc: firstServiceForEntity(cfg, e.Name),
 	}
 	if httpEnabled && cfg.Settings.HTTP != nil {
-		httpCtx.prefix = cfg.Settings.HTTP.Prefix
 		httpCtx.bodyStyle = cfg.Settings.HTTP.BodyStyle
 	}
 	if e.Create != nil {
@@ -325,15 +370,21 @@ func buildEntity(e *apigenyaml.Entity, cfg *apigenyaml.Config, opts BuildOptions
 		if err != nil {
 			return nil, err
 		}
-		httpCtx.fillResourceAnnotations(resource, &e.Resources[i])
+		if err := httpCtx.fillResourceAnnotations(resource, &e.Resources[i]); err != nil {
+			return nil, fmt.Errorf("entity %q: %w", e.Name, err)
+		}
 		entity.Resources = append(entity.Resources, *resource)
 	}
 	return entity, nil
 }
 
 // firstServiceForEntity returns the name of the first service that references
-// the given entity, or the entity name itself if no service references it
-// (fallback for orphan entities in tests).
+// the given entity, or "" if no service references it. Used as the
+// service-segment placeholder for entity-level http override templates: the
+// user writes the override path using this service's name, and at render
+// time the segment equal to this value is replaced with the rendering
+// service's name (so two services inheriting the entity via narrowing do
+// not register identical routes and collide).
 func firstServiceForEntity(cfg *apigenyaml.Config, entityName string) string {
 	for _, s := range cfg.Services {
 		for _, se := range s.Entities {
@@ -342,56 +393,19 @@ func firstServiceForEntity(cfg *apigenyaml.Config, entityName string) string {
 			}
 		}
 	}
-	return entityName
+	return ""
 }
 
 // httpBuildContext carries the context needed to construct HTTPAnnotation
-// for each method of a single entity within a single service.
+// for each method of a single entity. Paths are NOT built here — only
+// structured segments.
 type httpBuildContext struct {
-	enabled   bool
-	prefix    string
-	svcName   string
-	entity    string
-	keyLeaves []KeyLeaf
-	bodyStyle string // global body_style from settings.http
-}
-
-// keyPathSegments returns the URL path variable segments for the key leaves,
-// e.g. ["{key.id}"] for a simple key or ["{key.org.oid}","{key.id}"] for a
-// composite key. Returns empty slice if no leaves.
-func (h *httpBuildContext) keyPathSegments() []string {
-	segs := make([]string, 0, len(h.keyLeaves))
-	for _, l := range h.keyLeaves {
-		segs = append(segs, "{key."+l.DotPath+"}")
-	}
-	return segs
-}
-
-// joinPath joins non-empty parts with "/" and ensures a leading slash if
-// prefix is empty.
-func (h *httpBuildContext) joinPath(parts ...string) string {
-	nonEmpty := parts[:0]
-	for _, p := range parts {
-		if p != "" {
-			nonEmpty = append(nonEmpty, p)
-		}
-	}
-	path := "/" + strings.Join(nonEmpty, "/")
-	if h.prefix != "" {
-		path = h.prefix + path
-	}
-	return path
-}
-
-func (h *httpBuildContext) buildCreateAnnotation() *HTTPAnnotation {
-	if !h.enabled {
-		return nil
-	}
-	return &HTTPAnnotation{
-		Verb: "POST",
-		Path: h.joinPath(h.svcName, h.entity),
-		Body: "*",
-	}
+	enabled     bool
+	entity      string
+	keyLeaves   []KeyLeaf
+	bodyStyle   string // global body_style from settings.http
+	templateSvc string // first service referencing this entity; used as the
+	// service-segment placeholder for entity-level http override templates.
 }
 
 // buildCreateAnnotationWithResources builds the Create HTTP annotation,
@@ -401,21 +415,13 @@ func (h *httpBuildContext) buildCreateAnnotationWithResources(resourceCount int)
 	if !h.enabled {
 		return nil, nil
 	}
-	body := "*"
-	if h.bodyStyle == "resource" {
-		if resourceCount > 1 {
-			return nil, fmt.Errorf("body_style: resource is ambiguous for Create with %d resources; use body_style: wrapper (default) for multi-resource Create", resourceCount)
-		}
-		// Single resource: body = resource field name. But we don't know
-		// the resource name here; caller must patch. For simplicity, single-
-		// resource Create with body_style:resource is rare; we return "*"
-		// and let per-method override handle it. The error case (multi-
-		// resource) is the important guard.
+	if h.bodyStyle == "resource" && resourceCount > 1 {
+		return nil, fmt.Errorf("body_style: resource is ambiguous for Create with %d resources; use body_style: wrapper (default) for multi-resource Create", resourceCount)
 	}
 	return &HTTPAnnotation{
-		Verb: "POST",
-		Path: h.joinPath(h.svcName, h.entity),
-		Body: body,
+		Verb:   "POST",
+		Body:   "*",
+		Entity: h.entity,
 	}, nil
 }
 
@@ -423,12 +429,10 @@ func (h *httpBuildContext) buildDeleteAnnotation() *HTTPAnnotation {
 	if !h.enabled {
 		return nil
 	}
-	segs := h.keyPathSegments()
-	all := append([]string{h.svcName, h.entity}, segs...)
 	return &HTTPAnnotation{
-		Verb: "DELETE",
-		Path: h.joinPath(all...),
-		Body: "",
+		Verb:      "DELETE",
+		Entity:    h.entity,
+		KeyLeaves: h.keyLeaves,
 	}
 }
 
@@ -437,27 +441,27 @@ func (h *httpBuildContext) buildDeleteSoftAnnotation() *HTTPAnnotation {
 		return nil
 	}
 	return &HTTPAnnotation{
-		Verb: "POST",
-		Path: h.joinPath(h.svcName, h.entity, "deleteSoft"),
-		Body: "*",
+		Verb:   "POST",
+		Body:   "*",
+		Entity: h.entity,
+		Suffix: "deleteSoft",
 	}
 }
 
 // fillResourceAnnotations populates HTTPAnnotation for Get/BatchGet/List/Update.
 // When yamlResource declares per-method HTTP overrides (reader.http /
-// writer.update.http), the overridden fields replace the defaults.
-func (h *httpBuildContext) fillResourceAnnotations(r *ResourceIR, yr *apigenyaml.Resource) {
+// writer.update.http), the overridden fields replace the defaults. Override
+// paths are validated against the entity's key leaves (fail-fast).
+func (h *httpBuildContext) fillResourceAnnotations(r *ResourceIR, yr *apigenyaml.Resource) error {
 	if !h.enabled {
-		return
+		return nil
 	}
-	keySegs := h.keyPathSegments()
 	if r.Get != nil {
-		all := append([]string{h.svcName, h.entity}, keySegs...)
-		all = append(all, r.Name)
 		r.Get.HTTPAnnotation = &HTTPAnnotation{
-			Verb: "GET",
-			Path: h.joinPath(all...),
-			Body: "",
+			Verb:      "GET",
+			Entity:    h.entity,
+			KeyLeaves: h.keyLeaves,
+			Resource:  r.Name,
 		}
 		// Get has no http override in P2 (only reader-level List/BatchGet
 		// overrides are supported via reader.http, which applies to the
@@ -468,49 +472,70 @@ func (h *httpBuildContext) fillResourceAnnotations(r *ResourceIR, yr *apigenyaml
 	}
 	if r.BatchGet != nil {
 		r.BatchGet.HTTPAnnotation = &HTTPAnnotation{
-			Verb: "POST",
-			Path: h.joinPath(h.svcName, h.entity, r.Name, "batchGet"),
-			Body: "*",
+			Verb:     "POST",
+			Body:     "*",
+			Entity:   h.entity,
+			Resource: r.Name,
+			Suffix:   "batchGet",
 		}
 		// reader.http override applies only to List (the primary reader
 		// method), not to BatchGet. BatchGet retains its default route.
 	}
 	if r.List != nil {
 		r.List.HTTPAnnotation = &HTTPAnnotation{
-			Verb: "POST",
-			Path: h.joinPath(h.svcName, h.entity, r.Name, "list"),
-			Body: "*",
+			Verb:     "POST",
+			Body:     "*",
+			Entity:   h.entity,
+			Resource: r.Name,
+			Suffix:   "list",
 		}
 		if yr.Reader != nil && yr.Reader.HTTP != nil {
-			r.List.HTTPAnnotation = h.applyOverride(r.List.HTTPAnnotation, yr.Reader.HTTP, r.Name, false)
+			ann, err := h.applyOverride(r.List.HTTPAnnotation, yr.Reader.HTTP, r.Name, "List", h.templateSvc)
+			if err != nil {
+				return err
+			}
+			r.List.HTTPAnnotation = ann
 		}
 	}
 	if r.Update != nil {
-		all := append([]string{h.svcName, h.entity}, keySegs...)
-		all = append(all, r.Name)
 		r.Update.HTTPAnnotation = &HTTPAnnotation{
-			Verb: "PATCH",
-			Path: h.joinPath(all...),
-			Body: h.bodyForStyle(h.bodyStyle, r.Name),
+			Verb:      "PATCH",
+			Entity:    h.entity,
+			KeyLeaves: h.keyLeaves,
+			Resource:  r.Name,
+			Body:      h.bodyForStyle(h.bodyStyle, r.Name),
 		}
 		if yr.Writer != nil && yr.Writer.Update != nil && yr.Writer.Update.HTTP != nil {
-			r.Update.HTTPAnnotation = h.applyOverride(r.Update.HTTPAnnotation, yr.Writer.Update.HTTP, r.Name, true)
+			ann, err := h.applyOverride(r.Update.HTTPAnnotation, yr.Writer.Update.HTTP, r.Name, "Update", h.templateSvc)
+			if err != nil {
+				return err
+			}
+			r.Update.HTTPAnnotation = ann
 		}
 	}
+	return nil
 }
 
 // applyOverride returns a new HTTPAnnotation with fields from override
-// applied on top of def. Fields empty in override inherit from def.
-// When override declares body_style: resource, body is set to resourceName
-// (only meaningful for Update/Create; hasBody=true indicates Update semantics).
-func (h *httpBuildContext) applyOverride(def *HTTPAnnotation, override *apigenyaml.HTTPOverride, resourceName string, hasBody bool) *HTTPAnnotation {
-	out := &HTTPAnnotation{Verb: def.Verb, Path: def.Path, Body: def.Body}
+// applied on top of def. Fields empty in override inherit from def. An
+// override path is stored as a template: the segment equal to templateSvc
+// (the first service referencing this entity) is replaced per rendering
+// service at ResolvePath time, so two services inheriting the entity via
+// narrowing do not register colliding routes. Its {key.*} variables are
+// validated against the entity's key leaves.
+// When override declares body_style: resource, body is set to resourceName.
+func (h *httpBuildContext) applyOverride(def *HTTPAnnotation, override *apigenyaml.HTTPOverride, resourceName, methodName, templateSvc string) (*HTTPAnnotation, error) {
+	out := *def
 	if override.Verb != "" {
 		out.Verb = strings.ToUpper(override.Verb)
 	}
 	if override.Path != "" {
-		out.Path = override.Path
+		if err := ValidatePathVariables(override.Path, h.keyLeaves); err != nil {
+			return nil, fmt.Errorf("resource %q method %s: %w", resourceName, methodName, err)
+		}
 		out.IsOverride = true
+		out.OverridePath = override.Path
+		out.OverrideTemplateSvc = templateSvc
 	}
 	// Body resolution priority: explicit body > body_style > verb-derived default.
 	switch {
@@ -522,7 +547,7 @@ func (h *httpBuildContext) applyOverride(def *HTTPAnnotation, override *apigenya
 		// Verb overridden to GET/DELETE with no body/body_style → no body.
 		out.Body = ""
 	}
-	return out
+	return &out, nil
 }
 
 // bodyForStyle returns the body binding for a given body_style and resource.
@@ -690,10 +715,10 @@ func versionWrapperType(t string) string {
 }
 
 func buildService(s *apigenyaml.Service, cfg *apigenyaml.Config, httpEnabled bool) ServiceIR {
-	goPkg := toSnakeCase(s.Name)
+	goPkg := ToSnakeCase(s.Name)
 	sir := ServiceIR{
 		Name:         s.Name,
-		ProtoPackage: cfg.Name + "." + toSnakeCase(s.Name),
+		ProtoPackage: cfg.Name + "." + ToSnakeCase(s.Name),
 		GoPackage:    goPkg,
 		GoRepo:       cfg.Settings.GoRepo,
 		OutGoDir:     cfg.Settings.Out.Go,
@@ -724,10 +749,13 @@ func buildService(s *apigenyaml.Service, cfg *apigenyaml.Config, httpEnabled boo
 	for _, cm := range s.CustomMethods {
 		cmIR := CustomMethodIR{Name: cm.Name, Request: cm.Request, Response: cm.Response}
 		if httpEnabled && cm.HTTP != nil {
+			// Custom method paths are fully user-declared (AIP-136 colon
+			// syntax included) — stored verbatim, never rewritten.
 			cmIR.HTTPAnnotation = &HTTPAnnotation{
-				Verb: strings.ToUpper(cm.HTTP.Verb),
-				Path: cm.HTTP.Path,
-				Body: cm.HTTP.Body,
+				Verb:         strings.ToUpper(cm.HTTP.Verb),
+				Body:         cm.HTTP.Body,
+				IsOverride:   true,
+				OverridePath: cm.HTTP.Path,
 			}
 		}
 		sir.CustomMethods = append(sir.CustomMethods, cmIR)
@@ -745,7 +773,10 @@ func toPascalCase(s string) string {
 	return strings.Join(parts, "")
 }
 
-func toSnakeCase(s string) string {
+// ToSnakeCase converts a CamelCase name to snake_case (e.g.
+// "LibraryService" → "library_service"). Shared by the IR builder and the
+// CLI for output path derivation.
+func ToSnakeCase(s string) string {
 	var sb strings.Builder
 	for i, r := range s {
 		if unicode.IsUpper(r) {

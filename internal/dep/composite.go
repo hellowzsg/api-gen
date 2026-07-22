@@ -3,13 +3,14 @@ package dep
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
 	"github.com/bufbuild/protocompile"
 	"github.com/bufbuild/protocompile/linker"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
 // CompositeResolver combines multiple resolvers (path, git, bsr) into a single
@@ -19,6 +20,10 @@ type CompositeResolver struct {
 	pathResolvers []*PathResolver
 	files         linker.Files
 	resolved      bool
+	// descByFQN indexes every descriptor (messages, enums, services,
+	// methods, fields, extensions) across the named files and their
+	// transitive imports, built once at Resolve time — lookups are O(1).
+	descByFQN map[string]protoreflect.Descriptor
 }
 
 // NewCompositeResolver creates a CompositeResolver with initial import paths.
@@ -26,19 +31,20 @@ func NewCompositeResolver(importPaths []string) *CompositeResolver {
 	return &CompositeResolver{importPaths: importPaths}
 }
 
-// AddPathResolver adds a path resolver's files and import paths.
+// AddPathResolver adds a path resolver's files and import paths. Import
+// paths already present (e.g. aggregated earlier via Resolver.Fetch) are
+// deduplicated, preserving their original declaration order.
 func (c *CompositeResolver) AddPathResolver(r *PathResolver) error {
 	if _, err := r.ResolveFiles(); err != nil {
 		return err
 	}
 	c.pathResolvers = append(c.pathResolvers, r)
-	c.importPaths = append(c.importPaths, r.ImportPaths()...)
+	for _, ip := range r.ImportPaths() {
+		if !slices.Contains(c.importPaths, ip) {
+			c.importPaths = append(c.importPaths, ip)
+		}
+	}
 	return nil
-}
-
-// AddImportPaths adds additional import paths.
-func (c *CompositeResolver) AddImportPaths(paths []string) {
-	c.importPaths = append(c.importPaths, paths...)
 }
 
 // Resolve runs protocompile to parse all proto files.
@@ -50,15 +56,7 @@ func (c *CompositeResolver) Resolve() (linker.Files, error) {
 		for _, f := range files {
 			if !seen[f] {
 				seen[f] = true
-				// Convert absolute path to relative path from the nearest import path
-				rel := f
-				for _, ip := range c.importPaths {
-					if relPath, err := filepath.Rel(ip, f); err == nil && !strings.HasPrefix(relPath, "..") {
-						rel = relPath
-						break
-					}
-				}
-				protoFiles = append(protoFiles, rel)
+				protoFiles = append(protoFiles, RelToImportRoot(c.importPaths, f))
 			}
 		}
 	}
@@ -73,27 +71,96 @@ func (c *CompositeResolver) Resolve() (linker.Files, error) {
 	}
 	c.files = files
 	c.resolved = true
+	c.descByFQN = c.buildFQNIndex()
 	return files, nil
 }
 
-func (c *CompositeResolver) findDescriptor(fqn string) protoreflect.Descriptor {
-	for _, f := range c.files {
-		if d := f.FindDescriptorByName(protoreflect.FullName(fqn)); d != nil {
-			return d
+// buildFQNIndex registers every descriptor in the named files and their
+// transitive imports by fully-qualified name.
+func (c *CompositeResolver) buildFQNIndex() map[string]protoreflect.Descriptor {
+	idx := make(map[string]protoreflect.Descriptor)
+	for _, f := range c.allFiles() {
+		registerEnums(f.Enums(), idx)
+		registerMessages(f.Messages(), idx)
+		svcs := f.Services()
+		for i := 0; i < svcs.Len(); i++ {
+			s := svcs.Get(i)
+			idx[string(s.FullName())] = s
+			methods := s.Methods()
+			for j := 0; j < methods.Len(); j++ {
+				m := methods.Get(j)
+				idx[string(m.FullName())] = m
+			}
+		}
+		exts := f.Extensions()
+		for i := 0; i < exts.Len(); i++ {
+			idx[string(exts.Get(i).FullName())] = exts.Get(i)
 		}
 	}
-	return nil
+	return idx
 }
 
-// CheckSymbolReachable checks that a fully-qualified symbol name exists.
-func (c *CompositeResolver) CheckSymbolReachable(fqn string) error {
-	if !c.resolved {
-		return fmt.Errorf("Resolve not called")
+func registerMessages(msgs protoreflect.MessageDescriptors, idx map[string]protoreflect.Descriptor) {
+	for i := 0; i < msgs.Len(); i++ {
+		m := msgs.Get(i)
+		idx[string(m.FullName())] = m
+		fields := m.Fields()
+		for j := 0; j < fields.Len(); j++ {
+			idx[string(fields.Get(j).FullName())] = fields.Get(j)
+		}
+		exts := m.Extensions()
+		for j := 0; j < exts.Len(); j++ {
+			idx[string(exts.Get(j).FullName())] = exts.Get(j)
+		}
+		registerEnums(m.Enums(), idx)
+		registerMessages(m.Messages(), idx)
 	}
-	if d := c.findDescriptor(fqn); d != nil {
-		return nil
+}
+
+func registerEnums(enums protoreflect.EnumDescriptors, idx map[string]protoreflect.Descriptor) {
+	for i := 0; i < enums.Len(); i++ {
+		e := enums.Get(i)
+		idx[string(e.FullName())] = e
 	}
-	return fmt.Errorf("symbol %q not found in resolved proto files", fqn)
+}
+
+// allFiles returns the named files plus their transitively imported files,
+// deduplicated by path. Types from git/BSR dependencies are only compiled
+// as transitive imports of the named (path-import) files, so descriptor
+// lookups must walk this set rather than c.files alone.
+func (c *CompositeResolver) allFiles() []linker.File {
+	seen := make(map[string]bool, len(c.files))
+	out := make([]linker.File, 0, len(c.files))
+	var queue []linker.File
+	for _, f := range c.files {
+		p := string(f.Path())
+		if !seen[p] {
+			seen[p] = true
+			out = append(out, f)
+			queue = append(queue, f)
+		}
+	}
+	for len(queue) > 0 {
+		cur := queue[0]
+		queue = queue[1:]
+		imports := cur.Imports()
+		for i := 0; i < imports.Len(); i++ {
+			impPath := string(imports.Get(i).Path())
+			if seen[impPath] {
+				continue
+			}
+			seen[impPath] = true
+			if dep := cur.FindImportByPath(impPath); dep != nil {
+				out = append(out, dep)
+				queue = append(queue, dep)
+			}
+		}
+	}
+	return out
+}
+
+func (c *CompositeResolver) findDescriptor(fqn string) protoreflect.Descriptor {
+	return c.descByFQN[fqn]
 }
 
 // CheckTypeIsMessage checks that a type resolves to a proto message.
@@ -126,33 +193,6 @@ func (c *CompositeResolver) FindMessageDescriptor(fqn string) protoreflect.Messa
 	return md
 }
 
-// DryRunClosure validates that all imports are resolvable.
-func (c *CompositeResolver) DryRunClosure() error {
-	if !c.resolved {
-		return fmt.Errorf("Resolve not called")
-	}
-	for _, f := range c.files {
-		imports := f.Imports()
-		for i := 0; i < imports.Len(); i++ {
-			imp := imports.Get(i)
-			found := false
-			for _, rf := range c.files {
-				if string(rf.Path()) == string(imp.Path()) || string(rf.Name()) == string(imp.Path()) {
-					found = true
-					break
-				}
-			}
-			if !found && isStandardImport(string(imp.Path())) {
-				continue
-			}
-			if !found {
-				return fmt.Errorf("unresolved import %q in file %q", imp.Path(), f.Path())
-			}
-		}
-	}
-	return nil
-}
-
 func isStandardImport(path string) bool {
 	return strings.HasPrefix(path, "google/protobuf/") ||
 		path == "google/api/annotations.proto" ||
@@ -164,60 +204,6 @@ func (c *CompositeResolver) Files() linker.Files {
 	return c.files
 }
 
-// CollectTransitiveClosure returns proto file paths for plugins.
-// It performs a real transitive-closure walk over the resolved linker.Files,
-// following each file's imports (including WKT) and returning the deduplicated,
-// sorted list of all reachable file paths.
-func (c *CompositeResolver) CollectTransitiveClosure(seedFiles []string) []string {
-	if !c.resolved {
-		result := make([]string, len(seedFiles))
-		copy(result, seedFiles)
-		sort.Strings(result)
-		return result
-	}
-	seen := make(map[string]bool)
-	var result []string
-	// Index resolved files by path for quick lookup.
-	byPath := make(map[string]linker.File, len(c.files))
-	for _, f := range c.files {
-		byPath[string(f.Path())] = f
-	}
-	// BFS queue seeded with the explicit seed files.
-	var queue []linker.File
-	for _, seed := range seedFiles {
-		if !seen[seed] {
-			seen[seed] = true
-			result = append(result, seed)
-			if f, ok := byPath[seed]; ok {
-				queue = append(queue, f)
-			}
-		}
-	}
-	for len(queue) > 0 {
-		cur := queue[0]
-		queue = queue[1:]
-		imports := cur.Imports()
-		for i := 0; i < imports.Len(); i++ {
-			impPath := string(imports.Get(i).Path())
-			if seen[impPath] {
-				continue
-			}
-			seen[impPath] = true
-			result = append(result, impPath)
-			if dep, ok := byPath[impPath]; ok {
-				queue = append(queue, dep)
-			} else if lf := cur.FindImportByPath(impPath); lf != nil {
-				queue = append(queue, lf)
-			}
-			// WKT files from protoregistry are not enqueued as linker.File —
-			// they have no further user-relevant imports beyond other WKT,
-			// which protoc-gen-go resolves internally.
-		}
-	}
-	sort.Strings(result)
-	return result
-}
-
 // BuildTypeImportPaths builds a map from fully-qualified message/enum type name
 // to the proto file path that defines it. This is used by the renderer to emit
 // exact import statements for type_ references instead of guessing the file
@@ -227,43 +213,48 @@ func (c *CompositeResolver) BuildTypeImportPaths() map[string]string {
 		return nil
 	}
 	m := make(map[string]string)
-	for _, f := range c.files {
-		path := string(f.Path())
-		// Walk all messages and enums defined in this file.
-		collectTypeNames(f.Messages(), path, m)
-		collectEnumNames(f.Enums(), path, m)
+	for name, d := range c.descByFQN {
+		switch d.(type) {
+		case protoreflect.MessageDescriptor, protoreflect.EnumDescriptor:
+		default:
+			continue
+		}
+		path := string(d.ParentFile().Path())
+		// Standard imports never hold user entity types; excluding them
+		// keeps the map identical to the named-files-only behavior.
+		if isStandardImport(path) {
+			continue
+		}
+		m[name] = path
 	}
 	return m
 }
 
-func collectTypeNames(msgs protoreflect.MessageDescriptors, path string, m map[string]string) {
-	for i := 0; i < msgs.Len(); i++ {
-		md := msgs.Get(i)
-		m[string(md.FullName())] = path
-		collectTypeNames(md.Messages(), path, m)
-		collectEnumNames(md.Enums(), path, m)
+// ResolveExtra compiles additional proto files (e.g. freshly generated
+// service protos) while reusing the already-resolved files as fully-linked
+// inputs — previously compiled files are never recompiled. importPaths must
+// cover the extra files' roots plus any sources not already resolved.
+// Returns the newly compiled files only; their imports link back to the
+// reused files.
+func (c *CompositeResolver) ResolveExtra(importPaths, protoFiles []string) (linker.Files, error) {
+	if !c.resolved {
+		return nil, fmt.Errorf("Resolve not called")
 	}
-}
-
-func collectEnumNames(enums protoreflect.EnumDescriptors, path string, m map[string]string) {
-	for i := 0; i < enums.Len(); i++ {
-		ed := enums.Get(i)
-		m[string(ed.FullName())] = path
-	}
-}
-
-// ResolveWithFiles resolves the given proto files (relative paths) using
-// the import paths, without relying on pathResolvers.
-func (c *CompositeResolver) ResolveWithFiles(protoFiles []string) (linker.Files, error) {
 	sort.Strings(protoFiles)
-	srcResolver := &protocompile.SourceResolver{ImportPaths: c.importPaths}
-	resolver := protocompile.WithStandardImports(srcResolver)
+	reuse := protocompile.ResolverFunc(func(path string) (protocompile.SearchResult, error) {
+		if f := c.files.FindFileByPath(path); f != nil {
+			return protocompile.SearchResult{Desc: f}, nil
+		}
+		return protocompile.SearchResult{}, protoregistry.NotFound
+	})
+	src := &protocompile.SourceResolver{ImportPaths: importPaths}
+	resolver := protocompile.WithStandardImports(protocompile.CompositeResolver{reuse, src})
 	compiler := protocompile.Compiler{Resolver: resolver}
 	files, err := compiler.Compile(context.Background(), protoFiles...)
 	if err != nil {
 		return nil, fmt.Errorf("protocompile failed: %w", err)
 	}
-	c.files = files
-	c.resolved = true
 	return files, nil
 }
+
+

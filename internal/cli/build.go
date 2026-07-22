@@ -4,102 +4,110 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/acme/apigen/internal/build"
 	"github.com/acme/apigen/internal/dep"
+	"github.com/acme/apigen/internal/ir"
 	apigenyaml "github.com/acme/apigen/internal/yaml"
 )
 
+// Test seams: allow tests to count Prepare invocations and capture compiler
+// inputs without invoking real protoc plugins.
+var (
+	prepareFn = Prepare
+	compileFn = build.Compile
+)
+
 func runBuild(ctx context.Context, apiYAMLPath string) error {
-	if err := runGenerate(ctx, apiYAMLPath); err != nil {
-		return err
-	}
-	cfg, err := parseConfig(apiYAMLPath)
+	p, err := prepareFn(ctx, apiYAMLPath)
 	if err != nil {
 		return err
 	}
-	baseDir := filepath.Dir(apiYAMLPath)
-	cacheDir := defaultCacheDir()
-	importPaths, err := resolveDependencies(cfg, baseDir, cacheDir)
-	if err != nil {
+	if err := renderServiceProtos(p); err != nil {
 		return err
 	}
-	pathResolver := setupPathResolver(cfg, baseDir)
-	if pathResolver != nil {
-		_ = pathResolver.Glob()
-		importPaths = append(importPaths, pathResolver.ImportPaths()...)
+	cfg := p.Config
+	protoOutDir := filepath.Join(p.BaseDir, cfg.Settings.Out.Proto)
+	// Compile ONLY the freshly generated service protos; user protos resolved
+	// by Prepare are reused as fully-linked inputs (never recompiled).
+	genRel := make([]string, 0, len(p.IR.Services))
+	for _, svc := range p.IR.Services {
+		name := ir.ToSnakeCase(svc.Name)
+		genRel = append(genRel, filepath.Join(name, name+".proto"))
 	}
-	// Also resolve the generated service protos (output of runGenerate).
-	protoOutDir := filepath.Join(baseDir, cfg.Settings.Out.Proto)
-	genResolver := dep.NewPathResolverWithBase(filepath.Join(cfg.Settings.Out.Proto, "**/*.proto"), baseDir)
-	cr := dep.NewCompositeResolver(importPaths)
-	if pathResolver != nil {
-		_ = cr.AddPathResolver(pathResolver)
-	}
-	_ = cr.AddPathResolver(genResolver)
-	files, err := cr.Resolve()
+	files, err := p.Resolver.ResolveExtra(append([]string{protoOutDir}, p.ImportPaths...), genRel)
 	if err != nil {
 		return fmt.Errorf("resolve proto for build: %w", err)
 	}
-	seedFiles := collectSeedFiles(cfg, baseDir)
-	// FileToGenerate should contain ONLY the user's own protos —
-	// generated service protos AND local protos declared via
-	// import_protos.path — but NOT remote dependencies (git/BSR) or WKT
-	// (google/api/*, google/protobuf/*).  The transitive closure is
-	// already walked inside BuildCodeGeneratorRequest to populate ProtoFile
-	// (the dependency set passed to plugins).  If google/remote protos end
-	// up in FileToGenerate, plugins emit generated code for them under
-	// generated/<lang>/google/, which is undesirable.
-	fileToGenerate := make([]string, 0, len(seedFiles))
-	// 1. Generated service protos: paths relative to protoOutDir.
-	for _, s := range seedFiles {
-		rel, err := filepath.Rel(protoOutDir, s)
-		if err != nil {
-			rel = s
-		}
-		fileToGenerate = append(fileToGenerate, rel)
+	fileToGenerate, err := buildFileToGenerate(p, genRel)
+	if err != nil {
+		return err
 	}
-	// 2. Local protos from import_protos.path: convert absolute paths to
-	// import-root-relative paths (matching linker.File.Path() keys).
-	if pathResolver != nil {
-		localFiles, _ := pathResolver.ResolveFiles()
-		for _, f := range localFiles {
-			rel := f
-			for _, ip := range importPaths {
-				if relPath, err := filepath.Rel(ip, f); err == nil && !strings.HasPrefix(relPath, "..") {
-					rel = relPath
-					break
-				}
-			}
-			fileToGenerate = append(fileToGenerate, rel)
-		}
-	}
-	goOut := filepath.Join(baseDir, cfg.Settings.Out.Go)
-	openAPIOut := ""
-	if cfg.Settings.Out.OpenAPI != "" {
-		openAPIOut = filepath.Join(baseDir, cfg.Settings.Out.OpenAPI)
-	}
-	jsOut := ""
-	if cfg.Settings.Out.Js != "" {
-		jsOut = filepath.Join(baseDir, cfg.Settings.Out.Js)
-	}
-	httpEnabled := cfg.Settings.HTTP != nil && cfg.Settings.HTTP.Enable
-	generateOpenAPI := httpEnabled && cfg.Settings.HTTP.GenerateOpenAPI
-	generateJS := len(cfg.Settings.Plugins.JS) > 0
-	if err := build.Compile(ctx, files, fileToGenerate,
-		goOut, openAPIOut, jsOut,
-		httpEnabled, generateOpenAPI, generateJS); err != nil {
+	if err := compileFn(ctx, files, fileToGenerate, pluginSpecsForConfig(cfg, p.BaseDir)); err != nil {
 		return fmt.Errorf("compile: %w", err)
 	}
 	return nil
 }
 
-func collectSeedFiles(cfg *apigenyaml.Config, baseDir string) []string {
-	var seeds []string
-	for _, svc := range cfg.Services {
-		seeds = append(seeds, filepath.Join(baseDir, cfg.Settings.Out.Proto,
-			toSnakeCase(svc.Name), toSnakeCase(svc.Name)+".proto"))
+// pluginSpecsForConfig assembles the protoc plugin list from configuration:
+// protoc-gen-go and protoc-gen-go-grpc always; grpc-gateway (+openapiv2)
+// when HTTP is enabled; protoc-gen-es when JS stubs are configured.
+//
+// protoc-gen-go is invoked with `paths=source_relative` so output files are
+// placed at <goOut>/<proto-relative-path>.pb.go rather than deriving the
+// output directory from the go_package import path; grpc and gateway follow
+// the same parameter.
+func pluginSpecsForConfig(cfg *apigenyaml.Config, baseDir string) []build.PluginSpec {
+	goOut := filepath.Join(baseDir, cfg.Settings.Out.Go)
+	specs := []build.PluginSpec{
+		{Name: "protoc-gen-go", OutDir: goOut, Parameter: "paths=source_relative"},
+		{Name: "protoc-gen-go-grpc", OutDir: goOut, Parameter: "paths=source_relative"},
 	}
-	return seeds
+	httpEnabled := cfg.Settings.HTTP != nil && cfg.Settings.HTTP.Enable
+	if httpEnabled {
+		specs = append(specs, build.PluginSpec{
+			Name: "protoc-gen-grpc-gateway", OutDir: goOut, Parameter: "paths=source_relative",
+		})
+		if cfg.Settings.HTTP.GenerateOpenAPI && cfg.Settings.Out.OpenAPI != "" {
+			specs = append(specs, build.PluginSpec{
+				Name:      "protoc-gen-openapiv2",
+				OutDir:    filepath.Join(baseDir, cfg.Settings.Out.OpenAPI),
+				Parameter: "logtostderr=false,json_names_for_fields=false",
+			})
+		}
+	}
+	if len(cfg.Settings.Plugins.JS) > 0 && cfg.Settings.Out.Js != "" {
+		specs = append(specs, build.PluginSpec{
+			Name:      "protoc-gen-es",
+			OutDir:    filepath.Join(baseDir, cfg.Settings.Out.Js),
+			Parameter: "target=ts",
+		})
+	}
+	return specs
+}
+
+// buildFileToGenerate assembles the plugin file list: the generated service
+// protos (paths relative to the proto output dir) plus local protos declared
+// via import_protos.path (converted from absolute paths to import-root-
+// relative paths, matching linker.File.Path() keys).
+//
+// Remote dependencies (git/BSR) and WKT (google/api/*, google/protobuf/*)
+// are deliberately excluded: the transitive closure is already walked inside
+// BuildCodeGeneratorRequest to populate ProtoFile. If remote/WKT protos ended
+// up in FileToGenerate, plugins would emit code for them under
+// generated/<lang>/google/, which is undesirable.
+func buildFileToGenerate(p *Pipeline, genRel []string) ([]string, error) {
+	fileToGenerate := make([]string, 0, len(genRel))
+	fileToGenerate = append(fileToGenerate, genRel...)
+	for _, pr := range p.PathResolvers {
+		// Already globbed successfully inside Prepare; cannot fail here.
+		localFiles, err := pr.ResolveFiles()
+		if err != nil {
+			return nil, fmt.Errorf("resolve local proto files: %w", err)
+		}
+		for _, f := range localFiles {
+			fileToGenerate = append(fileToGenerate, dep.RelToImportRoot(p.ImportPaths, f))
+		}
+	}
+	return fileToGenerate, nil
 }

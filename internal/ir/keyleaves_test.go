@@ -13,6 +13,8 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
+
+	apigenyaml "github.com/acme/apigen/internal/yaml"
 )
 
 // strPtr returns a pointer to s.
@@ -447,4 +449,62 @@ func TestValidatePathVariables(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestValidatePathVariables_OverrideIntegration verifies that per-method
+// http override paths are validated against the entity's key leaves at IR
+// build time (fail-fast), while non-key variables are left alone.
+func TestValidatePathVariables_OverrideIntegration(t *testing.T) {
+	keyFile := mkFile("test", mkMsg("BookId", mkScalarField("id", "string", 1)))
+	keyDesc := keyFile.Messages().ByName("BookId")
+
+	build := func(overridePath string) error {
+		cfg := &apigenyaml.Config{
+			Syntax: "v1",
+			Name:   "test",
+			Settings: apigenyaml.Settings{
+				HTTP: &apigenyaml.HTTPConfig{Enable: true},
+			},
+			Entities: []apigenyaml.Entity{{
+				Name: "book",
+				Key:  apigenyaml.KeyDef{Type: "BookId"},
+				Resources: []apigenyaml.Resource{{
+					Name:    "meta",
+					Type:    "BookMeta",
+					Version: apigenyaml.VersionDef{Kind: "NONE"},
+					Reader: &apigenyaml.ReaderDef{
+						List: true,
+						HTTP: &apigenyaml.HTTPOverride{Path: overridePath},
+					},
+				}},
+			}},
+		}
+		_, err := BuildWithOptions(cfg, BuildOptions{
+			KeyDescriptors: map[string]protoreflect.MessageDescriptor{"test.BookId": keyDesc},
+		})
+		return err
+	}
+
+	t.Run("illegal key variable fails fast", func(t *testing.T) {
+		err := build("/custom/{key.nonexistent}/items")
+		if err == nil {
+			t.Fatal("BuildWithOptions should fail on unreachable key variable")
+		}
+		if !strings.Contains(err.Error(), "key.nonexistent") {
+			t.Errorf("error should name the illegal variable, got: %v", err)
+		}
+		if !strings.Contains(err.Error(), "meta") {
+			t.Errorf("error should name the resource, got: %v", err)
+		}
+	})
+	t.Run("legal key variable passes", func(t *testing.T) {
+		if err := build("/custom/{key.id}/items"); err != nil {
+			t.Fatalf("legal override should pass: %v", err)
+		}
+	})
+	t.Run("non-key variable not validated", func(t *testing.T) {
+		if err := build("/custom/{book_id}/items"); err != nil {
+			t.Fatalf("non-key variable should not be validated: %v", err)
+		}
+	})
 }

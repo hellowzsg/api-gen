@@ -1,10 +1,12 @@
 package dep
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net/url"
 	"os"
 	"os/exec"
@@ -23,6 +25,13 @@ const CacheVersion = "v1"
 // moduleProxyDir is the sub-namespace under <cacheDir>/<version>/ that holds
 // git dependency clones, mirroring buf's "module-proxy" directory.
 const moduleProxyDir = "module-proxy"
+
+// moduleProxyBase returns the shared cache root for dependency clones/exports:
+// <cacheDir>/<CacheVersion>/module-proxy. Both git and BSR resolvers lay out
+// their content-addressed entries underneath it.
+func moduleProxyBase(cacheDir string) string {
+	return filepath.Join(cacheDir, CacheVersion, moduleProxyDir)
+}
 
 // GitDep declares a git proto dependency.
 type GitDep struct {
@@ -73,7 +82,7 @@ var gitRefPattern = regexp.MustCompile(`^[a-zA-Z0-9._/:-]+$`)
 //	<cacheDir>/<CacheVersion>/module-proxy/local/<short-hash>
 //
 // where <short-hash> = SHA256(URL+key)[:16] for disambiguation.
-func (r *GitResolver) Fetch() ([]string, error) {
+func (r *GitResolver) Fetch(ctx context.Context) ([]string, error) {
 	if err := validateGitInput(r.dep.URL); err != nil {
 		return nil, fmt.Errorf("git url: %w", err)
 	}
@@ -85,17 +94,19 @@ func (r *GitResolver) Fetch() ([]string, error) {
 
 	if _, err := os.Stat(r.cloneDir); os.IsNotExist(err) {
 		if r.dep.ResolvedCommit != "" {
-			if err := r.cloneByCommit(r.dep.ResolvedCommit); err != nil {
+			if err := r.cloneByCommit(ctx, r.dep.ResolvedCommit); err != nil {
 				return nil, err
 			}
 		} else {
-			if err := r.clone(); err != nil {
+			if err := r.clone(ctx); err != nil {
 				return nil, err
 			}
 		}
+	} else {
+		slog.Info("dep fetch cache hit", "kind", "git", "url", r.dep.URL, "cache_hit", true)
 	}
 
-	commit, err := r.resolveCommit()
+	commit, err := r.resolveCommit(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +119,7 @@ func (r *GitResolver) Fetch() ([]string, error) {
 	if r.dep.ResolvedCommit != "" && r.dep.ResolvedCommit != commit {
 		// Cache corruption or race: re-clone from scratch.
 		os.RemoveAll(r.cloneDir)
-		if err := r.cloneByCommit(r.dep.ResolvedCommit); err != nil {
+		if err := r.cloneByCommit(ctx, r.dep.ResolvedCommit); err != nil {
 			return nil, err
 		}
 		commit = r.dep.ResolvedCommit
@@ -157,7 +168,7 @@ func (r *GitResolver) Fetch() ([]string, error) {
 // computeCloneDir builds the cache directory path for this dependency,
 // following buf's module-proxy layout. See Fetch docs for the full spec.
 func (r *GitResolver) computeCloneDir() string {
-	base := filepath.Join(r.cacheDir, CacheVersion, moduleProxyDir)
+	base := moduleProxyBase(r.cacheDir)
 	subpath := gitCacheSubpath(r.dep.URL)
 
 	// Fallback for unparseable URLs (e.g. local filesystem paths in tests):
@@ -191,7 +202,7 @@ func sha256Short(s string) string {
 	return hex.EncodeToString(h[:])[:16]
 }
 
-func (r *GitResolver) clone() error {
+func (r *GitResolver) clone(ctx context.Context) error {
 	if err := os.MkdirAll(filepath.Dir(r.cloneDir), 0755); err != nil {
 		return fmt.Errorf("create cache dir: %w", err)
 	}
@@ -204,19 +215,19 @@ func (r *GitResolver) clone() error {
 		args = append(args, "--branch", ref)
 	}
 	args = append(args, r.dep.URL, r.cloneDir)
-	cmd := exec.Command("git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		os.RemoveAll(r.cloneDir)
 		fullArgs := []string{"clone", r.dep.URL, r.cloneDir}
-		cmd2 := exec.Command("git", fullArgs...)
+		cmd2 := exec.CommandContext(ctx, "git", fullArgs...)
 		cmd2.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
 		if output2, err := cmd2.CombinedOutput(); err != nil {
 			return fmt.Errorf("git clone failed: %w\n%s", err, string(output2))
 		}
 		_ = output
 		if ref != "HEAD" {
-			checkout := exec.Command("git", "checkout", ref)
+			checkout := exec.CommandContext(ctx, "git", "checkout", ref)
 			checkout.Dir = r.cloneDir
 			if output3, err := checkout.CombinedOutput(); err != nil {
 				return fmt.Errorf("git checkout %s: %w\n%s", ref, err, string(output3))
@@ -228,18 +239,18 @@ func (r *GitResolver) clone() error {
 
 // cloneByCommit performs a full clone and checks out the specific commit SHA.
 // Used when ResolvedCommit is known and the ref-based cache is absent/stale.
-func (r *GitResolver) cloneByCommit(commit string) error {
+func (r *GitResolver) cloneByCommit(ctx context.Context, commit string) error {
 	if err := os.MkdirAll(filepath.Dir(r.cloneDir), 0755); err != nil {
 		return fmt.Errorf("create cache dir: %w", err)
 	}
 	args := []string{"clone", r.dep.URL, r.cloneDir}
-	cmd := exec.Command("git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...)
 	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
 	if output, err := cmd.CombinedOutput(); err != nil {
 		os.RemoveAll(r.cloneDir)
 		return fmt.Errorf("git clone failed: %w\n%s", err, string(output))
 	}
-	checkout := exec.Command("git", "checkout", commit)
+	checkout := exec.CommandContext(ctx, "git", "checkout", commit)
 	checkout.Dir = r.cloneDir
 	if output, err := checkout.CombinedOutput(); err != nil {
 		return fmt.Errorf("git checkout %s: %w\n%s", commit, err, string(output))
@@ -247,8 +258,8 @@ func (r *GitResolver) cloneByCommit(commit string) error {
 	return nil
 }
 
-func (r *GitResolver) resolveCommit() (string, error) {
-	cmd := exec.Command("git", "rev-parse", "HEAD")
+func (r *GitResolver) resolveCommit(ctx context.Context) (string, error) {
+	cmd := exec.CommandContext(ctx, "git", "rev-parse", "HEAD")
 	cmd.Dir = r.cloneDir
 	output, err := cmd.Output()
 	if err != nil {
@@ -262,12 +273,21 @@ func (r *GitResolver) ResolvedCommit() string {
 	return r.resolvedCommit
 }
 
-// ProtoFiles returns the extracted .proto file paths.
-func (r *GitResolver) ProtoFiles() ([]string, error) {
-	if r.protoFiles == nil {
-		return nil, fmt.Errorf("Fetch not called")
+// CloneDir returns the dependency's cache clone directory. It performs path
+// computation only — no network access or cloning — so it is safe to use
+// for cache-locality checks (e.g. dep prune).
+func (r *GitResolver) CloneDir() string {
+	if r.cloneDir == "" {
+		r.cloneDir = r.computeCloneDir()
 	}
-	return r.protoFiles, nil
+	return r.cloneDir
+}
+
+// ProtoFiles implements Resolver. Git protos compile lazily as transitive
+// imports of explicitly named files, so this always returns nil — naming the
+// whole dependency repo would compile thousands of unrelated files.
+func (r *GitResolver) ProtoFiles() []string {
+	return nil
 }
 
 // validateGitInput validates a git URL for subprocess safety.

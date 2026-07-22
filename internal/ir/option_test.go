@@ -93,3 +93,28 @@ func TestOptionValidateOptionName(t *testing.T) {
 		})
 	}
 }
+
+// TestFormatOptionValue_MapKeySorted verifies that map values are formatted
+// with keys in deterministic (lexicographic) order — same input must always
+// produce the same output (reproducible generation).
+func TestFormatOptionValue_MapKeySorted(t *testing.T) {
+	value := map[string]interface{}{
+		"zeta":  1,
+		"alpha": "a",
+		"mid":   true,
+		"nested": map[string]interface{}{
+			"b": 2,
+			"a": 1,
+		},
+	}
+	first := FormatOptionValue(value)
+	for i := 0; i < 50; i++ {
+		if got := FormatOptionValue(value); got != first {
+			t.Fatalf("FormatOptionValue not deterministic: %q vs %q", first, got)
+		}
+	}
+	want := "{alpha: \"a\", mid: true, nested: {a: 1, b: 2}, zeta: 1}"
+	if first != want {
+		t.Errorf("FormatOptionValue = %q, want %q (keys sorted, nested sorted)", first, want)
+	}
+}

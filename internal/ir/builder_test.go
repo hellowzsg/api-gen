@@ -387,8 +387,10 @@ func TestBuild_HTTPEnabled(t *testing.T) {
 	}
 }
 
-// TestBuild_HTTPPathGeneration: verify path contains prefix/service/collection/key/resource.
-func TestBuild_HTTPPathGeneration(t *testing.T) {
+// TestBuild_HTTPStructuredAnnotations: IR annotations carry structured
+// path segments (entity/keyLeaves/resource/suffix), not a pre-baked path
+// string; the final path is resolved per service at render time.
+func TestBuild_HTTPStructuredAnnotations(t *testing.T) {
 	keyDesc := buildTestKeyDesc(t)
 	cfg := &apigenyaml.Config{
 		Syntax: "v1",
@@ -400,13 +402,17 @@ func TestBuild_HTTPPathGeneration(t *testing.T) {
 			},
 		},
 		Entities: []apigenyaml.Entity{{
-			Name: "book",
-			Key:  apigenyaml.KeyDef{Type: "BookId"},
+			Name:       "book",
+			Key:        apigenyaml.KeyDef{Type: "BookId"},
+			Create:     &struct{}{},
+			Delete:     &struct{}{},
+			DeleteSoft: &struct{}{},
 			Resources: []apigenyaml.Resource{{
 				Name:    "meta",
 				Type:    "BookMeta",
 				Version: apigenyaml.VersionDef{Kind: "NONE"},
-				Reader:  &apigenyaml.ReaderDef{},
+				Reader:  &apigenyaml.ReaderDef{Batch: true, List: true},
+				Writer:  &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{}},
 			}},
 		}},
 		Services: []apigenyaml.Service{{
@@ -424,15 +430,111 @@ func TestBuild_HTTPPathGeneration(t *testing.T) {
 		t.Fatalf("BuildWithOptions failed: %v", err)
 	}
 	e := irData.Entities[0]
-	r := e.Resources[0]
-	if r.Get == nil || r.Get.HTTPAnnotation == nil {
-		t.Fatal("Get.HTTPAnnotation should be non-nil")
+
+	// Create: entity-level POST, no key/resource/suffix.
+	ann := e.Create.HTTPAnnotation
+	if ann == nil {
+		t.Fatal("Create.HTTPAnnotation is nil")
 	}
-	// Expected: /library/LibraryService/book/{key.id}/meta
-		expectedPath := "/library/LibraryService/book/{key.id}/meta"
-		if r.Get.HTTPAnnotation.Path != expectedPath {
-			t.Errorf("Get.Path = %q, want %q", r.Get.HTTPAnnotation.Path, expectedPath)
-		}
+	if ann.Verb != "POST" || ann.Body != "*" {
+		t.Errorf("Create = {%s %q}, want {POST \"*\"}", ann.Verb, ann.Body)
+	}
+	if ann.Entity != "book" || ann.Resource != "" || ann.Suffix != "" || len(ann.KeyLeaves) != 0 {
+		t.Errorf("Create segments = {entity:%q resource:%q suffix:%q leaves:%d}, want {book \"\" \"\" 0}",
+			ann.Entity, ann.Resource, ann.Suffix, len(ann.KeyLeaves))
+	}
+	if got := ann.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book" {
+		t.Errorf("Create ResolvePath = %q, want /library/LibraryService/book", got)
+	}
+
+	// Delete: entity-level with key leaves.
+	ann = e.Delete.HTTPAnnotation
+	if len(ann.KeyLeaves) != 1 || ann.KeyLeaves[0].DotPath != "id" {
+		t.Errorf("Delete KeyLeaves = %v, want [id]", ann.KeyLeaves)
+	}
+	if got := ann.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/{key.id}" {
+		t.Errorf("Delete ResolvePath = %q, want /library/LibraryService/book/{key.id}", got)
+	}
+
+	// DeleteSoft: entity-level with suffix.
+	ann = e.DeleteSoft.HTTPAnnotation
+	if ann.Suffix != "deleteSoft" {
+		t.Errorf("DeleteSoft Suffix = %q, want deleteSoft", ann.Suffix)
+	}
+	if got := ann.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/deleteSoft" {
+		t.Errorf("DeleteSoft ResolvePath = %q, want /library/LibraryService/book/deleteSoft", got)
+	}
+
+	r := e.Resources[0]
+	// Get: key leaves + resource.
+	if got := r.Get.HTTPAnnotation.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/{key.id}/meta" {
+		t.Errorf("Get ResolvePath = %q, want /library/LibraryService/book/{key.id}/meta", got)
+	}
+	// BatchGet: resource + batchGet suffix, no key leaves.
+	ann = r.BatchGet.HTTPAnnotation
+	if ann.Resource != "meta" || ann.Suffix != "batchGet" || len(ann.KeyLeaves) != 0 {
+		t.Errorf("BatchGet segments = {resource:%q suffix:%q leaves:%d}, want {meta batchGet 0}",
+			ann.Resource, ann.Suffix, len(ann.KeyLeaves))
+	}
+	if got := ann.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/meta/batchGet" {
+		t.Errorf("BatchGet ResolvePath = %q, want /library/LibraryService/book/meta/batchGet", got)
+	}
+	// List: resource + list suffix.
+	if got := r.List.HTTPAnnotation.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/meta/list" {
+		t.Errorf("List ResolvePath = %q, want /library/LibraryService/book/meta/list", got)
+	}
+	// Update: key leaves + resource.
+	if got := r.Update.HTTPAnnotation.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/{key.id}/meta" {
+		t.Errorf("Update ResolvePath = %q, want /library/LibraryService/book/{key.id}/meta", got)
+	}
+}
+
+// TestHTTPAnnotation_ResolvePath covers ResolvePath composition rules:
+// prefix handling, composite keys, and override paths returned verbatim.
+func TestHTTPAnnotation_ResolvePath(t *testing.T) {
+	// Composite key: multiple leaves become consecutive segments.
+	ann := &HTTPAnnotation{
+		Verb:      "GET",
+		Entity:    "book",
+		KeyLeaves: []KeyLeaf{{DotPath: "org.oid"}, {DotPath: "id"}},
+		Resource:  "meta",
+	}
+	if got := ann.ResolvePath("/library", "Svc"); got != "/library/Svc/book/{key.org.oid}/{key.id}/meta" {
+		t.Errorf("composite key path = %q, want /library/Svc/book/{key.org.oid}/{key.id}/meta", got)
+	}
+	// No prefix.
+	ann = &HTTPAnnotation{Verb: "POST", Entity: "book", Body: "*"}
+	if got := ann.ResolvePath("", "Svc"); got != "/Svc/book" {
+		t.Errorf("no-prefix path = %q, want /Svc/book", got)
+	}
+	// Override (verbatim, custom method): returned as-is regardless of
+	// prefix/svc — OverrideTemplateSvc is empty.
+	ann = &HTTPAnnotation{
+		Verb:         "GET",
+		Entity:       "book",
+		IsOverride:   true,
+		OverridePath: "/custom/{key.id}/items",
+	}
+	if got := ann.ResolvePath("/library", "AdminService"); got != "/custom/{key.id}/items" {
+		t.Errorf("verbatim override path = %q, want /custom/{key.id}/items", got)
+	}
+	// Override (template, entity-level reader/writer http): the path
+	// segment equal to OverrideTemplateSvc is replaced by the rendering
+	// service name so each service inheriting the entity gets an isolated
+	// route.
+	ann = &HTTPAnnotation{
+		Verb:                "GET",
+		Entity:              "book",
+		IsOverride:          true,
+		OverridePath:        "/library/LibraryService/book/meta/list",
+		OverrideTemplateSvc: "LibraryService",
+	}
+	if got := ann.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/meta/list" {
+		t.Errorf("template override (same svc) = %q, want /library/LibraryService/book/meta/list", got)
+	}
+	if got := ann.ResolvePath("/library", "AdminService"); got != "/library/AdminService/book/meta/list" {
+		t.Errorf("template override (AdminService) = %q, want /library/AdminService/book/meta/list", got)
+	}
 }
 
 // TestBuildPerMethodHTTPOverride: reader.http overrides default verb/path.
@@ -488,8 +590,11 @@ func TestBuildPerMethodHTTPOverride(t *testing.T) {
 	if r.List.HTTPAnnotation.Verb != "GET" {
 		t.Errorf("List.Verb = %q, want GET (overridden)", r.List.HTTPAnnotation.Verb)
 	}
-	if r.List.HTTPAnnotation.Path != "/custom/path/{key.id}/metadata" {
-		t.Errorf("List.Path = %q, want /custom/path/{key.id}/metadata (overridden)", r.List.HTTPAnnotation.Path)
+	if !r.List.HTTPAnnotation.IsOverride {
+		t.Error("List.IsOverride = false, want true (path overridden)")
+	}
+	if r.List.HTTPAnnotation.OverridePath != "/custom/path/{key.id}/metadata" {
+		t.Errorf("List.OverridePath = %q, want /custom/path/{key.id}/metadata (overridden)", r.List.HTTPAnnotation.OverridePath)
 	}
 	// List with verb=GET should have no body.
 	if r.List.HTTPAnnotation.Body != "" {
@@ -574,8 +679,14 @@ func TestBuildCustomMethodHTTP(t *testing.T) {
 	if cm.HTTPAnnotation.Verb != "POST" {
 		t.Errorf("CustomMethod.Verb = %q, want POST", cm.HTTPAnnotation.Verb)
 	}
-	if cm.HTTPAnnotation.Path != "/library/LibraryService/book/{book_id}:archive" {
-		t.Errorf("CustomMethod.Path = %q, want /library/LibraryService/book/{book_id}:archive", cm.HTTPAnnotation.Path)
+	if !cm.HTTPAnnotation.IsOverride {
+		t.Error("CustomMethod.IsOverride = false, want true (user-declared path)")
+	}
+	if cm.HTTPAnnotation.OverrideTemplateSvc != "" {
+		t.Errorf("CustomMethod.OverrideTemplateSvc = %q, want empty (custom methods are verbatim, never templated)", cm.HTTPAnnotation.OverrideTemplateSvc)
+	}
+	if cm.HTTPAnnotation.OverridePath != "/library/LibraryService/book/{book_id}:archive" {
+		t.Errorf("CustomMethod.OverridePath = %q, want /library/LibraryService/book/{book_id}:archive", cm.HTTPAnnotation.OverridePath)
 	}
 	if cm.HTTPAnnotation.Body != "*" {
 		t.Errorf("CustomMethod.Body = %q, want *", cm.HTTPAnnotation.Body)

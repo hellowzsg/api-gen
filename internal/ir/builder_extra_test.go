@@ -335,7 +335,7 @@ func TestBuildSnakeCaseConversion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			got := toSnakeCase(tt.input)
+			got := ToSnakeCase(tt.input)
 			if got != tt.want {
 				t.Errorf("toSnakeCase(%q) = %q, want %q", tt.input, got, tt.want)
 			}

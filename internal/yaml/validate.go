@@ -173,9 +173,6 @@ var pathVarPattern = regexp.MustCompile(`\{([^}]*)\}`)
 // check: each {var} must be non-empty and not end with a dot. Deep key-leaf
 // reachability validation (via ir.ValidatePathVariables) is performed in the
 // IR build phase when key descriptors are available.
-//
-// TODO(P2 task group 2): supplement with ir.ValidatePathVariables for
-// key.* variables once key descriptors are resolved.
 func (c *Config) validatePerMethodHTTPOverrides() error {
 	for i := range c.Entities {
 		for j := range c.Entities[i].Resources {

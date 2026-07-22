@@ -316,12 +316,12 @@ func TestRenderProto_DeleteSoftHTTP(t *testing.T) {
 		Delete: &ir.DeleteIR{
 			RPCName: "DeleteBook", RequestName: "DeleteBookRequest", ResponseName: "google.protobuf.Empty",
 			KeyField:       ir.FieldIR{Name: "key", Type: "test.BookId", Number: 1},
-			HTTPAnnotation: &ir.HTTPAnnotation{Verb: "DELETE", Path: "/api/Svc/book/{key.id}", Body: ""},
+			HTTPAnnotation: &ir.HTTPAnnotation{Verb: "DELETE", Entity: "book", KeyLeaves: []ir.KeyLeaf{{DotPath: "id"}}},
 		},
 		DeleteSoft: &ir.DeleteIR{
 			RPCName: "DeleteBookSoft", RequestName: "DeleteBookSoftRequest", ResponseName: "google.protobuf.Empty",
 			KeyField:       ir.FieldIR{Name: "key", Type: "test.BookId", Number: 1},
-			HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Path: "/api/Svc/book/deleteSoft", Body: "*"},
+			HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Entity: "book", Suffix: "deleteSoft", Body: "*"},
 		},
 	}}}
 	svc := ir.ServiceIR{Name: "Svc", ProtoPackage: "test.svc", GoPackage: "svc", Entities: []ir.ServiceEntityIR{{Name: "book"}}}
@@ -339,18 +339,18 @@ func TestRenderProto_DeleteSoftHTTP(t *testing.T) {
 
 // TestRenderHTTPAnnotation_AllVerbs: verify PUT annotation format.
 func TestRenderHTTPAnnotation_AllVerbs(t *testing.T) {
-	ann := &ir.HTTPAnnotation{Verb: "PUT", Path: "/api/svc/ent/{key.id}", Body: "meta"}
-	got := RenderHTTPAnnotation(ann)
+	ann := &ir.HTTPAnnotation{Verb: "PUT", Entity: "ent", KeyLeaves: []ir.KeyLeaf{{DotPath: "id"}}, Body: "meta"}
+	got := RenderHTTPAnnotation(ann, "/api", "svc")
 	want := `option (google.api.http) = { put: "/api/svc/ent/{key.id}" body: "meta" };`
 	if got != want {
 		t.Errorf("RenderHTTPAnnotation(PUT) = %q, want %q", got, want)
-	}
+}
 }
 
 // TestRenderHTTPAnnotation_BodyResource: body field name (not "*") renders correctly.
 func TestRenderHTTPAnnotation_BodyResource(t *testing.T) {
-	ann := &ir.HTTPAnnotation{Verb: "PATCH", Path: "/api/svc/ent/{key.id}", Body: "meta"}
-	got := RenderHTTPAnnotation(ann)
+	ann := &ir.HTTPAnnotation{Verb: "PATCH", Entity: "ent", KeyLeaves: []ir.KeyLeaf{{DotPath: "id"}}, Body: "meta"}
+	got := RenderHTTPAnnotation(ann, "/api", "svc")
 	want := `option (google.api.http) = { patch: "/api/svc/ent/{key.id}" body: "meta" };`
 	if got != want {
 		t.Errorf("RenderHTTPAnnotation(body=meta) = %q, want %q", got, want)

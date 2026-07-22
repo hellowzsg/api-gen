@@ -1,6 +1,7 @@
 package dep
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -37,7 +38,7 @@ func TestGitResolver_CloneAndExtract(t *testing.T) {
 		Subdir: "proto",
 	}, cacheDir)
 
-	importPaths, err := r.Fetch()
+	importPaths, err := r.Fetch(context.Background())
 	if err != nil {
 		t.Fatalf("Fetch failed: %v", err)
 	}
@@ -45,12 +46,8 @@ func TestGitResolver_CloneAndExtract(t *testing.T) {
 		t.Fatal("ImportPaths empty, want at least 1")
 	}
 
-	files, err := r.ProtoFiles()
-	if err != nil {
-		t.Fatalf("ProtoFiles failed: %v", err)
-	}
-	if len(files) != 2 {
-		t.Errorf("len(ProtoFiles) = %d, want 2", len(files))
+	if len(r.protoFiles) != 2 {
+		t.Errorf("len(r.protoFiles) = %d, want 2", len(r.protoFiles))
 	}
 }
 
@@ -78,7 +75,7 @@ func TestGitResolver_ApiLock(t *testing.T) {
 
 	dep := GitDep{URL: remoteDir, Ref: "main", Subdir: "proto"}
 	r := NewGitResolver(dep, cacheDir)
-	if _, err := r.Fetch(); err != nil {
+	if _, err := r.Fetch(context.Background()); err != nil {
 		t.Fatalf("Fetch failed: %v", err)
 	}
 
@@ -133,7 +130,7 @@ func TestGitResolver_InvalidRef(t *testing.T) {
 		Subdir: "proto",
 	}, cacheDir)
 
-	_, err := r.Fetch()
+	_, err := r.Fetch(context.Background())
 	if err == nil {
 		t.Fatal("Fetch should fail for nonexistent ref")
 	}
@@ -183,7 +180,7 @@ func TestGitResolver_CommitKeyedCache(t *testing.T) {
 		Ref:    "main",
 		Subdir: "proto",
 	}, cacheDir)
-	if _, err := r1.Fetch(); err != nil {
+	if _, err := r1.Fetch(context.Background()); err != nil {
 		t.Fatalf("first Fetch failed: %v", err)
 	}
 	commit := r1.ResolvedCommit()
@@ -200,7 +197,7 @@ func TestGitResolver_CommitKeyedCache(t *testing.T) {
 		Subdir:         "proto",
 		ResolvedCommit: commit,
 	}, cacheDir)
-	if _, err := r2.Fetch(); err != nil {
+	if _, err := r2.Fetch(context.Background()); err != nil {
 		t.Fatalf("second Fetch with commit failed: %v", err)
 	}
 	if r2.ResolvedCommit() != commit {
@@ -221,7 +218,7 @@ func TestGitResolver_CommitKeyedCache(t *testing.T) {
 	// Pre-compute the expected cloneDir to verify it already exists.
 	// (r3.cloneDir is set inside Fetch; we instead check that Fetch succeeds
 	// without network by pointing URL to a path that would fail if re-cloned.)
-	if _, err := r3.Fetch(); err != nil {
+	if _, err := r3.Fetch(context.Background()); err != nil {
 		t.Fatalf("third Fetch (cache hit) failed: %v", err)
 	}
 	if r3.cloneDir != r2.cloneDir {
@@ -254,7 +251,7 @@ func TestGitResolver_LockRoundTrip(t *testing.T) {
 
 	dep1 := GitDep{URL: remoteDir, Ref: "main", Subdir: "proto"}
 	r1 := NewGitResolver(dep1, cacheDir)
-	if _, err := r1.Fetch(); err != nil {
+	if _, err := r1.Fetch(context.Background()); err != nil {
 		t.Fatalf("first Fetch failed: %v", err)
 	}
 	if err := WriteAPILock(lockPath, []GitDep{{
@@ -281,7 +278,7 @@ func TestGitResolver_LockRoundTrip(t *testing.T) {
 		Subdir:         dep1.Subdir,
 		ResolvedCommit: locked[0].ResolvedCommit,
 	}, cacheDir)
-	if _, err := r2.Fetch(); err != nil {
+	if _, err := r2.Fetch(context.Background()); err != nil {
 		t.Fatalf("second Fetch with locked commit failed: %v", err)
 	}
 	if r2.ResolvedCommit() != locked[0].ResolvedCommit {

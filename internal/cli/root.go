@@ -7,13 +7,18 @@ import (
 
 // NewRoot creates the root apigen command.
 func NewRoot() *cobra.Command {
+	var verbose bool
 	root := &cobra.Command{
 		Use:   "apigen",
 		Short: "AIP Proto 标准化生成工具",
 		Long: "apigen 从四段式 api.yaml 生成 AIP 风格的服务层 proto（gRPC），" +
 			"并一键编译成 *.pb.go / *_grpc.pb.go。",
 		SilenceUsage: true,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			initLogging(verbose)
+		},
 	}
+	root.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "输出关键节点结构化日志（stderr）")
 	root.AddCommand(newGenerateCmd(), newBuildCmd(), newDepCmd(), newEntityCmd())
 	return root
 }

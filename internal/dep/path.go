@@ -3,6 +3,7 @@
 package dep
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -103,6 +104,35 @@ func (r *PathResolver) ResolveFiles() ([]string, error) {
 // ImportPaths returns the directories to add to protocompile's import paths.
 func (r *PathResolver) ImportPaths() []string {
 	return r.importPaths
+}
+
+// Fetch implements Resolver: it globs the pattern and returns the import
+// paths for the matched proto files.
+func (r *PathResolver) Fetch(_ context.Context) ([]string, error) {
+	if err := r.Glob(); err != nil {
+		return nil, err
+	}
+	return r.importPaths, nil
+}
+
+// ProtoFiles implements Resolver: path protos are explicitly named for
+// compilation (they may not import each other).
+func (r *PathResolver) ProtoFiles() []string {
+	return r.files
+}
+
+// RelToImportRoot converts an absolute proto file path to its
+// import-root-relative form (matching linker.File.Path() keys). Returns the
+// original path unchanged when no import root is a prefix of it.
+func RelToImportRoot(importPaths []string, absPath string) string {
+	rel := absPath
+	for _, ip := range importPaths {
+		if relPath, err := filepath.Rel(ip, absPath); err == nil && !strings.HasPrefix(relPath, "..") {
+			rel = relPath
+			break
+		}
+	}
+	return rel
 }
 
 // doubleStarGlob handles ** glob patterns by walking the directory tree.

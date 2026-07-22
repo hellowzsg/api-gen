@@ -115,9 +115,10 @@ func TestRenderCustomMethodHTTP(t *testing.T) {
 			Request:  "ArchiveBookRequest",
 			Response: "ArchiveBookResponse",
 			HTTPAnnotation: &ir.HTTPAnnotation{
-				Verb: "POST",
-				Path: "/library/LibraryService/book/{book_id}:archive",
-				Body: "*",
+				Verb:         "POST",
+				IsOverride:   true,
+				OverridePath: "/library/LibraryService/book/{book_id}:archive",
+				Body:         "*",
 			},
 		}},
 	}
@@ -142,7 +143,7 @@ func TestExemptionsBodyStyle(t *testing.T) {
 			Name: "book", PascalName: "Book", KeyType: "test.BookId",
 			Create: &ir.CreateIR{
 				RPCName: "CreateBook", RequestName: "CreateBookRequest", ResponseName: "CreateBookResponse",
-				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Path: "/svc/book", Body: "*"},
+				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Entity: "book", Body: "*"},
 			},
 		}}
 		exemptions := generateExemptions(entities, true)
@@ -163,7 +164,7 @@ func TestExemptionsBodyStyle(t *testing.T) {
 			Name: "book", PascalName: "Book", KeyType: "test.BookId",
 			Create: &ir.CreateIR{
 				RPCName: "CreateBook", RequestName: "CreateBookRequest", ResponseName: "CreateBookResponse",
-				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Path: "/svc/book", Body: "meta"},
+				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Entity: "book", Body: "meta"},
 			},
 		}}
 		exemptions := generateExemptions(entities, true)
@@ -175,9 +176,9 @@ func TestExemptionsBodyStyle(t *testing.T) {
 	})
 }
 
-// TestUserPathServiceRewrite: user-declared http.path (IsOverride=true) still
-// gets its service-name segment rewritten so each service's routes are isolated.
-func TestUserPathServiceRewrite(t *testing.T) {
+// TestUserPathOverrideVerbatim: user-declared http.path (IsOverride=true) is
+// emitted verbatim — the renderer never rewrites user-specified routes.
+func TestUserPathOverrideVerbatim(t *testing.T) {
 	irData := &ir.IR{PackageName: "test", HTTPEnabled: true}
 	irData.Entities = []ir.EntityIR{{
 		Name: "book", PascalName: "Book", KeyType: "test.BookId",
@@ -186,7 +187,7 @@ func TestUserPathServiceRewrite(t *testing.T) {
 			Version: ir.VersionIR{Kind: "NONE"},
 			List: &ir.ListIR{
 				RPCName: "ListBookMetas", RequestName: "ListBookMetasRequest", ResponseName: "ListBookMetasResponse",
-				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "GET", Path: "/svc/LibraryService/book/meta/list", Body: "", IsOverride: true},
+				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "GET", IsOverride: true, OverridePath: "/svc/LibraryService/book/meta/list"},
 			},
 		}},
 	}}
@@ -200,8 +201,8 @@ func TestUserPathServiceRewrite(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RenderServiceProto failed: %v", err)
 	}
-	// Service segment "LibraryService" should be rewritten to "AdminService".
-	if !strings.Contains(output, `get: "/svc/AdminService/book/meta/list"`) {
-		t.Errorf("service segment should be rewritten; output should contain AdminService path, got:\n%s", output)
+	// The user-declared path must appear verbatim — no service-segment rewrite.
+	if !strings.Contains(output, `get: "/svc/LibraryService/book/meta/list"`) {
+		t.Errorf("override path should be verbatim, got:\n%s", output)
 	}
 }
