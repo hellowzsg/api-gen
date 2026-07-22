@@ -2,25 +2,51 @@
 
 > Generate AIP-style gRPC service definitions from an entity model, with on-demand Go, HTTP gateway, OpenAPI, and TypeScript output.
 
+[![Go Version](https://img.shields.io/badge/Go-1.24%2B-00ADD8?logo=go&logoColor=white)](https://go.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](#license)
+[![API Style](https://img.shields.io/badge/gRPC-AIP%20Style-green.svg)](https://aip.dev/)
+
 简体中文 | [English](README_EN.md)
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Quick Start](#quick-start)
+- [Usage Example](#usage-example)
+- [Command Reference](#command-reference)
+- [Configuration](#configuration)
+- [Project Structure](#project-structure)
+- [License](#license)
 
 ## Overview
 
 `apigen` is a declarative API generation tool. You describe your business entities—their keys, resource facets, read/write capabilities, concurrency controls, and service exposure—in a single `api.yaml`. The tool produces service-layer `.proto` files, standard Request/Response wrappers, pagination, update masks, and more, then optionally compiles them into multi-language client code.
 
-## Feature Overview
+The division of labor is clear—you maintain the domain model, and `apigen` generates all the boilerplate:
 
-- **Declarative definition**: Describe entities, resources, read/write policies, and services in `api.yaml`—no boilerplate proto needed.
-- **Standard gRPC API generation**: Automatically generates AIP-compliant Create, Delete, Get, BatchGet, List, Update, and other methods.
-- **Optimistic locking**: Built-in versioning strategies with CAS-based concurrent updates.
-- **HTTP transcoding**: One-click generation of `google.api.http` annotations and grpc-gateway reverse-proxy code.
-- **Multi-language clients**: Generate Go and TypeScript stubs, plus OpenAPI v2 API documentation.
-- **Dependency management**: Reference proto types from local files, Git repositories, or BSR, with lockfile support for reproducible builds.
+| You maintain | `apigen` generates |
+| --- | --- |
+| Entity key messages (`key.type_`) | Service-layer `.proto` and gRPC Service definitions |
+| Resource data messages (`type_`) | Standard Request/Response, pagination, update masks |
+| Declarative `api.yaml` config | HTTP annotations, grpc-gateway, OpenAPI, TS stubs |
+
+## Features
+
+| Feature | Description |
+| --- | --- |
+| **Declarative definition** | Describe entities, resources, read/write policies, and services in `api.yaml`—no boilerplate proto needed |
+| **Standard gRPC API generation** | Automatically generates AIP-compliant Create, Delete, Get, BatchGet, List, Update, and other methods |
+| **Optimistic locking** | Built-in versioning strategies (`STRONG` / `WEAK` / `NONE`) with CAS-based concurrent updates |
+| **HTTP transcoding** | One-click generation of `google.api.http` annotations and grpc-gateway reverse-proxy code |
+| **Multi-language clients** | Generate Go and TypeScript stubs, plus OpenAPI v2 API documentation |
+| **Dependency management** | Reference proto types from local files, Git repositories, or BSR, with lockfile support for reproducible builds |
 
 ## Requirements
 
 | Item | Requirement | When needed |
-|---|---|---|
+| --- | --- | --- |
 | Go | **1.24+** | Install and run `apigen` |
 | `protoc-gen-go` | Required | Generate Go message code |
 | `protoc-gen-go-grpc` | Required | Generate Go gRPC code |
@@ -30,9 +56,10 @@
 | Git CLI | Required when using `import_protos.git` | Fetch Git proto dependencies |
 | Buf CLI | Required when using `import_protos.bsr` | Export BSR modules |
 
+> [!IMPORTANT]
 > `apigen build` invokes generators via the Protobuf plugin protocol—**a standalone `protoc` installation is not required**. Make sure the necessary plugins are on your `PATH`.
 
-## Installation & Quick Start
+## Quick Start
 
 ### 1. Install the CLI
 
@@ -41,11 +68,13 @@ git clone <repository-url> aip-gen
 cd aip-gen
 go install ./cmd/apigen
 
-# Verify
+# Verify the installation
 apigen --help
 ```
 
-### 2. Install the Required Go Plugins
+### 2. Install the Code Generation Plugins
+
+Required plugins for Go code generation:
 
 ```bash
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
@@ -82,11 +111,13 @@ Generated files are placed under `examples/book/generated/`. See [examples/READM
 
 ## Usage Example
 
-### Define Your Domain Types
+Using a book scenario, it takes three steps to go from domain definition to generated code.
+
+### Step 1: Define Your Domain Types
 
 `apigen` generates the service layer; you maintain the entity key and resource messages. Below is a minimal example of `proto/demo/business/book/book.proto`:
 
-```proto
+```protobuf
 syntax = "proto3";
 
 package demo.business.book;
@@ -103,7 +134,7 @@ message BookMeta {
 }
 ```
 
-### Write `api.yaml`
+### Step 2: Write `api.yaml`
 
 ```yaml
 syntax: v1
@@ -137,7 +168,7 @@ services:
       - name: book
 ```
 
-### Generate & Compile
+### Step 3: Generate & Compile
 
 ```bash
 # Generate protos only
@@ -150,21 +181,32 @@ apigen build -f api.yaml
 apigen entity list -f api.yaml
 ```
 
-The above configuration generates `LibraryService` with methods including `CreateBook`, `DeleteBook`, `GetBookMeta`, `BatchGetBookMetas`, `ListBookMetas`, and `UpdateBookMeta`.
+The above configuration generates `LibraryService`. The mapping between methods and config is as follows:
+
+| Generated method | Source config |
+| --- | --- |
+| `CreateBook` | `create: {}` |
+| `DeleteBook` | `delete: {}` |
+| `GetBookMeta` | `reader` (generated by default when configured) |
+| `BatchGetBookMetas` | `reader.batch: true` |
+| `ListBookMetas` | `reader.list: true` |
+| `UpdateBookMeta` | `writer.update` |
 
 ## Command Reference
 
 All commands accept `--file` or `-f` to specify the config file, defaulting to `api.yaml` in the current directory.
 
 | Command | Description |
-|---|---|
+| --- | --- |
 | `apigen generate -f api.yaml` | Validate config and dependencies, then generate per-service `.proto` files. |
 | `apigen build -f api.yaml` | Run `generate` first, then invoke installed code-generation plugins. |
 | `apigen entity list -f api.yaml` | Print entities, resources, and generated methods without writing files. |
 | `apigen dep update -f api.yaml` | Refresh remote dependencies and update Git entries in `api.lock`. |
 | `apigen dep prune -f api.yaml` | Placeholder for dependency cleanup; currently does not remove existing lock entries. |
 
-## `api.yaml` Configuration
+## Configuration
+
+`api.yaml` is parsed in strict-field mode—typos and unknown fields are rejected immediately. `entities` is required; each entity must define a key and at least one resource.
 
 ### Structure
 
@@ -178,12 +220,10 @@ entities: []
 services: []
 ```
 
-The config is parsed in strict-field mode—typos and unknown fields are rejected immediately. `entities` is required; each entity must define a key and at least one resource.
-
 ### Root Fields & Dependency Sources
 
 | Field | Type | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `syntax` | `string` | Config format identifier. Example uses `v1`. |
 | `name` | `string` | Business proto package in dot-separated form, e.g., `demo.business.book`. |
 | `import_protos` | `[]object` | Declares where `key.type_` and resource `type_` protos are defined. |
@@ -194,7 +234,7 @@ The config is parsed in strict-field mode—typos and unknown fields are rejecte
 Each `import_protos` entry chooses one of the following sources:
 
 | Field | Description |
-|---|---|
+| --- | --- |
 | `path` | Local proto glob, resolved relative to the `api.yaml` directory. |
 | `git` | Git repository URL. Combine with `ref` (branch, tag, or commit) and `subdir` (proto subdirectory within the repo). |
 | `bsr` | BSR module name, e.g., `buf.build/googleapis/googleapis`. |
@@ -212,12 +252,13 @@ import_protos:
   - bsr: buf.build/googleapis/googleapis
 ```
 
+> [!NOTE]
 > When HTTP is enabled, `google/api/annotations.proto` and its transitive imports must be resolvable from your dependencies (via local vendored proto, Git, or BSR).
 
 ### `settings` — Output & Generation
 
 | Field | Type | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `go_repo` | `string` | Go module path written into `go_package` of generated protos. |
 | `js_repo` | `string` | Accepted compat field; does not currently affect TypeScript output. |
 | `out.proto` | `string` | Directory for generated service `.proto` files. |
@@ -254,7 +295,7 @@ An entity consists of a key and one or more resources. A resource represents an 
 #### Entity Fields
 
 | Field | Type | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `name` | `string` | Entity name in `snake_case`, used as the naming stem for generated types and methods. |
 | `key.type_` | `string` | Key message type; can use a fully-qualified name. |
 | `create` | `object` | Set to `{}` to generate `Create`, whose response carries only the key. |
@@ -265,7 +306,7 @@ An entity consists of a key and one or more resources. A resource represents an 
 #### Resource Fields
 
 | Field | Type | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `name` | `string` | Resource name in `snake_case`. |
 | `type_` | `string` | Resource message type; can use a fully-qualified name. |
 | `version.kind` | `string` | Update concurrency control: `STRONG`, `WEAK`, or `NONE`. |
@@ -283,7 +324,7 @@ An entity consists of a key and one or more resources. A resource represents an 
 #### Version Strategies
 
 | Strategy | Get Response | Update Request | Update Response | Use Case |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | `STRONG` | Returns scalar `version` | Must carry scalar `version` for CAS | Returns updated scalar version | Enforce CAS to prevent concurrent overwrites |
 | `WEAK` | Returns wrapper-type `version` | Optionally carries wrapper-type `version` | Returns updated wrapper-type version | Allow clients to choose whether to perform CAS |
 | `NONE` | No version returned | No version carried | Returns `google.protobuf.Empty` | Direct updates without optimistic locking |
@@ -295,7 +336,7 @@ For `STRONG` the scalar type, and for `WEAK` the corresponding wrapper type, is 
 A service can expose an entity's full capabilities, or narrow them to a subset of resources and methods.
 
 | Field | Type | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `services[].name` | `string` | Service name in `PascalCase`, e.g., `LibraryService`. |
 | `services[].entities[].name` | `string` | References an entity defined in `entities`. |
 | `services[].entities[].resources` | `[]object` | Optional narrowing rules; currently uses resource `name`, `reader.batch`, `reader.list`, and `writer.update`. Omitting inherits the entity's full capabilities. |
@@ -346,4 +387,4 @@ aip-gen/
 
 ## License
 
-The project is declared under the **MIT License**. A `LICENSE` file is not yet present in the repository; please add an official license file before publishing, redistributing, or consuming as a dependency.
+This project is licensed under the **MIT License** — see [LICENSE](LICENSE) for the full text.

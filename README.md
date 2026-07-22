@@ -4,24 +4,45 @@
 
 [English](README_EN.md) | 简体中文
 
+## 目录
+
+- [项目简介](#项目简介)
+- [功能特性](#功能特性)
+- [环境要求](#环境要求)
+- [快速开始](#快速开始)
+- [使用示例](#使用示例)
+- [命令参考](#命令参考)
+- [配置说明](#配置说明)
+- [项目结构](#项目结构)
+- [许可证](#许可证)
+
 ## 项目简介
 
 `apigen` 是一个声明式 API 生成工具。开发者在 `api.yaml` 中描述业务实体的主键、资源数据面、读写能力、并发控制与服务暴露范围；工具据此生成服务层 `.proto`、标准 Request/Response、分页与更新掩码等样板代码，并可进一步编译为多语言客户端代码。
 
-## 功能概览
+分工界面清晰——你只维护领域模型，`apigen` 负责所有样板代码：
 
-- **声明式定义**：通过 `api.yaml` 描述实体、资源、读写策略与服务，无需手写样板 proto。
-- **标准 gRPC API 生成**：自动生成符合 AIP 规范的 Create、Delete、Get、BatchGet、List、Update 等方法。
-- **乐观锁支持**：内置版本控制策略，支持 CAS 并发更新。
-- **HTTP 转码**：一键生成 `google.api.http` 注解和 grpc-gateway 反向代理代码。
-- **多语言客户端**：支持生成 Go、TypeScript stub 及 OpenAPI v2 接口文档。
-- **依赖管理**：可引用本地、Git 仓库或 BSR 中的 proto 类型，并支持锁文件固定版本。
+| 你负责维护 | `apigen` 自动生成 |
+| --- | --- |
+| 实体主键 message（`key.type_`） | 服务层 `.proto` 与 gRPC Service 定义 |
+| 资源数据 message（`type_`） | 标准 Request/Response、分页、更新掩码 |
+| `api.yaml` 声明式配置 | HTTP 注解、grpc-gateway、OpenAPI、TS stub |
+
+## 功能特性
+
+| 特性 | 说明 |
+| --- | --- |
+| **声明式定义** | 通过 `api.yaml` 描述实体、资源、读写策略与服务，无需手写样板 proto |
+| **标准 gRPC API 生成** | 自动生成符合 AIP 规范的 Create、Delete、Get、BatchGet、List、Update 等方法 |
+| **乐观锁支持** | 内置版本控制策略（`STRONG` / `WEAK` / `NONE`），支持 CAS 并发更新 |
+| **HTTP 转码** | 一键生成 `google.api.http` 注解和 grpc-gateway 反向代理代码 |
+| **多语言客户端** | 支持生成 Go、TypeScript stub 及 OpenAPI v2 接口文档 |
+| **依赖管理** | 可引用本地、Git 仓库或 BSR 中的 proto 类型，并支持锁文件固定版本 |
 
 ## 环境要求
 
 | 项目 | 要求 | 适用场景 |
-|---|---|---|
-| Go | **1.24+** | 安装、运行 `apigen` |
+| --- | --- | --- |
 | `protoc-gen-go` | 必需 | 生成 Go message 代码 |
 | `protoc-gen-go-grpc` | 必需 | 生成 Go gRPC 代码 |
 | `protoc-gen-grpc-gateway` | 启用 HTTP 时必需 | 生成 `*.pb.gw.go` |
@@ -30,9 +51,10 @@
 | Git CLI | 使用 `import_protos.git` 时必需 | 拉取 Git proto 依赖 |
 | Buf CLI | 使用 `import_protos.bsr` 时必需 | 导出 BSR 模块 |
 
+> [!IMPORTANT]
 > `apigen build` 通过 Protobuf 插件协议调用生成器，**无需单独安装 `protoc`**。请确保所需插件均在 `PATH` 中。
 
-## 安装与快速开始
+## 快速开始
 
 ### 1. 安装 CLI
 
@@ -45,7 +67,9 @@ go install ./cmd/apigen
 apigen --help
 ```
 
-### 2. 安装生成 Go 代码所需插件
+### 2. 安装代码生成插件
+
+生成 Go 代码的必需插件：
 
 ```bash
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
@@ -82,11 +106,13 @@ go run ./cmd/apigen build -f examples/book/api.yaml
 
 ## 使用示例
 
-### 定义领域类型
+三步完成从领域定义到代码生成。
+
+### 第 1 步：定义领域类型
 
 `apigen` 生成服务层协议；实体主键和资源 message 由你维护。以下为 `proto/demo/business/book/book.proto` 的简化示例：
 
-```proto
+```protobuf
 syntax = "proto3";
 
 package demo.business.book;
@@ -103,7 +129,7 @@ message BookMeta {
 }
 ```
 
-### 编写 `api.yaml`
+### 第 2 步：编写 `api.yaml`
 
 ```yaml
 syntax: v1
@@ -137,7 +163,7 @@ services:
       - name: book
 ```
 
-### 生成与编译
+### 第 3 步：生成与编译
 
 ```bash
 # 仅生成 proto
@@ -150,21 +176,32 @@ apigen build -f api.yaml
 apigen entity list -f api.yaml
 ```
 
-上述配置会生成 `LibraryService`，包含 `CreateBook`、`DeleteBook`、`GetBookMeta`、`BatchGetBookMetas`、`ListBookMetas` 和 `UpdateBookMeta` 等方法。
+上述配置会生成 `LibraryService`，各方法与配置的对应关系如下：
+
+| 生成方法 | 来源配置 |
+| --- | --- |
+| `CreateBook` | `create: {}` |
+| `DeleteBook` | `delete: {}` |
+| `GetBookMeta` | `reader`（配置即默认生成） |
+| `BatchGetBookMetas` | `reader.batch: true` |
+| `ListBookMetas` | `reader.list: true` |
+| `UpdateBookMeta` | `writer.update` |
 
 ## 命令参考
 
 所有命令均可使用 `--file` 或 `-f` 指定配置文件，默认读取当前目录的 `api.yaml`。
 
 | 命令 | 说明 |
-|---|---|
+| --- | --- |
 | `apigen generate -f api.yaml` | 校验配置与依赖，生成各 service 的 `.proto` 文件。 |
 | `apigen build -f api.yaml` | 先执行 `generate`，再调用已安装的代码生成插件。 |
 | `apigen entity list -f api.yaml` | 输出实体、资源与将生成的方法，不写入文件。 |
 | `apigen dep update -f api.yaml` | 刷新远程依赖，并更新 Git 依赖的 `api.lock` 记录。 |
 | `apigen dep prune -f api.yaml` | 预留的依赖清理命令；当前版本不会移除现有 lock 条目。 |
 
-## `api.yaml` 配置说明
+## 配置说明
+
+`api.yaml` 会以严格字段模式解析；拼写错误或未知字段会直接报错。`entities` 是必填项，每个实体必须包含主键与至少一个资源。
 
 ### 配置结构
 
@@ -178,12 +215,10 @@ entities: []
 services: []
 ```
 
-配置会以严格字段模式解析；拼写错误或未知字段会直接报错。`entities` 是必填项，每个实体必须包含主键与至少一个资源。
-
 ### 根字段与依赖来源
 
 | 字段 | 类型 | 作用 |
-|---|---|---|
+| --- | --- | --- |
 | `syntax` | `string` | 配置格式标识。示例使用 `v1`。 |
 | `name` | `string` | 业务 proto package，格式为点分标识符，如 `demo.business.book`。 |
 | `import_protos` | `[]object` | 声明 `key.type_` 与资源 `type_` 对应的 proto 来源。 |
@@ -194,7 +229,7 @@ services: []
 `import_protos` 的每项可选择下列一种来源：
 
 | 字段 | 说明 |
-|---|---|
+| --- | --- |
 | `path` | 本地 proto glob；相对 `api.yaml` 所在目录解析。 |
 | `git` | Git 仓库 URL。可配合 `ref`（分支、标签或 commit）与 `subdir`（仓库内 proto 子目录）。 |
 | `bsr` | BSR 模块名，如 `buf.build/googleapis/googleapis`。 |
@@ -212,12 +247,13 @@ import_protos:
   - bsr: buf.build/googleapis/googleapis
 ```
 
+> [!NOTE]
 > 启用 HTTP 时，依赖中必须可解析 `google/api/annotations.proto` 与其关联定义；可通过本地 vendored proto、Git 或 BSR 提供。
 
 ### `settings`：输出与生成行为
 
 | 字段 | 类型 | 作用 |
-|---|---|---|
+| --- | --- | --- |
 | `go_repo` | `string` | 写入生成 proto 的 `go_package` 的 Go module path。 |
 | `js_repo` | `string` | 已接受的兼容字段；当前不会影响 TypeScript 生成结果。 |
 | `out.proto` | `string` | 生成 service `.proto` 的目录。 |
@@ -254,7 +290,7 @@ settings:
 #### 实体字段
 
 | 字段 | 类型 | 作用 |
-|---|---|---|
+| --- | --- | --- |
 | `name` | `string` | 实体名，使用 `snake_case`，作为生成类型和方法的命名词干。 |
 | `key.type_` | `string` | 主键 message 类型；可使用全限定名。 |
 | `create` | `object` | 设为 `{}` 时生成 `Create`，响应仅携带 key。 |
@@ -265,7 +301,7 @@ settings:
 #### 资源字段
 
 | 字段 | 类型 | 作用 |
-|---|---|---|
+| --- | --- | --- |
 | `name` | `string` | 资源名，使用 `snake_case`。 |
 | `type_` | `string` | 资源 message 类型；可使用全限定名。 |
 | `version.kind` | `string` | 更新并发控制：`STRONG`、`WEAK` 或 `NONE`。 |
@@ -283,7 +319,7 @@ settings:
 #### 版本策略
 
 | 策略 | Get 响应 | Update 请求 | Update 响应 | 使用场景 |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | `STRONG` | 返回标量 `version` | 必须携带标量 `version` 参与 CAS | 返回更新后的标量版本 | 需要强制防止并发覆盖 |
 | `WEAK` | 返回 wrapper 类型 `version` | 可选携带 wrapper 类型 `version` | 返回更新后的 wrapper 版本 | 支持客户端选择是否进行 CAS |
 | `NONE` | 不返回版本 | 不携带版本 | 返回 `google.protobuf.Empty` | 无需乐观锁的直接更新 |
@@ -295,7 +331,7 @@ settings:
 一个 service 可暴露实体的全部能力，也可将资源和方法收窄到一个子集。
 
 | 字段 | 类型 | 作用 |
-|---|---|---|
+| --- | --- | --- |
 | `services[].name` | `string` | Service 名，使用 `PascalCase`，如 `LibraryService`。 |
 | `services[].entities[].name` | `string` | 引用已在 `entities` 中定义的实体。 |
 | `services[].entities[].resources` | `[]object` | 可选的收窄规则；当前使用资源 `name`、`reader.batch`、`reader.list` 与 `writer.update`。省略时暴露该实体的全部能力。 |
@@ -344,6 +380,6 @@ aip-gen/
 └── design-v2.md       # 架构设计与路线图
 ```
 
-## 开源许可证
+## 许可证
 
-项目声明采用 **MIT License**。当前仓库尚未包含 `LICENSE` 正文；在发布、再分发或作为依赖使用前，请补充正式许可文件。
+本项目采用 **MIT License**，全文见 [LICENSE](LICENSE)。
