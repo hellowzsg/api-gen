@@ -1,3 +1,5 @@
 # Generated artifacts from apigen generate/build
 fixtures/*/generated/
 fixtures/*/api.lock
+# Exception: corrupt_lock fixture ships a deliberately broken api.lock
+!fixtures/invalid/corrupt_lock/api.lock
