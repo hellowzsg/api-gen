@@ -287,6 +287,20 @@ settings:
 
 实体由主键和一个或多个资源组成。资源可视为同一业务对象的独立数据面，例如图书的 `meta`（元数据）和 `content`（正文）。`key.type_` 与资源 `type_` 必须引用已导入的、由开发者维护的 proto message。
 
+**类型引用规则**：`key.type_` 和 `type_` 支持简写形式和全限定名两种写法：
+- **简写形式**（如 `BookId`）：当 message 所在的 proto package 与 `api.yaml` 的 `name` 相同时，可直接写 message 名称，apigen 会自动补全为 `<name>.<message>`。
+- **全限定名**（如 `demo.common.ShelfId`）：当 message 所在的 proto package 与 `name` **不同**时，必须显式写全限定名。
+
+例如，`name: demo.business.book` 时：
+```yaml
+# BookId 在 demo.business.book package 中 → 可用简写
+key: { type_: BookId }
+# ShelfId 在 demo.common package 中 → 必须用全限定名
+key: { type_: demo.common.ShelfId }
+```
+
+具体示例参见 `examples/book/api.yaml` 中的 `shelf` entity 和 `testcase/fixtures/edge/api.yaml` 中的 `tag` entity。
+
 #### 实体字段
 
 | 字段 | 类型 | 作用 |

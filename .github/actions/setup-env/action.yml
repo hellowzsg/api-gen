@@ -1,0 +1,98 @@
+name: Setup CI environment
+description: >-
+  Set up Go (with module/build cache), cached protoc plugins,
+  optional Node.js + protoc-gen-es, and optionally build the apigen CLI.
+  Tool versions are pinned here as the single source of truth.
+
+inputs:
+  protoc-plugins:
+    description: >-
+      Plugin set to install: none |
+      core (protoc-gen-go, protoc-gen-go-grpc) |
+      full (core + protoc-gen-grpc-gateway + protoc-gen-openapiv2)
+    required: false
+    default: "none"
+  node:
+    description: "Set up Node.js 20 and install protoc-gen-es globally"
+    required: false
+    default: "false"
+  cli:
+    description: "Build the apigen CLI to /tmp/apigen"
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    # Pinned to match go.mod deps: protobuf v1.36.11, grpc-gateway v2.29.0,
+    # and the protoc-gen-es version recorded in generated TS headers (v2.12.1).
+    - name: Pin tool versions
+      id: versions
+      shell: bash
+      run: |
+        {
+          echo "protoc_gen_go=v1.36.11"
+          echo "protoc_gen_go_grpc=v1.5.1"
+          echo "grpc_gateway=v2.29.0"
+          echo "protoc_gen_es=2.12.1"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        # examples/book, testcase and fixtures require go >= 1.25.0;
+        # installing 1.25 avoids a GOTOOLCHAIN auto-download on every run.
+        go-version: "1.25"
+        cache-dependency-path: |
+          go.sum
+          examples/book/go.sum
+          testcase/go.sum
+          testcase/fixtures/book/go.sum
+          testcase/fixtures/edge/go.sum
+          testcase/fixtures/simple/go.sum
+
+    # Cache installed plugin binaries; on hit the go install steps are skipped entirely.
+    - name: Restore cached protoc plugins
+      id: plugins-cache
+      if: inputs.protoc-plugins != 'none'
+      uses: actions/cache@v4
+      with:
+        path: ~/go/bin
+        key: protoc-plugins-v1-${{ runner.os }}-${{ inputs.protoc-plugins }}-${{ steps.versions.outputs.protoc_gen_go }}-${{ steps.versions.outputs.protoc_gen_go_grpc }}-${{ steps.versions.outputs.grpc_gateway }}
+
+    - name: Install core protoc plugins
+      if: inputs.protoc-plugins != 'none' && steps.plugins-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        go install "google.golang.org/protobuf/cmd/protoc-gen-go@${{ steps.versions.outputs.protoc_gen_go }}"
+        go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@${{ steps.versions.outputs.protoc_gen_go_grpc }}"
+
+    - name: Install HTTP/OpenAPI protoc plugins
+      if: inputs.protoc-plugins == 'full' && steps.plugins-cache.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@${{ steps.versions.outputs.grpc_gateway }}"
+        go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@${{ steps.versions.outputs.grpc_gateway }}"
+
+    - name: Set up Node.js
+      if: inputs.node == 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Restore npm cache
+      if: inputs.node == 'true'
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: npm-v1-${{ runner.os }}-protoc-gen-es-${{ steps.versions.outputs.protoc_gen_es }}
+
+    - name: Install protoc-gen-es
+      if: inputs.node == 'true'
+      shell: bash
+      run: npm install --global "@bufbuild/protoc-gen-es@${{ steps.versions.outputs.protoc_gen_es }}"
+
+    - name: Build apigen CLI
+      if: inputs.cli == 'true'
+      shell: bash
+      run: go build -o /tmp/apigen ./cmd/apigen

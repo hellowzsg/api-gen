@@ -1,0 +1,96 @@
+name: Release
+
+# 打 tag 触发，例如：git tag v0.1.0 && git push origin v0.1.0
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # 创建 GitHub Release 需要
+
+jobs:
+  # ---- Job 1: 质量门（单元测试 + vet） ----
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-env
+
+      - name: Run internal unit tests
+        run: go test ./internal/... -count=1
+
+      - name: Run go vet
+        run: go vet ./internal/... ./cmd/...
+
+  # ---- Job 2: 跨平台构建（注入 tag 版本号） ----
+  build:
+    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-env
+
+      # 直接产出带平台后缀的原始二进制，不打 tar.gz/zip 包
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          ext=""
+          if [ "$GOOS" = "windows" ]; then ext=".exe"; fi
+          bin="dist/apigen_${{ github.ref_name }}_${GOOS}_${GOARCH}${ext}"
+          go build -trimpath \
+            -ldflags "-s -w -X github.com/hellowzsg/api-gen/internal/cli.Version=${{ github.ref_name }}" \
+            -o "$bin" ./cmd/apigen
+
+      - name: Verify version injection
+        run: |
+          if [ "${{ matrix.goos }}" = "linux" ] && [ "${{ matrix.goarch }}" = "amd64" ]; then
+            "./dist/apigen_${{ github.ref_name }}_linux_amd64" --version
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/apigen_*
+          if-no-files-found: error
+
+  # ---- Job 3: 汇总产物并创建 GitHub Release ----
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum apigen_* > checksums.txt
+          cat checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true

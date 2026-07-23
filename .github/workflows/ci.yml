@@ -1,10 +1,8 @@
 name: CI
 
+# 仅手动触发（GitHub Actions 页面或 gh workflow run）
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   # ---- Job 1: Unit tests for internal packages ----
@@ -15,9 +13,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.24"
+        uses: ./.github/actions/setup-env
 
       - name: Run internal unit tests
         run: go test ./internal/... -v -count=1
@@ -32,13 +28,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: Set up Go + build apigen
+        uses: ./.github/actions/setup-env
         with:
-          go-version: "1.24"
-
-      - name: Build apigen CLI
-        run: go build -o /tmp/apigen ./cmd/apigen
+          cli: "true"
 
       - name: Generate simple example
         run: /tmp/apigen generate -f examples/simple/api.yaml
@@ -74,33 +67,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: Set up Go + protoc plugins + Node.js
+        uses: ./.github/actions/setup-env
         with:
-          go-version: "1.24"
-
-      - name: Install protoc-gen-go
-        run: go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-
-      - name: Install protoc-gen-go-grpc
-        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-
-      - name: Install protoc-gen-grpc-gateway
-        run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@latest
-
-      - name: Install protoc-gen-openapiv2
-        run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@latest
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install protoc-gen-es
-        run: npm install --global @bufbuild/protoc-gen-es
-
-      - name: Build apigen CLI
-        run: go build -o /tmp/apigen ./cmd/apigen
+          protoc-plugins: full
+          node: "true"
+          cli: "true"
 
       - name: Build book example (generate + compile Go + HTTP + OpenAPI)
         working-directory: examples/book
@@ -138,19 +110,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: Set up Go + protoc plugins
+        uses: ./.github/actions/setup-env
         with:
-          go-version: "1.24"
-
-      - name: Install protoc-gen-go
-        run: go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-
-      - name: Install protoc-gen-go-grpc
-        run: go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-
-      - name: Build apigen CLI
-        run: go build -o /tmp/apigen ./cmd/apigen
+          protoc-plugins: core
+          cli: "true"
 
       - name: Build simple example
         working-directory: examples/simple
@@ -169,3 +133,42 @@ jobs:
             exit 1
           fi
           echo "OK: no gateway files (P0 as expected)"
+
+  # ---- Job 5: End-to-end test suite (testcase module) ----
+  testcase-e2e:
+    name: Testcase E2E
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go + protoc plugins
+        uses: ./.github/actions/setup-env
+        with:
+          protoc-plugins: full
+          cli: "true"
+
+      - name: Generate book fixture
+        run: /tmp/apigen generate -f testcase/fixtures/book/api.yaml
+
+      - name: Build book fixture
+        run: /tmp/apigen build -f testcase/fixtures/book/api.yaml
+
+      - name: Generate simple fixture
+        run: /tmp/apigen generate -f testcase/fixtures/simple/api.yaml
+
+      - name: Build simple fixture
+        run: /tmp/apigen build -f testcase/fixtures/simple/api.yaml
+
+      - name: Generate edge fixture
+        run: /tmp/apigen generate -f testcase/fixtures/edge/api.yaml
+
+      - name: Build edge fixture
+        run: /tmp/apigen build -f testcase/fixtures/edge/api.yaml
+
+      - name: Run positive e2e tests
+        working-directory: testcase
+        run: go test -v -count=1 ./positive/...
+
+      - name: Run negative e2e tests
+        working-directory: testcase
+        run: go test -v -count=1 ./negative/...

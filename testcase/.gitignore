@@ -1,0 +1,3 @@
+# Generated artifacts from apigen generate/build
+fixtures/*/generated/
+fixtures/*/api.lock

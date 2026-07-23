@@ -5,12 +5,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Version is the CLI version, injected at release build time via
+// -ldflags "-X github.com/hellowzsg/api-gen/internal/cli.Version=vX.Y.Z".
+var Version = "dev"
+
 // NewRoot creates the root apigen command.
 func NewRoot() *cobra.Command {
 	var verbose bool
 	root := &cobra.Command{
-		Use:   "apigen",
-		Short: "AIP Proto 标准化生成工具",
+		Use:     "apigen",
+		Short:   "AIP Proto 标准化生成工具",
+		Version: Version,
 		Long: "apigen 从四段式 api.yaml 生成 AIP 风格的服务层 proto（gRPC），" +
 			"并一键编译成 *.pb.go / *_grpc.pb.go。",
 		SilenceUsage: true,

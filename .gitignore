@@ -34,5 +34,10 @@ go.work.sum
 # design doc (not tracked)
 design-v2.md
 
+# testcase generated artifacts
+testcase/fixtures/*/generated/
+testcase/fixtures/*/api.lock
+testcase/fixtures/invalid/corrupt_lock/api.lock
+
 ### PreCI ###
 .codecc
