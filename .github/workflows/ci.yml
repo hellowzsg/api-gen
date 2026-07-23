@@ -141,10 +141,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Go + protoc plugins
+      - name: Set up Go + protoc plugins + Node.js (protoc-gen-es)
         uses: ./.github/actions/setup-env
         with:
           protoc-plugins: full
+          node: "true"
           cli: "true"
 
       - name: Generate book fixture
