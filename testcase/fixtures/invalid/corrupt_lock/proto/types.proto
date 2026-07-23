@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package test.corrupt_lock;
+
+option go_package = "github.com/test/invalid;invalid";
+
+message FooId {
+  string id = 1;
+}
+
+message Bar {
+  string value = 1;
+}
+
+message Meta {
+  string title = 1;
+}
+
+message Content {
+  string body = 1;
+}
+
+message EmptyKey {
+  string id = 1;
+}
+
+message RepeatedKey {
+  repeated string ids = 1;
+}
+
+message MapKey {
+  map<string, string> labels = 1;
+}
+
+message OneofKey {
+  oneof id_oneof {
+    string str_id = 1;
+    int32 int_id = 2;
+  }
+}
+
+message CircularA {
+  CircularB b = 1;
+}
+
+message CircularB {
+  CircularA a = 1;
+}

@@ -1,0 +1,18 @@
+# A11: unknown YAML field (KnownFields(true) will reject)
+syntax: v1
+name: test.unknown_field
+unknown_field: should_fail
+import_protos:
+  - path: "proto/**/*.proto"
+entities:
+  - name: foo
+    key:
+      type_: FooId
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+services:
+  - name: FooService
+    entities:
+      - name: foo

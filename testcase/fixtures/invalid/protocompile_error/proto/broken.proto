@@ -1,0 +1,11 @@
+// Invalid proto with syntax error
+syntax = "proto3";
+
+package test.protocompile_error;
+
+option go_package = "github.com/test/protocompile_error;pcerror";
+
+// Missing closing brace
+message BrokenMessage {
+  string id = 1;
+// EOF without closing brace

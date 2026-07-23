@@ -19,6 +19,7 @@ syntax = "proto3";
 package demo.business.book.library_service;
 
 import "demo/business/book/book.proto";
+import "demo/common/types.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/field_mask.proto";
@@ -52,6 +53,18 @@ service LibraryService {
   }
   rpc UpdateBookContent(UpdateBookContentRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = { patch: "/library/LibraryService/book/{key.id}/content" body: "*" };
+  }
+  rpc CreateShelf(CreateShelfRequest) returns (CreateShelfResponse) {
+    option (google.api.http) = { post: "/library/LibraryService/shelf" body: "*" };
+  }
+  rpc DeleteShelf(DeleteShelfRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { delete: "/library/LibraryService/shelf/{key.code}" };
+  }
+  rpc GetShelfMeta(GetShelfMetaRequest) returns (GetShelfMetaResponse) {
+    option (google.api.http) = { get: "/library/LibraryService/shelf/{key.code}/meta" };
+  }
+  rpc UpdateShelfMeta(UpdateShelfMetaRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { patch: "/library/LibraryService/shelf/{key.code}/meta" body: "*" };
   }
   rpc ArchiveBook(ArchiveBookRequest) returns (ArchiveBookResponse) {
     option (google.api.http) = { post: "/library/LibraryService/book/{book_id}:archive" body: "*" };
@@ -98,5 +111,20 @@ message GetBookContentResponse {
 message UpdateBookContentRequest {
   demo.business.book.BookContent content = 1;
   demo.business.book.BookId key = 2;
+}
+
+message CreateShelfRequest {
+  demo.common.Shelf meta = 1;
+}
+message CreateShelfResponse { demo.common.ShelfId key = 1; }
+
+message DeleteShelfRequest { demo.common.ShelfId key = 1; }
+message GetShelfMetaRequest { demo.common.ShelfId key = 1; }
+message GetShelfMetaResponse {
+  demo.common.Shelf shelf_meta = 1;
+}
+message UpdateShelfMetaRequest {
+  demo.common.Shelf meta = 1;
+  demo.common.ShelfId key = 2;
 }
 

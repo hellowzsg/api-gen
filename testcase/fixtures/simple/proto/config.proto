@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package simple.config;
+
+option go_package = "github.com/hellowzsg/api-gen/testcase/fixtures/simple/generated/go;config";
+
+// ConfigId is the primary key for the Config entity.
+message ConfigId {
+  string key = 1;
+}
+
+// ConfigEntry is a simple key-value configuration resource.
+message ConfigEntry {
+  string value = 1;
+}

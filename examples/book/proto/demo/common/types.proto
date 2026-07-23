@@ -9,3 +9,16 @@ message Timestamp {
   int64 seconds = 1;
   int32 millis = 2;
 }
+
+// ShelfId 是书架实体的主键类型。
+// 用于展示跨 package 类型引用：entity 的 key/meta 来自 demo.common（与 api.yaml 的 name demo.business.book 不同 package），
+// 因此 api.yaml 中必须使用全限定名 demo.common.ShelfId。
+message ShelfId {
+  string code = 1;
+}
+
+// Shelf 是书架资源。
+message Shelf {
+  string name = 1;
+  int32  capacity = 2;
+}

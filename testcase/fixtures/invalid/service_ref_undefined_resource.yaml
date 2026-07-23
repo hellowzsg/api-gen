@@ -1,0 +1,19 @@
+# C3: service entity references undefined resource
+syntax: v1
+name: test.service_ref_undefined_resource
+import_protos:
+  - path: "proto/**/*.proto"
+entities:
+  - name: foo
+    key:
+      type_: FooId
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+services:
+  - name: FooService
+    entities:
+      - name: foo
+        resources:
+          - name: nonexistent

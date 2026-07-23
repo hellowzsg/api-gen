@@ -1,0 +1,16 @@
+# A6: entity key missing type_
+syntax: v1
+name: test.entity_missing_key_type
+import_protos:
+  - path: "proto/**/*.proto"
+entities:
+  - name: foo
+    key: {}
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+services:
+  - name: FooService
+    entities:
+      - name: foo

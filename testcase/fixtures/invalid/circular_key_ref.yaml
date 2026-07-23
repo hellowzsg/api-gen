@@ -1,0 +1,28 @@
+# G6: circular reference in key type (A → B → A)
+syntax: v1
+name: test.invalid
+import_protos:
+  - path: "proto/**/*.proto"
+  - git: https://github.com/googleapis/googleapis
+    ref: master
+settings:
+  go_repo: github.com/test/repo
+  out:
+    proto: generated/proto
+    go: generated/go
+  http:
+    enable: true
+    prefix: /api
+entities:
+  - name: foo
+    key:
+      type_: CircularA
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+        reader: {}
+services:
+  - name: FooService
+    entities:
+      - name: foo

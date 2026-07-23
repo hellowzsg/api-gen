@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package edge.tag;
+
+option go_package = "github.com/hellowzsg/api-gen/testcase/fixtures/edge/generated/go/edge/tag;tag";
+
+// TagId is a simple scalar key for the Tag entity.
+// This type lives in a different proto package (edge.tag) from DocId (edge.example),
+// testing cross-package key/resource type references within a single api.yaml.
+message TagId {
+  string name = 1;
+}
+
+// Tag is a resource with NONE version.
+message Tag {
+  string color = 1;
+}

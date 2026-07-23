@@ -1,0 +1,13 @@
+# A7: entity with no resources
+syntax: v1
+name: test.entity_no_resources
+import_protos:
+  - path: "proto/**/*.proto"
+entities:
+  - name: foo
+    key:
+      type_: FooId
+services:
+  - name: FooService
+    entities:
+      - name: foo

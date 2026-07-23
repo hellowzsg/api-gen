@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package edge.example;
+
+option go_package = "github.com/hellowzsg/api-gen/testcase/fixtures/edge/generated/go;example";
+
+// OrgId is a nested message used in a composite key.
+message OrgId {
+  string oid = 1;
+  int32  qid = 2;
+}
+
+// DocId is a composite key with nested message fields + scalar.
+// Key leaves (depth-first): org.oid, org.qid, seq
+message DocId {
+  OrgId org  = 1;
+  int32 seq  = 2;
+}
+
+// DocMeta — STRONG version (uint64)
+message DocMeta {
+  string title   = 1;
+  string owner   = 2;
+}
+
+// DocContent — WEAK version (string wrapper)
+message DocContent {
+  string body = 1;
+}
+
+// DocLog — NONE version
+message DocLog {
+  string message = 1;
+}
+
+// TagMeta — tag's metadata, lives in edge.example (different package from tag's key TagId),
+// testing that an entity's key and meta can come from different proto packages.
+message TagMeta {
+  string label = 1;
+  int32  priority = 2;
+}
+
+// ExportDocRequest is a custom method request.
+message ExportDocRequest {
+  DocId key = 1;
+  string format = 2;
+}
+
+// ExportDocResponse is a custom method response.
+message ExportDocResponse {
+  string url = 1;
+}

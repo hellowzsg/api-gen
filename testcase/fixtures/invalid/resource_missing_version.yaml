@@ -1,0 +1,16 @@
+# A10: resource missing version.kind
+syntax: v1
+name: test.resource_missing_version
+import_protos:
+  - path: "proto/**/*.proto"
+entities:
+  - name: foo
+    key:
+      type_: FooId
+    resources:
+      - name: bar
+        type_: Bar
+services:
+  - name: FooService
+    entities:
+      - name: foo

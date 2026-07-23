@@ -1,0 +1,30 @@
+syntax: v1
+
+name: simple.config
+
+import_protos:
+  - path: "proto/**/*.proto"
+
+settings:
+  go_repo: github.com/hellowzsg/api-gen/testcase/fixtures/simple
+  out:
+    proto: generated/proto
+    go: generated/go
+
+entities:
+  - name: config
+    key:
+      type_: ConfigId
+
+    resources:
+      - name: entry
+        type_: ConfigEntry
+        version: { kind: NONE }
+        reader: {}
+        writer:
+          update: {}
+
+services:
+  - name: ConfigService
+    entities:
+      - name: config

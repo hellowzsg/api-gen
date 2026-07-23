@@ -346,6 +346,136 @@
           "LibraryService"
         ]
       }
+    },
+    "/library/LibraryService/shelf": {
+      "post": {
+        "operationId": "LibraryService_CreateShelf",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/library_serviceCreateShelfResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/library_serviceCreateShelfRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LibraryService"
+        ]
+      }
+    },
+    "/library/LibraryService/shelf/{key.code}": {
+      "delete": {
+        "operationId": "LibraryService_DeleteShelf",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.code",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LibraryService"
+        ]
+      }
+    },
+    "/library/LibraryService/shelf/{key.code}/meta": {
+      "get": {
+        "operationId": "LibraryService_GetShelfMeta",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/library_serviceGetShelfMetaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.code",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LibraryService"
+        ]
+      },
+      "patch": {
+        "operationId": "LibraryService_UpdateShelfMeta",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.code",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LibraryServiceUpdateShelfMetaBody"
+            }
+          }
+        ],
+        "tags": [
+          "LibraryService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -378,6 +508,17 @@
         "version": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "LibraryServiceUpdateShelfMetaBody": {
+      "type": "object",
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/commonShelf"
+        },
+        "key": {
+          "type": "object"
         }
       }
     },
@@ -451,6 +592,26 @@
         }
       }
     },
+    "commonShelf": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "capacity": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "commonShelfId": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        }
+      }
+    },
     "commonTimestamp": {
       "type": "object",
       "properties": {
@@ -507,6 +668,22 @@
         }
       }
     },
+    "library_serviceCreateShelfRequest": {
+      "type": "object",
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/commonShelf"
+        }
+      }
+    },
+    "library_serviceCreateShelfResponse": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "$ref": "#/definitions/commonShelfId"
+        }
+      }
+    },
     "library_serviceDeleteBookSoftRequest": {
       "type": "object",
       "properties": {
@@ -532,6 +709,14 @@
         "version": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "library_serviceGetShelfMetaResponse": {
+      "type": "object",
+      "properties": {
+        "shelf_meta": {
+          "$ref": "#/definitions/commonShelf"
         }
       }
     },

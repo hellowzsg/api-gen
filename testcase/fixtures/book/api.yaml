@@ -1,0 +1,72 @@
+syntax: v1
+
+name: demo.business.book
+
+import_protos:
+  - path: "proto/**/*.proto"
+  - git: https://github.com/googleapis/googleapis
+    ref: master
+
+settings:
+  go_repo: github.com/hellowzsg/api-gen/testcase/fixtures/book
+  js_repo: "@acme/demo-book"
+  out:
+    proto:   generated/proto
+    go:      generated/go
+    js:      generated/js
+    openapi: generated/openapi
+  http:
+    enable: true
+    prefix: /library
+    generate_openapi: true
+  plugins:
+    js: [es]
+
+entities:
+  - name: book
+    key:
+      type_: BookId
+
+    create: {}
+    delete: {}
+    delete_soft: {}
+
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: STRONG, type: U64 }
+        reader:
+          batch: true
+          list: true
+          list_config:
+            total_size: true
+            filter_type: BookMetaFilter
+        writer:
+          update: { mask: true }
+
+      - name: content
+        type_: BookContent
+        version: { kind: NONE }
+        reader: {}
+        writer:
+          update: {}
+
+services:
+  - name: LibraryService
+    entities:
+      - name: book
+    custom_methods:
+      - name: ArchiveBook
+        request: ArchiveBookRequest
+        response: ArchiveBookResponse
+        http:
+          verb: post
+          path: /library/LibraryService/book/{book_id}:archive
+          body: "*"
+
+  - name: AdminService
+    entities:
+      - name: book
+        resources:
+          - name: meta
+            reader: { list: true }

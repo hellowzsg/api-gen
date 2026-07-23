@@ -1,0 +1,24 @@
+# C1: duplicate entity name
+syntax: v1
+name: test.duplicate_entity
+import_protos:
+  - path: "proto/**/*.proto"
+entities:
+  - name: foo
+    key:
+      type_: FooId
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+  - name: foo
+    key:
+      type_: FooId
+    resources:
+      - name: baz
+        type_: Baz
+        version: { kind: NONE }
+services:
+  - name: FooService
+    entities:
+      - name: foo

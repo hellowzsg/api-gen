@@ -14,6 +14,7 @@ import (
 	adminpb "github.com/acme/demo-book/generated/go/admin_service"
 	libpb "github.com/acme/demo-book/generated/go/library_service"
 	bookpb "github.com/acme/demo-book/generated/go/demo/business/book"
+	commonpb "github.com/acme/demo-book/generated/go/demo/common"
 )
 
 const bufSize = 1024 * 1024
@@ -192,6 +193,60 @@ func TestLibraryServiceGRPC_AllMethods(t *testing.T) {
 		}
 		if srv.lastUpdateCont.GetContent().GetText() != "updated" {
 			t.Errorf("text=%q want updated", srv.lastUpdateCont.GetContent().GetText())
+		}
+	})
+
+	// ---- Shelf entity (cross-package types from demo.common) ----
+
+	t.Run("CreateShelf", func(t *testing.T) {
+		resp, err := libCli.CreateShelf(ctx, &libpb.CreateShelfRequest{
+			Meta: &commonpb.Shelf{Name: "Fiction", Capacity: 100},
+		})
+		if err != nil {
+			t.Fatalf("CreateShelf: %v", err)
+		}
+		if resp.GetKey().GetCode() != "new-shelf" {
+			t.Errorf("key.code=%q want new-shelf", resp.GetKey().GetCode())
+		}
+		if srv.lastCreateShelf.GetMeta().GetName() != "Fiction" {
+			t.Errorf("meta.name=%q", srv.lastCreateShelf.GetMeta().GetName())
+		}
+	})
+
+	t.Run("DeleteShelf", func(t *testing.T) {
+		_, err := libCli.DeleteShelf(ctx, &libpb.DeleteShelfRequest{
+			Key: &commonpb.ShelfId{Code: "sh-1"},
+		})
+		if err != nil {
+			t.Fatalf("DeleteShelf: %v", err)
+		}
+		if srv.lastDeleteShelf.GetKey().GetCode() != "sh-1" {
+			t.Errorf("key.code=%q want sh-1", srv.lastDeleteShelf.GetKey().GetCode())
+		}
+	})
+
+	t.Run("GetShelfMeta", func(t *testing.T) {
+		resp, err := libCli.GetShelfMeta(ctx, &libpb.GetShelfMetaRequest{
+			Key: &commonpb.ShelfId{Code: "sh-meta"},
+		})
+		if err != nil {
+			t.Fatalf("GetShelfMeta: %v", err)
+		}
+		if resp.GetShelfMeta().GetName() != "Fantasy" {
+			t.Errorf("name=%q want Fantasy", resp.GetShelfMeta().GetName())
+		}
+	})
+
+	t.Run("UpdateShelfMeta", func(t *testing.T) {
+		_, err := libCli.UpdateShelfMeta(ctx, &libpb.UpdateShelfMetaRequest{
+			Key:  &commonpb.ShelfId{Code: "sh-up"},
+			Meta: &commonpb.Shelf{Name: "Updated", Capacity: 200},
+		})
+		if err != nil {
+			t.Fatalf("UpdateShelfMeta: %v", err)
+		}
+		if srv.lastUpdateShelf.GetKey().GetCode() != "sh-up" {
+			t.Errorf("key.code=%q want sh-up", srv.lastUpdateShelf.GetKey().GetCode())
 		}
 	})
 

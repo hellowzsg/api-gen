@@ -30,6 +30,10 @@ const (
 	LibraryService_UpdateBookMeta_FullMethodName    = "/demo.business.book.library_service.LibraryService/UpdateBookMeta"
 	LibraryService_GetBookContent_FullMethodName    = "/demo.business.book.library_service.LibraryService/GetBookContent"
 	LibraryService_UpdateBookContent_FullMethodName = "/demo.business.book.library_service.LibraryService/UpdateBookContent"
+	LibraryService_CreateShelf_FullMethodName       = "/demo.business.book.library_service.LibraryService/CreateShelf"
+	LibraryService_DeleteShelf_FullMethodName       = "/demo.business.book.library_service.LibraryService/DeleteShelf"
+	LibraryService_GetShelfMeta_FullMethodName      = "/demo.business.book.library_service.LibraryService/GetShelfMeta"
+	LibraryService_UpdateShelfMeta_FullMethodName   = "/demo.business.book.library_service.LibraryService/UpdateShelfMeta"
 	LibraryService_ArchiveBook_FullMethodName       = "/demo.business.book.library_service.LibraryService/ArchiveBook"
 )
 
@@ -46,6 +50,10 @@ type LibraryServiceClient interface {
 	UpdateBookMeta(ctx context.Context, in *UpdateBookMetaRequest, opts ...grpc.CallOption) (*UpdateBookMetaResponse, error)
 	GetBookContent(ctx context.Context, in *GetBookContentRequest, opts ...grpc.CallOption) (*GetBookContentResponse, error)
 	UpdateBookContent(ctx context.Context, in *UpdateBookContentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateShelf(ctx context.Context, in *CreateShelfRequest, opts ...grpc.CallOption) (*CreateShelfResponse, error)
+	DeleteShelf(ctx context.Context, in *DeleteShelfRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	GetShelfMeta(ctx context.Context, in *GetShelfMetaRequest, opts ...grpc.CallOption) (*GetShelfMetaResponse, error)
+	UpdateShelfMeta(ctx context.Context, in *UpdateShelfMetaRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ArchiveBook(ctx context.Context, in *book.ArchiveBookRequest, opts ...grpc.CallOption) (*book.ArchiveBookResponse, error)
 }
 
@@ -147,6 +155,46 @@ func (c *libraryServiceClient) UpdateBookContent(ctx context.Context, in *Update
 	return out, nil
 }
 
+func (c *libraryServiceClient) CreateShelf(ctx context.Context, in *CreateShelfRequest, opts ...grpc.CallOption) (*CreateShelfResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateShelfResponse)
+	err := c.cc.Invoke(ctx, LibraryService_CreateShelf_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *libraryServiceClient) DeleteShelf(ctx context.Context, in *DeleteShelfRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, LibraryService_DeleteShelf_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *libraryServiceClient) GetShelfMeta(ctx context.Context, in *GetShelfMetaRequest, opts ...grpc.CallOption) (*GetShelfMetaResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetShelfMetaResponse)
+	err := c.cc.Invoke(ctx, LibraryService_GetShelfMeta_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *libraryServiceClient) UpdateShelfMeta(ctx context.Context, in *UpdateShelfMetaRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, LibraryService_UpdateShelfMeta_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *libraryServiceClient) ArchiveBook(ctx context.Context, in *book.ArchiveBookRequest, opts ...grpc.CallOption) (*book.ArchiveBookResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(book.ArchiveBookResponse)
@@ -170,6 +218,10 @@ type LibraryServiceServer interface {
 	UpdateBookMeta(context.Context, *UpdateBookMetaRequest) (*UpdateBookMetaResponse, error)
 	GetBookContent(context.Context, *GetBookContentRequest) (*GetBookContentResponse, error)
 	UpdateBookContent(context.Context, *UpdateBookContentRequest) (*emptypb.Empty, error)
+	CreateShelf(context.Context, *CreateShelfRequest) (*CreateShelfResponse, error)
+	DeleteShelf(context.Context, *DeleteShelfRequest) (*emptypb.Empty, error)
+	GetShelfMeta(context.Context, *GetShelfMetaRequest) (*GetShelfMetaResponse, error)
+	UpdateShelfMeta(context.Context, *UpdateShelfMetaRequest) (*emptypb.Empty, error)
 	ArchiveBook(context.Context, *book.ArchiveBookRequest) (*book.ArchiveBookResponse, error)
 	mustEmbedUnimplementedLibraryServiceServer()
 }
@@ -207,6 +259,18 @@ func (UnimplementedLibraryServiceServer) GetBookContent(context.Context, *GetBoo
 }
 func (UnimplementedLibraryServiceServer) UpdateBookContent(context.Context, *UpdateBookContentRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateBookContent not implemented")
+}
+func (UnimplementedLibraryServiceServer) CreateShelf(context.Context, *CreateShelfRequest) (*CreateShelfResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateShelf not implemented")
+}
+func (UnimplementedLibraryServiceServer) DeleteShelf(context.Context, *DeleteShelfRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteShelf not implemented")
+}
+func (UnimplementedLibraryServiceServer) GetShelfMeta(context.Context, *GetShelfMetaRequest) (*GetShelfMetaResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetShelfMeta not implemented")
+}
+func (UnimplementedLibraryServiceServer) UpdateShelfMeta(context.Context, *UpdateShelfMetaRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateShelfMeta not implemented")
 }
 func (UnimplementedLibraryServiceServer) ArchiveBook(context.Context, *book.ArchiveBookRequest) (*book.ArchiveBookResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ArchiveBook not implemented")
@@ -394,6 +458,78 @@ func _LibraryService_UpdateBookContent_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LibraryService_CreateShelf_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateShelfRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).CreateShelf(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_CreateShelf_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).CreateShelf(ctx, req.(*CreateShelfRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LibraryService_DeleteShelf_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteShelfRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).DeleteShelf(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_DeleteShelf_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).DeleteShelf(ctx, req.(*DeleteShelfRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LibraryService_GetShelfMeta_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetShelfMetaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).GetShelfMeta(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_GetShelfMeta_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).GetShelfMeta(ctx, req.(*GetShelfMetaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LibraryService_UpdateShelfMeta_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateShelfMetaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).UpdateShelfMeta(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_UpdateShelfMeta_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).UpdateShelfMeta(ctx, req.(*UpdateShelfMetaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LibraryService_ArchiveBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(book.ArchiveBookRequest)
 	if err := dec(in); err != nil {
@@ -454,6 +590,22 @@ var LibraryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateBookContent",
 			Handler:    _LibraryService_UpdateBookContent_Handler,
+		},
+		{
+			MethodName: "CreateShelf",
+			Handler:    _LibraryService_CreateShelf_Handler,
+		},
+		{
+			MethodName: "DeleteShelf",
+			Handler:    _LibraryService_DeleteShelf_Handler,
+		},
+		{
+			MethodName: "GetShelfMeta",
+			Handler:    _LibraryService_GetShelfMeta_Handler,
+		},
+		{
+			MethodName: "UpdateShelfMeta",
+			Handler:    _LibraryService_UpdateShelfMeta_Handler,
 		},
 		{
 			MethodName: "ArchiveBook",

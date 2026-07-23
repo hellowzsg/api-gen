@@ -1,0 +1,17 @@
+# B3: key.type_ starts with digit (invalid type reference)
+syntax: v1
+name: test.key_type_digit_prefix
+import_protos:
+  - path: "proto/**/*.proto"
+entities:
+  - name: foo
+    key:
+      type_: "1FooId"
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+services:
+  - name: FooService
+    entities:
+      - name: foo

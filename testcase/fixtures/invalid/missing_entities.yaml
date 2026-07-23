@@ -1,0 +1,9 @@
+# A4: missing required field: entities
+syntax: v1
+name: test.missing_entities
+import_protos:
+  - path: "proto/**/*.proto"
+services:
+  - name: FooService
+    entities:
+      - name: foo

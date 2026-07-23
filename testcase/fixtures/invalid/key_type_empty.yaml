@@ -1,0 +1,17 @@
+# B1: key.type_ is empty (type reference validation)
+syntax: v1
+name: test.key_type_empty
+import_protos:
+  - path: "proto/**/*.proto"
+entities:
+  - name: foo
+    key:
+      type_: ""
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+services:
+  - name: FooService
+    entities:
+      - name: foo

@@ -1,0 +1,21 @@
+# B5: filter_type has invalid type reference (starts with digit)
+syntax: v1
+name: test.filter_type_invalid
+import_protos:
+  - path: "proto/**/*.proto"
+entities:
+  - name: foo
+    key:
+      type_: FooId
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+        reader:
+          list: true
+          list_config:
+            filter_type: "1InvalidFilter"
+services:
+  - name: FooService
+    entities:
+      - name: foo

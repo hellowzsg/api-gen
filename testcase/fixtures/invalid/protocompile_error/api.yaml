@@ -1,0 +1,23 @@
+# K2: proto file has syntax error (protocompile fails)
+syntax: v1
+name: test.protocompile_error
+import_protos:
+  - path: "proto/**/*.proto"
+settings:
+  go_repo: github.com/test/repo
+  out:
+    proto: generated/proto
+    go: generated/go
+entities:
+  - name: foo
+    key:
+      type_: BrokenKey
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+        reader: {}
+services:
+  - name: FooService
+    entities:
+      - name: foo

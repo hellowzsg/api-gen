@@ -1,0 +1,26 @@
+# D1: HTTP enabled but no googleapis dependency in import_protos
+syntax: v1
+name: test.http_without_googleapis
+import_protos:
+  - path: "proto/specific.proto"
+settings:
+  go_repo: github.com/test/repo
+  out:
+    proto: generated/proto
+    go: generated/go
+  http:
+    enable: true
+    prefix: /api
+entities:
+  - name: foo
+    key:
+      type_: FooId
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+        reader: {}
+services:
+  - name: FooService
+    entities:
+      - name: foo

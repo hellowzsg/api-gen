@@ -1,0 +1,25 @@
+# F1: unknown JS plugin
+syntax: v1
+name: test.unknown_js_plugin
+import_protos:
+  - path: "proto/**/*.proto"
+settings:
+  go_repo: github.com/test/repo
+  out:
+    proto: generated/proto
+    go: generated/go
+  plugins:
+    js: [unknown_plugin]
+entities:
+  - name: foo
+    key:
+      type_: FooId
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+        reader: {}
+services:
+  - name: FooService
+    entities:
+      - name: foo

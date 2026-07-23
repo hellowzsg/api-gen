@@ -1,0 +1,32 @@
+# G1: HTTP enabled but key descriptor missing (not in build options)
+# This triggers at IR build time: "HTTP enabled but key descriptor for %q not provided"
+# Note: this fixture is valid YAML but fails at IR build when generate is called
+# without the key descriptor. The generate CLI resolves protos and passes key descriptors,
+# so this fixture needs a proto file with a key type that has no scalar leaf.
+syntax: v1
+name: test.invalid
+import_protos:
+  - path: "proto/**/*.proto"
+  - git: https://github.com/googleapis/googleapis
+    ref: master
+settings:
+  go_repo: github.com/test/repo
+  out:
+    proto: generated/proto
+    go: generated/go
+  http:
+    enable: true
+    prefix: /api
+entities:
+  - name: foo
+    key:
+      type_: EmptyKey
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+        reader: {}
+services:
+  - name: FooService
+    entities:
+      - name: foo

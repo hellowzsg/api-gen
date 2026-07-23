@@ -17,6 +17,7 @@ import (
 	adminpb "github.com/acme/demo-book/generated/go/admin_service"
 	libpb "github.com/acme/demo-book/generated/go/library_service"
 	bookpb "github.com/acme/demo-book/generated/go/demo/business/book"
+	commonpb "github.com/acme/demo-book/generated/go/demo/common"
 )
 
 // ---- Mock LibraryServiceServer ----
@@ -34,6 +35,11 @@ type mockLibraryServer struct {
 	lastGetContent   *libpb.GetBookContentRequest
 	lastUpdateCont   *libpb.UpdateBookContentRequest
 	lastArchiveReq   *bookpb.ArchiveBookRequest
+
+	lastCreateShelf  *libpb.CreateShelfRequest
+	lastDeleteShelf  *libpb.DeleteShelfRequest
+	lastGetShelf     *libpb.GetShelfMetaRequest
+	lastUpdateShelf  *libpb.UpdateShelfMetaRequest
 }
 
 func (m *mockLibraryServer) CreateBook(_ context.Context, req *libpb.CreateBookRequest) (*libpb.CreateBookResponse, error) {
@@ -86,6 +92,26 @@ func (m *mockLibraryServer) UpdateBookContent(_ context.Context, req *libpb.Upda
 func (m *mockLibraryServer) ArchiveBook(_ context.Context, req *bookpb.ArchiveBookRequest) (*bookpb.ArchiveBookResponse, error) {
 	m.lastArchiveReq = req
 	return &bookpb.ArchiveBookResponse{Archived: true}, nil
+}
+
+// Shelf entity RPCs (cross-package types from demo.common)
+func (m *mockLibraryServer) CreateShelf(_ context.Context, req *libpb.CreateShelfRequest) (*libpb.CreateShelfResponse, error) {
+	m.lastCreateShelf = req
+	return &libpb.CreateShelfResponse{Key: &commonpb.ShelfId{Code: "new-shelf"}}, nil
+}
+func (m *mockLibraryServer) DeleteShelf(_ context.Context, req *libpb.DeleteShelfRequest) (*emptypb.Empty, error) {
+	m.lastDeleteShelf = req
+	return &emptypb.Empty{}, nil
+}
+func (m *mockLibraryServer) GetShelfMeta(_ context.Context, req *libpb.GetShelfMetaRequest) (*libpb.GetShelfMetaResponse, error) {
+	m.lastGetShelf = req
+	return &libpb.GetShelfMetaResponse{
+		ShelfMeta: &commonpb.Shelf{Name: "Fantasy", Capacity: 500},
+	}, nil
+}
+func (m *mockLibraryServer) UpdateShelfMeta(_ context.Context, req *libpb.UpdateShelfMetaRequest) (*emptypb.Empty, error) {
+	m.lastUpdateShelf = req
+	return &emptypb.Empty{}, nil
 }
 
 // ---- Mock AdminServiceServer ----
@@ -332,6 +358,61 @@ func TestLibraryServiceHTTP_AllMethods(t *testing.T) {
 		}
 		if got := srv.lastUpdateCont.GetContent().GetText(); got != "updated" {
 			t.Errorf("text got=%q want updated", got)
+		}
+	})
+
+	// ---- Shelf entity HTTP tests (cross-package types from demo.common) ----
+
+	t.Run("CreateShelf POST body=*", func(t *testing.T) {
+		resp := doReq(t, ts, "POST", "/library/LibraryService/shelf", map[string]any{
+			"meta": map[string]any{"name": "Fiction", "capacity": 100},
+		})
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("status=%d", resp.StatusCode)
+		}
+		if got := srv.lastCreateShelf.GetMeta().GetName(); got != "Fiction" {
+			t.Errorf("meta.name got=%q want=Fiction", got)
+		}
+		body := mustReadJSON(t, resp)
+		if got, _ := body["key"].(map[string]any); got["code"] != "new-shelf" {
+			t.Errorf("response key.code=%v want=new-shelf", body)
+		}
+	})
+
+	t.Run("DeleteShelf DELETE /{key.code}", func(t *testing.T) {
+		resp := doReq(t, ts, "DELETE", "/library/LibraryService/shelf/sh-1", nil)
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("status=%d", resp.StatusCode)
+		}
+		if got := srv.lastDeleteShelf.GetKey().GetCode(); got != "sh-1" {
+			t.Errorf("key.code got=%q want=sh-1", got)
+		}
+	})
+
+	t.Run("GetShelfMeta GET /{key.code}/meta", func(t *testing.T) {
+		resp := doReq(t, ts, "GET", "/library/LibraryService/shelf/sh-meta/meta", nil)
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("status=%d", resp.StatusCode)
+		}
+		if got := srv.lastGetShelf.GetKey().GetCode(); got != "sh-meta" {
+			t.Errorf("key.code got=%q want=sh-meta", got)
+		}
+		body := mustReadJSON(t, resp)
+		sm, _ := body["shelfMeta"].(map[string]any)
+		if sm["name"] != "Fantasy" {
+			t.Errorf("name=%v want=Fantasy", sm["name"])
+		}
+	})
+
+	t.Run("UpdateShelfMeta PATCH /{key.code}/meta body=*", func(t *testing.T) {
+		resp := doReq(t, ts, "PATCH", "/library/LibraryService/shelf/sh-up/meta", map[string]any{
+			"meta": map[string]any{"name": "Updated", "capacity": 200},
+		})
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("status=%d", resp.StatusCode)
+		}
+		if got := srv.lastUpdateShelf.GetKey().GetCode(); got != "sh-up" {
+			t.Errorf("key.code got=%q want=sh-up", got)
 		}
 	})
 }

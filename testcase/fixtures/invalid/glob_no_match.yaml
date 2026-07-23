@@ -1,0 +1,24 @@
+# K1: glob pattern matches no .proto files
+# import_protos.path points to a directory with no .proto files
+syntax: v1
+name: test.glob_no_match
+import_protos:
+  - path: "empty_dir/**/*.proto"
+settings:
+  go_repo: github.com/test/repo
+  out:
+    proto: generated/proto
+    go: generated/go
+entities:
+  - name: foo
+    key:
+      type_: FooId
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+        reader: {}
+services:
+  - name: FooService
+    entities:
+      - name: foo

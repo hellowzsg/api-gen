@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package demo.business.book;
+
+import "demo/common/types.proto";
+
+option go_package = "github.com/hellowzsg/api-gen/testcase/fixtures/book/generated/go/demo/business/book;book";
+
+// BookId 是 Book 实体的主键类型。
+message BookId {
+  string id = 1;
+}
+
+// BookMeta 是 Book 的元数据面资源。
+message BookMeta {
+  string title = 1;
+  string author = 2;
+  string isbn = 3;
+  // 创建时间，引用 common.Timestamp
+  demo.common.Timestamp create_time = 4;
+}
+
+// BookContent 是 Book 的内容面资源。
+message BookContent {
+  string text = 1;
+  bytes  cover_image = 2;
+}
+
+// ArchiveBookRequest 是 ArchiveBook 自定义方法的请求。
+message ArchiveBookRequest {
+  string book_id = 1;
+}
+
+// ArchiveBookResponse 是 ArchiveBook 自定义方法的响应。
+message ArchiveBookResponse {
+  bool archived = 1;
+}
+
+// BookMetaFilter 是 ListBookMetas 的结构化过滤条件。
+message BookMetaFilter {
+  string author = 1;
+  string title = 2;
+  uint32 year_from = 3;
+  uint32 year_to = 4;
+  repeated string tags = 5;
+}

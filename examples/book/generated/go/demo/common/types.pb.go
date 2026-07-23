@@ -73,6 +73,102 @@ func (x *Timestamp) GetMillis() int32 {
 	return 0
 }
 
+type ShelfId struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ShelfId) Reset() {
+	*x = ShelfId{}
+	mi := &file_demo_common_types_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ShelfId) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ShelfId) ProtoMessage() {}
+
+func (x *ShelfId) ProtoReflect() protoreflect.Message {
+	mi := &file_demo_common_types_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ShelfId.ProtoReflect.Descriptor instead.
+func (*ShelfId) Descriptor() ([]byte, []int) {
+	return file_demo_common_types_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ShelfId) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+type Shelf struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Capacity      int32                  `protobuf:"varint,2,opt,name=capacity,proto3" json:"capacity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Shelf) Reset() {
+	*x = Shelf{}
+	mi := &file_demo_common_types_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Shelf) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Shelf) ProtoMessage() {}
+
+func (x *Shelf) ProtoReflect() protoreflect.Message {
+	mi := &file_demo_common_types_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Shelf.ProtoReflect.Descriptor instead.
+func (*Shelf) Descriptor() ([]byte, []int) {
+	return file_demo_common_types_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Shelf) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Shelf) GetCapacity() int32 {
+	if x != nil {
+		return x.Capacity
+	}
+	return 0
+}
+
 var File_demo_common_types_proto protoreflect.FileDescriptor
 
 const file_demo_common_types_proto_rawDesc = "" +
@@ -80,7 +176,12 @@ const file_demo_common_types_proto_rawDesc = "" +
 	"\x17demo/common/types.proto\x12\vdemo.common\"=\n" +
 	"\tTimestamp\x12\x18\n" +
 	"\aseconds\x18\x01 \x01(\x03R\aseconds\x12\x16\n" +
-	"\x06millis\x18\x02 \x01(\x05R\x06millisB;Z9github.com/acme/demo-book/generated/go/demo/common;commonb\x06proto3"
+	"\x06millis\x18\x02 \x01(\x05R\x06millis\"\x1d\n" +
+	"\aShelfId\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\"7\n" +
+	"\x05Shelf\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
+	"\bcapacity\x18\x02 \x01(\x05R\bcapacityB;Z9github.com/acme/demo-book/generated/go/demo/common;commonb\x06proto3"
 
 var (
 	file_demo_common_types_proto_rawDescOnce sync.Once
@@ -94,9 +195,11 @@ func file_demo_common_types_proto_rawDescGZIP() []byte {
 	return file_demo_common_types_proto_rawDescData
 }
 
-var file_demo_common_types_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_demo_common_types_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_demo_common_types_proto_goTypes = []any{
 	(*Timestamp)(nil), // 0: demo.common.Timestamp
+	(*ShelfId)(nil),   // 1: demo.common.ShelfId
+	(*Shelf)(nil),     // 2: demo.common.Shelf
 }
 var file_demo_common_types_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -117,7 +220,7 @@ func file_demo_common_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_demo_common_types_proto_rawDesc), len(file_demo_common_types_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

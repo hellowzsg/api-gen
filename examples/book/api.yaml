@@ -51,10 +51,28 @@ entities:
         writer:
           update: {}
 
+  # Entity 2: shelf — key and resource types live in demo.common (different from api.yaml name demo.business.book),
+  # demonstrating explicit cross-package type references with fully qualified names.
+  - name: shelf
+    key:
+      type_: demo.common.ShelfId
+
+    create: {}
+    delete: {}
+
+    resources:
+      - name: meta
+        type_: demo.common.Shelf
+        version: { kind: NONE }
+        reader: {}
+        writer:
+          update: {}
+
 services:
   - name: LibraryService
     entities:
       - name: book
+      - name: shelf
     # P2: custom_method HTTP 路由（AIP-136 冒号语法）
     custom_methods:
       - name: ArchiveBook

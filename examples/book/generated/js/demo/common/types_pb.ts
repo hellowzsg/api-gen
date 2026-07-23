@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file demo/common/types.proto.
  */
 export const file_demo_common_types: GenFile = /*@__PURE__*/
-  fileDesc("ChdkZW1vL2NvbW1vbi90eXBlcy5wcm90bxILZGVtby5jb21tb24iLAoJVGltZXN0YW1wEg8KB3NlY29uZHMYASABKAMSDgoGbWlsbGlzGAIgASgFQjtaOWdpdGh1Yi5jb20vYWNtZS9kZW1vLWJvb2svZ2VuZXJhdGVkL2dvL2RlbW8vY29tbW9uO2NvbW1vbmIGcHJvdG8z");
+  fileDesc("ChdkZW1vL2NvbW1vbi90eXBlcy5wcm90bxILZGVtby5jb21tb24iLAoJVGltZXN0YW1wEg8KB3NlY29uZHMYASABKAMSDgoGbWlsbGlzGAIgASgFIhcKB1NoZWxmSWQSDAoEY29kZRgBIAEoCSInCgVTaGVsZhIMCgRuYW1lGAEgASgJEhAKCGNhcGFjaXR5GAIgASgFQjtaOWdpdGh1Yi5jb20vYWNtZS9kZW1vLWJvb2svZ2VuZXJhdGVkL2dvL2RlbW8vY29tbW9uO2NvbW1vbmIGcHJvdG8z");
 
 /**
  * @generated from message demo.common.Timestamp
@@ -33,4 +33,43 @@ export type Timestamp = Message<"demo.common.Timestamp"> & {
  */
 export const TimestampSchema: GenMessage<Timestamp> = /*@__PURE__*/
   messageDesc(file_demo_common_types, 0);
+
+/**
+ * @generated from message demo.common.ShelfId
+ */
+export type ShelfId = Message<"demo.common.ShelfId"> & {
+  /**
+   * @generated from field: string code = 1;
+   */
+  code: string;
+};
+
+/**
+ * Describes the message demo.common.ShelfId.
+ * Use `create(ShelfIdSchema)` to create a new message.
+ */
+export const ShelfIdSchema: GenMessage<ShelfId> = /*@__PURE__*/
+  messageDesc(file_demo_common_types, 1);
+
+/**
+ * @generated from message demo.common.Shelf
+ */
+export type Shelf = Message<"demo.common.Shelf"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 capacity = 2;
+   */
+  capacity: number;
+};
+
+/**
+ * Describes the message demo.common.Shelf.
+ * Use `create(ShelfSchema)` to create a new message.
+ */
+export const ShelfSchema: GenMessage<Shelf> = /*@__PURE__*/
+  messageDesc(file_demo_common_types, 2);
 

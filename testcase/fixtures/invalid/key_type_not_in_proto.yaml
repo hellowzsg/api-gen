@@ -1,0 +1,24 @@
+# J1: key type not found in proto files (protocompile fails to resolve)
+# This fixture references a key type that doesn't exist in any proto file.
+syntax: v1
+name: test.invalid
+import_protos:
+  - path: "proto/**/*.proto"
+settings:
+  go_repo: github.com/test/repo
+  out:
+    proto: generated/proto
+    go: generated/go
+entities:
+  - name: foo
+    key:
+      type_: NonExistentKeyId
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+        reader: {}
+services:
+  - name: FooService
+    entities:
+      - name: foo

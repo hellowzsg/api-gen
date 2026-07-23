@@ -6,6 +6,8 @@ import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegen
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
 import type { ArchiveBookRequestSchema, ArchiveBookResponseSchema, BookContent, BookId, BookMeta, BookMetaFilter } from "../demo/business/book/book_pb";
 import { file_demo_business_book_book } from "../demo/business/book/book_pb";
+import type { Shelf, ShelfId } from "../demo/common/types_pb";
+import { file_demo_common_types } from "../demo/common/types_pb";
 import { file_google_api_annotations } from "../google/api/annotations_pb";
 import type { EmptySchema, FieldMask } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_empty, file_google_protobuf_field_mask } from "@bufbuild/protobuf/wkt";
@@ -15,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file library_service/library_service.proto.
  */
 export const file_library_service_library_service: GenFile = /*@__PURE__*/
-  fileDesc("CiVsaWJyYXJ5X3NlcnZpY2UvbGlicmFyeV9zZXJ2aWNlLnByb3RvEiJkZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlInEKEUNyZWF0ZUJvb2tSZXF1ZXN0EioKBG1ldGEYASABKAsyHC5kZW1vLmJ1c2luZXNzLmJvb2suQm9va01ldGESMAoHY29udGVudBgCIAEoCzIfLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rQ29udGVudCI9ChJDcmVhdGVCb29rUmVzcG9uc2USJwoDa2V5GAEgASgLMhouZGVtby5idXNpbmVzcy5ib29rLkJvb2tJZCI8ChFEZWxldGVCb29rUmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIkAKFURlbGV0ZUJvb2tTb2Z0UmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIj0KEkdldEJvb2tNZXRhUmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIlcKE0dldEJvb2tNZXRhUmVzcG9uc2USLwoJYm9va19tZXRhGAEgASgLMhwuZGVtby5idXNpbmVzcy5ib29rLkJvb2tNZXRhEg8KB3ZlcnNpb24YAiABKAQiRAoYQmF0Y2hHZXRCb29rTWV0YXNSZXF1ZXN0EigKBGtleXMYASADKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIkgKGUJhdGNoR2V0Qm9va01ldGFzUmVzcG9uc2USKwoFbWV0YXMYASADKAsyHC5kZW1vLmJ1c2luZXNzLmJvb2suQm9va01ldGEigwEKFExpc3RCb29rTWV0YXNSZXF1ZXN0EhEKCXBhZ2Vfc2l6ZRgBIAEoBRISCgpwYWdlX3Rva2VuGAIgASgJEjIKBmZpbHRlchgDIAEoCzIiLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rTWV0YUZpbHRlchIQCghvcmRlcl9ieRgEIAEoCSJxChVMaXN0Qm9va01ldGFzUmVzcG9uc2USKwoFbWV0YXMYASADKAsyHC5kZW1vLmJ1c2luZXNzLmJvb2suQm9va01ldGESFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJEhIKCnRvdGFsX3NpemUYAyABKAUirgEKFVVwZGF0ZUJvb2tNZXRhUmVxdWVzdBIqCgRtZXRhGAEgASgLMhwuZGVtby5idXNpbmVzcy5ib29rLkJvb2tNZXRhEicKA2tleRgCIAEoCzIaLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rSWQSLwoLdXBkYXRlX21hc2sYAyABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrEg8KB3ZlcnNpb24YBCABKAQiKQoWVXBkYXRlQm9va01ldGFSZXNwb25zZRIPCgd2ZXJzaW9uGAEgASgEIkAKFUdldEJvb2tDb250ZW50UmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIk8KFkdldEJvb2tDb250ZW50UmVzcG9uc2USNQoMYm9va19jb250ZW50GAEgASgLMh8uZGVtby5idXNpbmVzcy5ib29rLkJvb2tDb250ZW50InUKGFVwZGF0ZUJvb2tDb250ZW50UmVxdWVzdBIwCgdjb250ZW50GAEgASgLMh8uZGVtby5idXNpbmVzcy5ib29rLkJvb2tDb250ZW50EicKA2tleRgCIAEoCzIaLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rSWQy2w0KDkxpYnJhcnlTZXJ2aWNlEqQBCgpDcmVhdGVCb29rEjUuZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5DcmVhdGVCb29rUmVxdWVzdBo2LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuQ3JlYXRlQm9va1Jlc3BvbnNlIieC0+STAiE6ASoiHC9saWJyYXJ5L0xpYnJhcnlTZXJ2aWNlL2Jvb2sSigEKCkRlbGV0ZUJvb2sSNS5kZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlLkRlbGV0ZUJvb2tSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5Ii2C0+STAicqJS9saWJyYXJ5L0xpYnJhcnlTZXJ2aWNlL2Jvb2sve2tleS5pZH0SlwEKDkRlbGV0ZUJvb2tTb2Z0EjkuZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5EZWxldGVCb29rU29mdFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiMoLT5JMCLDoBKiInL2xpYnJhcnkvTGlicmFyeVNlcnZpY2UvYm9vay9kZWxldGVTb2Z0ErIBCgtHZXRCb29rTWV0YRI2LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuR2V0Qm9va01ldGFSZXF1ZXN0GjcuZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5HZXRCb29rTWV0YVJlc3BvbnNlIjKC0+STAiwSKi9saWJyYXJ5L0xpYnJhcnlTZXJ2aWNlL2Jvb2sve2tleS5pZH0vbWV0YRLHAQoRQmF0Y2hHZXRCb29rTWV0YXMSPC5kZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlLkJhdGNoR2V0Qm9va01ldGFzUmVxdWVzdBo9LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuQmF0Y2hHZXRCb29rTWV0YXNSZXNwb25zZSI1gtPkkwIvOgEqIiovbGlicmFyeS9MaWJyYXJ5U2VydmljZS9ib29rL21ldGEvYmF0Y2hHZXQStwEKDUxpc3RCb29rTWV0YXMSOC5kZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlLkxpc3RCb29rTWV0YXNSZXF1ZXN0GjkuZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5MaXN0Qm9va01ldGFzUmVzcG9uc2UiMYLT5JMCKzoBKiImL2xpYnJhcnkvTGlicmFyeVNlcnZpY2UvYm9vay9tZXRhL2xpc3QSvgEKDlVwZGF0ZUJvb2tNZXRhEjkuZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5VcGRhdGVCb29rTWV0YVJlcXVlc3QaOi5kZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlLlVwZGF0ZUJvb2tNZXRhUmVzcG9uc2UiNYLT5JMCLzoBKjIqL2xpYnJhcnkvTGlicmFyeVNlcnZpY2UvYm9vay97a2V5LmlkfS9tZXRhEr4BCg5HZXRCb29rQ29udGVudBI5LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuR2V0Qm9va0NvbnRlbnRSZXF1ZXN0GjouZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5HZXRCb29rQ29udGVudFJlc3BvbnNlIjWC0+STAi8SLS9saWJyYXJ5L0xpYnJhcnlTZXJ2aWNlL2Jvb2sve2tleS5pZH0vY29udGVudBKjAQoRVXBkYXRlQm9va0NvbnRlbnQSPC5kZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlLlVwZGF0ZUJvb2tDb250ZW50UmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSI4gtPkkwIyOgEqMi0vbGlicmFyeS9MaWJyYXJ5U2VydmljZS9ib29rL3trZXkuaWR9L2NvbnRlbnQSmQEKC0FyY2hpdmVCb29rEiYuZGVtby5idXNpbmVzcy5ib29rLkFyY2hpdmVCb29rUmVxdWVzdBonLmRlbW8uYnVzaW5lc3MuYm9vay5BcmNoaXZlQm9va1Jlc3BvbnNlIjmC0+STAjM6ASoiLi9saWJyYXJ5L0xpYnJhcnlTZXJ2aWNlL2Jvb2sve2Jvb2tfaWR9OmFyY2hpdmVCSFpGZ2l0aHViLmNvbS9hY21lL2RlbW8tYm9vay9nZW5lcmF0ZWQvZ28vbGlicmFyeV9zZXJ2aWNlO2xpYnJhcnlfc2VydmljZWIGcHJvdG8z", [file_demo_business_book_book, file_google_api_annotations, file_google_protobuf_empty, file_google_protobuf_field_mask]);
+  fileDesc("CiVsaWJyYXJ5X3NlcnZpY2UvbGlicmFyeV9zZXJ2aWNlLnByb3RvEiJkZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlInEKEUNyZWF0ZUJvb2tSZXF1ZXN0EioKBG1ldGEYASABKAsyHC5kZW1vLmJ1c2luZXNzLmJvb2suQm9va01ldGESMAoHY29udGVudBgCIAEoCzIfLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rQ29udGVudCI9ChJDcmVhdGVCb29rUmVzcG9uc2USJwoDa2V5GAEgASgLMhouZGVtby5idXNpbmVzcy5ib29rLkJvb2tJZCI8ChFEZWxldGVCb29rUmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIkAKFURlbGV0ZUJvb2tTb2Z0UmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIj0KEkdldEJvb2tNZXRhUmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIlcKE0dldEJvb2tNZXRhUmVzcG9uc2USLwoJYm9va19tZXRhGAEgASgLMhwuZGVtby5idXNpbmVzcy5ib29rLkJvb2tNZXRhEg8KB3ZlcnNpb24YAiABKAQiRAoYQmF0Y2hHZXRCb29rTWV0YXNSZXF1ZXN0EigKBGtleXMYASADKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIkgKGUJhdGNoR2V0Qm9va01ldGFzUmVzcG9uc2USKwoFbWV0YXMYASADKAsyHC5kZW1vLmJ1c2luZXNzLmJvb2suQm9va01ldGEigwEKFExpc3RCb29rTWV0YXNSZXF1ZXN0EhEKCXBhZ2Vfc2l6ZRgBIAEoBRISCgpwYWdlX3Rva2VuGAIgASgJEjIKBmZpbHRlchgDIAEoCzIiLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rTWV0YUZpbHRlchIQCghvcmRlcl9ieRgEIAEoCSJxChVMaXN0Qm9va01ldGFzUmVzcG9uc2USKwoFbWV0YXMYASADKAsyHC5kZW1vLmJ1c2luZXNzLmJvb2suQm9va01ldGESFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJEhIKCnRvdGFsX3NpemUYAyABKAUirgEKFVVwZGF0ZUJvb2tNZXRhUmVxdWVzdBIqCgRtZXRhGAEgASgLMhwuZGVtby5idXNpbmVzcy5ib29rLkJvb2tNZXRhEicKA2tleRgCIAEoCzIaLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rSWQSLwoLdXBkYXRlX21hc2sYAyABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrEg8KB3ZlcnNpb24YBCABKAQiKQoWVXBkYXRlQm9va01ldGFSZXNwb25zZRIPCgd2ZXJzaW9uGAEgASgEIkAKFUdldEJvb2tDb250ZW50UmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIk8KFkdldEJvb2tDb250ZW50UmVzcG9uc2USNQoMYm9va19jb250ZW50GAEgASgLMh8uZGVtby5idXNpbmVzcy5ib29rLkJvb2tDb250ZW50InUKGFVwZGF0ZUJvb2tDb250ZW50UmVxdWVzdBIwCgdjb250ZW50GAEgASgLMh8uZGVtby5idXNpbmVzcy5ib29rLkJvb2tDb250ZW50EicKA2tleRgCIAEoCzIaLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rSWQiNgoSQ3JlYXRlU2hlbGZSZXF1ZXN0EiAKBG1ldGEYASABKAsyEi5kZW1vLmNvbW1vbi5TaGVsZiI4ChNDcmVhdGVTaGVsZlJlc3BvbnNlEiEKA2tleRgBIAEoCzIULmRlbW8uY29tbW9uLlNoZWxmSWQiNwoSRGVsZXRlU2hlbGZSZXF1ZXN0EiEKA2tleRgBIAEoCzIULmRlbW8uY29tbW9uLlNoZWxmSWQiOAoTR2V0U2hlbGZNZXRhUmVxdWVzdBIhCgNrZXkYASABKAsyFC5kZW1vLmNvbW1vbi5TaGVsZklkIj4KFEdldFNoZWxmTWV0YVJlc3BvbnNlEiYKCnNoZWxmX21ldGEYASABKAsyEi5kZW1vLmNvbW1vbi5TaGVsZiJdChZVcGRhdGVTaGVsZk1ldGFSZXF1ZXN0EiAKBG1ldGEYASABKAsyEi5kZW1vLmNvbW1vbi5TaGVsZhIhCgNrZXkYAiABKAsyFC5kZW1vLmNvbW1vbi5TaGVsZklkMvUSCg5MaWJyYXJ5U2VydmljZRKkAQoKQ3JlYXRlQm9vaxI1LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuQ3JlYXRlQm9va1JlcXVlc3QaNi5kZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlLkNyZWF0ZUJvb2tSZXNwb25zZSIngtPkkwIhOgEqIhwvbGlicmFyeS9MaWJyYXJ5U2VydmljZS9ib29rEooBCgpEZWxldGVCb29rEjUuZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5EZWxldGVCb29rUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSItgtPkkwInKiUvbGlicmFyeS9MaWJyYXJ5U2VydmljZS9ib29rL3trZXkuaWR9EpcBCg5EZWxldGVCb29rU29mdBI5LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuRGVsZXRlQm9va1NvZnRSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IjKC0+STAiw6ASoiJy9saWJyYXJ5L0xpYnJhcnlTZXJ2aWNlL2Jvb2svZGVsZXRlU29mdBKyAQoLR2V0Qm9va01ldGESNi5kZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlLkdldEJvb2tNZXRhUmVxdWVzdBo3LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuR2V0Qm9va01ldGFSZXNwb25zZSIygtPkkwIsEiovbGlicmFyeS9MaWJyYXJ5U2VydmljZS9ib29rL3trZXkuaWR9L21ldGESxwEKEUJhdGNoR2V0Qm9va01ldGFzEjwuZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5CYXRjaEdldEJvb2tNZXRhc1JlcXVlc3QaPS5kZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlLkJhdGNoR2V0Qm9va01ldGFzUmVzcG9uc2UiNYLT5JMCLzoBKiIqL2xpYnJhcnkvTGlicmFyeVNlcnZpY2UvYm9vay9tZXRhL2JhdGNoR2V0ErcBCg1MaXN0Qm9va01ldGFzEjguZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5MaXN0Qm9va01ldGFzUmVxdWVzdBo5LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuTGlzdEJvb2tNZXRhc1Jlc3BvbnNlIjGC0+STAis6ASoiJi9saWJyYXJ5L0xpYnJhcnlTZXJ2aWNlL2Jvb2svbWV0YS9saXN0Er4BCg5VcGRhdGVCb29rTWV0YRI5LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuVXBkYXRlQm9va01ldGFSZXF1ZXN0GjouZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5VcGRhdGVCb29rTWV0YVJlc3BvbnNlIjWC0+STAi86ASoyKi9saWJyYXJ5L0xpYnJhcnlTZXJ2aWNlL2Jvb2sve2tleS5pZH0vbWV0YRK+AQoOR2V0Qm9va0NvbnRlbnQSOS5kZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlLkdldEJvb2tDb250ZW50UmVxdWVzdBo6LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuR2V0Qm9va0NvbnRlbnRSZXNwb25zZSI1gtPkkwIvEi0vbGlicmFyeS9MaWJyYXJ5U2VydmljZS9ib29rL3trZXkuaWR9L2NvbnRlbnQSowEKEVVwZGF0ZUJvb2tDb250ZW50EjwuZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5VcGRhdGVCb29rQ29udGVudFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiOILT5JMCMjoBKjItL2xpYnJhcnkvTGlicmFyeVNlcnZpY2UvYm9vay97a2V5LmlkfS9jb250ZW50EqgBCgtDcmVhdGVTaGVsZhI2LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuQ3JlYXRlU2hlbGZSZXF1ZXN0GjcuZGVtby5idXNpbmVzcy5ib29rLmxpYnJhcnlfc2VydmljZS5DcmVhdGVTaGVsZlJlc3BvbnNlIiiC0+STAiI6ASoiHS9saWJyYXJ5L0xpYnJhcnlTZXJ2aWNlL3NoZWxmEo8BCgtEZWxldGVTaGVsZhI2LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuRGVsZXRlU2hlbGZSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IjCC0+STAioqKC9saWJyYXJ5L0xpYnJhcnlTZXJ2aWNlL3NoZWxmL3trZXkuY29kZX0SuAEKDEdldFNoZWxmTWV0YRI3LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuR2V0U2hlbGZNZXRhUmVxdWVzdBo4LmRlbW8uYnVzaW5lc3MuYm9vay5saWJyYXJ5X3NlcnZpY2UuR2V0U2hlbGZNZXRhUmVzcG9uc2UiNYLT5JMCLxItL2xpYnJhcnkvTGlicmFyeVNlcnZpY2Uvc2hlbGYve2tleS5jb2RlfS9tZXRhEp8BCg9VcGRhdGVTaGVsZk1ldGESOi5kZW1vLmJ1c2luZXNzLmJvb2subGlicmFyeV9zZXJ2aWNlLlVwZGF0ZVNoZWxmTWV0YVJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiOILT5JMCMjoBKjItL2xpYnJhcnkvTGlicmFyeVNlcnZpY2Uvc2hlbGYve2tleS5jb2RlfS9tZXRhEpkBCgtBcmNoaXZlQm9vaxImLmRlbW8uYnVzaW5lc3MuYm9vay5BcmNoaXZlQm9va1JlcXVlc3QaJy5kZW1vLmJ1c2luZXNzLmJvb2suQXJjaGl2ZUJvb2tSZXNwb25zZSI5gtPkkwIzOgEqIi4vbGlicmFyeS9MaWJyYXJ5U2VydmljZS9ib29rL3tib29rX2lkfTphcmNoaXZlQkhaRmdpdGh1Yi5jb20vYWNtZS9kZW1vLWJvb2svZ2VuZXJhdGVkL2dvL2xpYnJhcnlfc2VydmljZTtsaWJyYXJ5X3NlcnZpY2ViBnByb3RvMw", [file_demo_business_book_book, file_demo_common_types, file_google_api_annotations, file_google_protobuf_empty, file_google_protobuf_field_mask]);
 
 /**
  * @generated from message demo.business.book.library_service.CreateBookRequest
@@ -328,6 +330,113 @@ export const UpdateBookContentRequestSchema: GenMessage<UpdateBookContentRequest
   messageDesc(file_library_service_library_service, 14);
 
 /**
+ * @generated from message demo.business.book.library_service.CreateShelfRequest
+ */
+export type CreateShelfRequest = Message<"demo.business.book.library_service.CreateShelfRequest"> & {
+  /**
+   * @generated from field: demo.common.Shelf meta = 1;
+   */
+  meta?: Shelf | undefined;
+};
+
+/**
+ * Describes the message demo.business.book.library_service.CreateShelfRequest.
+ * Use `create(CreateShelfRequestSchema)` to create a new message.
+ */
+export const CreateShelfRequestSchema: GenMessage<CreateShelfRequest> = /*@__PURE__*/
+  messageDesc(file_library_service_library_service, 15);
+
+/**
+ * @generated from message demo.business.book.library_service.CreateShelfResponse
+ */
+export type CreateShelfResponse = Message<"demo.business.book.library_service.CreateShelfResponse"> & {
+  /**
+   * @generated from field: demo.common.ShelfId key = 1;
+   */
+  key?: ShelfId | undefined;
+};
+
+/**
+ * Describes the message demo.business.book.library_service.CreateShelfResponse.
+ * Use `create(CreateShelfResponseSchema)` to create a new message.
+ */
+export const CreateShelfResponseSchema: GenMessage<CreateShelfResponse> = /*@__PURE__*/
+  messageDesc(file_library_service_library_service, 16);
+
+/**
+ * @generated from message demo.business.book.library_service.DeleteShelfRequest
+ */
+export type DeleteShelfRequest = Message<"demo.business.book.library_service.DeleteShelfRequest"> & {
+  /**
+   * @generated from field: demo.common.ShelfId key = 1;
+   */
+  key?: ShelfId | undefined;
+};
+
+/**
+ * Describes the message demo.business.book.library_service.DeleteShelfRequest.
+ * Use `create(DeleteShelfRequestSchema)` to create a new message.
+ */
+export const DeleteShelfRequestSchema: GenMessage<DeleteShelfRequest> = /*@__PURE__*/
+  messageDesc(file_library_service_library_service, 17);
+
+/**
+ * @generated from message demo.business.book.library_service.GetShelfMetaRequest
+ */
+export type GetShelfMetaRequest = Message<"demo.business.book.library_service.GetShelfMetaRequest"> & {
+  /**
+   * @generated from field: demo.common.ShelfId key = 1;
+   */
+  key?: ShelfId | undefined;
+};
+
+/**
+ * Describes the message demo.business.book.library_service.GetShelfMetaRequest.
+ * Use `create(GetShelfMetaRequestSchema)` to create a new message.
+ */
+export const GetShelfMetaRequestSchema: GenMessage<GetShelfMetaRequest> = /*@__PURE__*/
+  messageDesc(file_library_service_library_service, 18);
+
+/**
+ * @generated from message demo.business.book.library_service.GetShelfMetaResponse
+ */
+export type GetShelfMetaResponse = Message<"demo.business.book.library_service.GetShelfMetaResponse"> & {
+  /**
+   * @generated from field: demo.common.Shelf shelf_meta = 1;
+   */
+  shelfMeta?: Shelf | undefined;
+};
+
+/**
+ * Describes the message demo.business.book.library_service.GetShelfMetaResponse.
+ * Use `create(GetShelfMetaResponseSchema)` to create a new message.
+ */
+export const GetShelfMetaResponseSchema: GenMessage<GetShelfMetaResponse> = /*@__PURE__*/
+  messageDesc(file_library_service_library_service, 19);
+
+/**
+ * @generated from message demo.business.book.library_service.UpdateShelfMetaRequest
+ */
+export type UpdateShelfMetaRequest = Message<"demo.business.book.library_service.UpdateShelfMetaRequest"> & {
+  /**
+   * @generated from field: demo.common.Shelf meta = 1;
+   */
+  meta?: Shelf | undefined;
+
+  /**
+   * @generated from field: demo.common.ShelfId key = 2;
+   */
+  key?: ShelfId | undefined;
+};
+
+/**
+ * Describes the message demo.business.book.library_service.UpdateShelfMetaRequest.
+ * Use `create(UpdateShelfMetaRequestSchema)` to create a new message.
+ */
+export const UpdateShelfMetaRequestSchema: GenMessage<UpdateShelfMetaRequest> = /*@__PURE__*/
+  messageDesc(file_library_service_library_service, 20);
+
+/**
  * @generated from service demo.business.book.library_service.LibraryService
  */
 export const LibraryService: GenService<{
@@ -401,6 +510,38 @@ export const LibraryService: GenService<{
   updateBookContent: {
     methodKind: "unary";
     input: typeof UpdateBookContentRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc demo.business.book.library_service.LibraryService.CreateShelf
+   */
+  createShelf: {
+    methodKind: "unary";
+    input: typeof CreateShelfRequestSchema;
+    output: typeof CreateShelfResponseSchema;
+  },
+  /**
+   * @generated from rpc demo.business.book.library_service.LibraryService.DeleteShelf
+   */
+  deleteShelf: {
+    methodKind: "unary";
+    input: typeof DeleteShelfRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc demo.business.book.library_service.LibraryService.GetShelfMeta
+   */
+  getShelfMeta: {
+    methodKind: "unary";
+    input: typeof GetShelfMetaRequestSchema;
+    output: typeof GetShelfMetaResponseSchema;
+  },
+  /**
+   * @generated from rpc demo.business.book.library_service.LibraryService.UpdateShelfMeta
+   */
+  updateShelfMeta: {
+    methodKind: "unary";
+    input: typeof UpdateShelfMetaRequestSchema;
     output: typeof EmptySchema;
   },
   /**

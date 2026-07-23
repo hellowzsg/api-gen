@@ -1,0 +1,22 @@
+# I6: option name contains spaces
+syntax: v1
+name: test.invalid
+import_protos:
+  - path: "proto/**/*.proto"
+entities:
+  - name: foo
+    key:
+      type_: FooId
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+        reader: {}
+        options:
+          - target: file
+            option: "option with space"
+            value: true
+services:
+  - name: FooService
+    entities:
+      - name: foo
