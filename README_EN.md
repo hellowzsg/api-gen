@@ -64,9 +64,7 @@ The division of labor is clear—you maintain the domain model, and `apigen` gen
 ### 1. Install the CLI
 
 ```bash
-git clone <repository-url> aip-gen
-cd aip-gen
-go install ./cmd/apigen
+go install github.com/hellowzsg/api-gen/cmd/apigen@latest
 
 # Verify the installation
 apigen --help

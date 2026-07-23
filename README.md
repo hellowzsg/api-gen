@@ -59,9 +59,7 @@
 ### 1. 安装 CLI
 
 ```bash
-git clone <repository-url> aip-gen
-cd aip-gen
-go install ./cmd/apigen
+go install github.com/hellowzsg/api-gen/cmd/apigen@latest
 
 # 验证安装
 apigen --help
