@@ -50,3 +50,16 @@ message ExportDocRequest {
 message ExportDocResponse {
   string url = 1;
 }
+
+// LabelId is a composite key for the label entity (client-key mode).
+// Key leaves (depth-first): ns, name
+message LabelId {
+  string ns   = 1;
+  string name = 2;
+}
+
+// LabelMeta is the label entity's metadata resource.
+message LabelMeta {
+  string color = 1;
+  int32  weight = 2;
+}

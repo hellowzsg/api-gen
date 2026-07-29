@@ -206,3 +206,26 @@ func TestGenerateError_Plugin(t *testing.T) {
 	assertExitNonZero(t, "unknown_js_plugin.yaml", exitCode)
 	assertErrorContains(t, "unknown_js_plugin.yaml", output, "unknown JS plugin")
 }
+
+// TestGenerateError_CreateKey verifies create.key validation errors.
+func TestGenerateError_CreateKey(t *testing.T) {
+	binary := apigenBinary(t)
+	dir := fixtureDir(t)
+
+	tests := []struct {
+		fixture string
+		errMsg  string
+	}{
+		{"create_key_invalid.yaml", "create.key"},
+		{"create_key_invalid.yaml", "server"},
+		{"create_key_invalid.yaml", "client"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.fixture+"/"+tt.errMsg, func(t *testing.T) {
+			output, exitCode := runGenerate(t, binary, filepath.Join(dir, tt.fixture))
+			assertExitNonZero(t, tt.fixture, exitCode)
+			assertErrorContains(t, tt.fixture, output, tt.errMsg)
+		})
+	}
+}

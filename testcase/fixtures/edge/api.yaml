@@ -78,11 +78,30 @@ entities:
         writer:
           update: {}
 
+  # Entity 3: label — client-key mode (create: { key: client }).
+  # The key is client-specified: Create request carries key=1, resources at 2..N+1.
+  # HTTP path includes key leaf segments.
+  - name: label
+    key:
+      type_: LabelId
+
+    create: { key: client }
+    delete: {}
+
+    resources:
+      - name: meta
+        type_: LabelMeta
+        version: { kind: NONE }
+        reader: {}
+        writer:
+          update: {}
+
 services:
   - name: EdgeService
     entities:
       - name: doc
       - name: tag
+      - name: label
     custom_methods:
       - name: ExportDoc
         request: ExportDocRequest

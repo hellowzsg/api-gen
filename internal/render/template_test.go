@@ -206,3 +206,48 @@ func TestUserPathOverrideVerbatim(t *testing.T) {
 		t.Errorf("override path should be verbatim, got:\n%s", output)
 	}
 }
+
+// TestRenderCreateClientKey: client mode Create request renders key field
+// at position 1, resources at 2..N+1; HTTP path includes {key.id} segment.
+func TestRenderCreateClientKey(t *testing.T) {
+	irData := &ir.IR{PackageName: "test", HTTPEnabled: true, HTTPPrefix: "/library"}
+	irData.Entities = []ir.EntityIR{{
+		Name: "book", PascalName: "Book", KeyType: "test.BookId",
+		KeyLeaves: []ir.KeyLeaf{{DotPath: "id", FieldType: "string"}},
+		Create: &ir.CreateIR{
+			RPCName:      "CreateBook",
+			RequestName:  "CreateBookRequest",
+			ResponseName: "CreateBookResponse",
+			KeyField:     &ir.FieldIR{Name: "key", Type: "test.BookId", Number: 1},
+			RequestFields: []ir.FieldIR{
+				{Name: "meta", Type: "test.BookMeta", Number: 2},
+			},
+			ResponseKeyField: ir.FieldIR{Name: "key", Type: "test.BookId", Number: 1},
+			HTTPAnnotation: &ir.HTTPAnnotation{
+				Verb: "POST", Entity: "book", Body: "*",
+				KeyLeaves: []ir.KeyLeaf{{DotPath: "id"}},
+			},
+		},
+	}}
+	svc := ir.ServiceIR{
+		Name:         "LibraryService",
+		ProtoPackage: "test.library_service",
+		GoPackage:    "library_service",
+		Entities:     []ir.ServiceEntityIR{{Name: "book"}},
+	}
+	output, err := RenderServiceProto(irData, svc)
+	if err != nil {
+		t.Fatalf("RenderServiceProto failed: %v", err)
+	}
+	// Request message should have key=1 then meta=2.
+	if !strings.Contains(output, "test.BookId key = 1;") {
+		t.Errorf("missing key field at position 1 in request message, got:\n%s", output)
+	}
+	if !strings.Contains(output, "test.BookMeta meta = 2;") {
+		t.Errorf("missing meta field at position 2 in request message, got:\n%s", output)
+	}
+	// HTTP annotation should include {key.id} in path.
+	if !strings.Contains(output, `post: "/library/LibraryService/book/{key.id}"`) {
+		t.Errorf("missing HTTP path with key segment, got:\n%s", output)
+	}
+}

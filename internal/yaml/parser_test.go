@@ -390,3 +390,84 @@ entities:
 		}
 	})
 }
+
+// TestParseCreateKey tests parsing of create.key configuration (server/client).
+func TestParseCreateKey(t *testing.T) {
+	// Subtest 1: create: { key: client }
+	t.Run("key client", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    create: { key: client }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		if cfg.Entities[0].Create == nil {
+			t.Fatal("Create is nil, want non-nil")
+		}
+		if cfg.Entities[0].Create.Key != "client" {
+			t.Errorf("Create.Key = %q, want %q", cfg.Entities[0].Create.Key, "client")
+		}
+	})
+
+	// Subtest 2: create: { key: server }
+	t.Run("key server", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    create: { key: server }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		if cfg.Entities[0].Create == nil {
+			t.Fatal("Create is nil, want non-nil")
+		}
+		if cfg.Entities[0].Create.Key != "server" {
+			t.Errorf("Create.Key = %q, want %q", cfg.Entities[0].Create.Key, "server")
+		}
+	})
+
+	// Subtest 3: create: {} → Key defaults to "" (equivalent to server)
+	t.Run("key omitted defaults to empty", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    create: {}
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		if cfg.Entities[0].Create == nil {
+			t.Fatal("Create is nil, want non-nil")
+		}
+		if cfg.Entities[0].Create.Key != "" {
+			t.Errorf("Create.Key = %q, want empty (default server)", cfg.Entities[0].Create.Key)
+		}
+	})
+}

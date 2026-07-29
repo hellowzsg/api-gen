@@ -19,7 +19,7 @@ func TestBuildEntityLevelMethods(t *testing.T) {
 		Entities: []apigenyaml.Entity{{
 			Name:       "book",
 			Key:        apigenyaml.KeyDef{Type: "BookId"},
-			Create:     &struct{}{},
+			Create:     &apigenyaml.CreateDef{},
 			Delete:     &struct{}{},
 			DeleteSoft: &struct{}{},
 			Resources: []apigenyaml.Resource{{
@@ -165,7 +165,7 @@ func TestBuildCreateResponseOnlyKey(t *testing.T) {
 		Entities: []apigenyaml.Entity{{
 			Name:   "book",
 			Key:    apigenyaml.KeyDef{Type: "BookId"},
-			Create: &struct{}{},
+			Create: &apigenyaml.CreateDef{},
 			Resources: []apigenyaml.Resource{{
 				Name:    "meta",
 				Type:    "BookMeta",
@@ -279,7 +279,7 @@ func TestBuild_HTTPEnabled(t *testing.T) {
 		Entities: []apigenyaml.Entity{{
 			Name:       "book",
 			Key:        apigenyaml.KeyDef{Type: "BookId"},
-			Create:     &struct{}{},
+			Create:     &apigenyaml.CreateDef{},
 			Delete:     &struct{}{},
 			DeleteSoft: &struct{}{},
 			Resources: []apigenyaml.Resource{{
@@ -404,7 +404,7 @@ func TestBuild_HTTPStructuredAnnotations(t *testing.T) {
 		Entities: []apigenyaml.Entity{{
 			Name:       "book",
 			Key:        apigenyaml.KeyDef{Type: "BookId"},
-			Create:     &struct{}{},
+			Create:     &apigenyaml.CreateDef{},
 			Delete:     &struct{}{},
 			DeleteSoft: &struct{}{},
 			Resources: []apigenyaml.Resource{{
@@ -850,7 +850,7 @@ func TestBodyStyleResource(t *testing.T) {
 			Entities: []apigenyaml.Entity{{
 				Name:  "book",
 				Key:   apigenyaml.KeyDef{Type: "BookId"},
-				Create: &struct{}{},
+				Create: &apigenyaml.CreateDef{},
 				Resources: []apigenyaml.Resource{
 					{Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"}, Reader: &apigenyaml.ReaderDef{}},
 					{Name: "content", Type: "BookContent", Version: apigenyaml.VersionDef{Kind: "NONE"}, Reader: &apigenyaml.ReaderDef{}},

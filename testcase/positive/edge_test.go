@@ -198,3 +198,70 @@ func TestEdge_CrossPackageTypes(t *testing.T) {
 		assertContains(t, "edge_service.proto", proto, "edge.tag.")
 	})
 }
+
+// TestEdge_ClientKeyCreate verifies that the label entity (create: { key: client })
+// generates a Create RPC where the key is prefixed at field 1, resources at 2..N+1,
+// and the HTTP path includes key leaf segments.
+func TestEdge_ClientKeyCreate(t *testing.T) {
+	dir := fixtureEdgeDir(t)
+	proto := mustReadFile(t, filepath.Join(dir, "generated", "proto", "edge_service", "edge_service.proto"))
+
+	t.Run("label entity RPCs generated", func(t *testing.T) {
+		rpcs := []string{
+			"rpc CreateLabel(",
+			"rpc DeleteLabel(",
+			"rpc GetLabelMeta(",
+			"rpc UpdateLabelMeta(",
+		}
+		for _, rpc := range rpcs {
+			assertContains(t, "edge_service.proto", proto, rpc)
+		}
+	})
+
+	t.Run("CreateLabelRequest has key=1 and resource=2 (client mode)", func(t *testing.T) {
+		assertContains(t, "edge_service.proto", proto, "edge.example.LabelId key = 1;")
+		assertContains(t, "edge_service.proto", proto, "edge.example.LabelMeta meta = 2;")
+	})
+
+	t.Run("CreateLabelResponse echoes key=1", func(t *testing.T) {
+		assertContains(t, "edge_service.proto", proto, "message CreateLabelResponse { edge.example.LabelId key = 1; }")
+	})
+
+	t.Run("CreateLabel HTTP path includes key leaf segments", func(t *testing.T) {
+		// LabelId { string ns; string name; } → {key.ns}/{key.name}
+		assertContains(t, "edge_service.proto", proto, `post: "/edge/EdgeService/label/{key.ns}/{key.name}" body: "*"`)
+	})
+
+	t.Run("DeleteLabel HTTP path includes key leaf segments", func(t *testing.T) {
+		assertContains(t, "edge_service.proto", proto, `delete: "/edge/EdgeService/label/{key.ns}/{key.name}"`)
+	})
+
+	t.Run("server-mode entities (doc, tag) do not have key in Create request", func(t *testing.T) {
+		// doc and tag use create: {} (server mode) — their Create requests should NOT have a key field
+		idx := strings.Index(proto, "message CreateDocRequest")
+		if idx < 0 {
+			t.Fatal("CreateDocRequest message not found")
+		}
+		end := strings.Index(proto[idx:], "\n}")
+		if end < 0 {
+			end = 300
+		}
+		createDocBlock := proto[idx : idx+end]
+		if strings.Contains(createDocBlock, "DocId key") {
+			t.Errorf("CreateDocRequest (server mode) should NOT have key field, but found: %s", createDocBlock)
+		}
+
+		idx = strings.Index(proto, "message CreateTagRequest")
+		if idx < 0 {
+			t.Fatal("CreateTagRequest message not found")
+		}
+		end = strings.Index(proto[idx:], "\n}")
+		if end < 0 {
+			end = 300
+		}
+		createTagBlock := proto[idx : idx+end]
+		if strings.Contains(createTagBlock, "TagId key") {
+			t.Errorf("CreateTagRequest (server mode) should NOT have key field, but found: %s", createTagBlock)
+		}
+	})
+}

@@ -34,6 +34,9 @@ const (
 	LibraryService_DeleteShelf_FullMethodName       = "/demo.business.book.library_service.LibraryService/DeleteShelf"
 	LibraryService_GetShelfMeta_FullMethodName      = "/demo.business.book.library_service.LibraryService/GetShelfMeta"
 	LibraryService_UpdateShelfMeta_FullMethodName   = "/demo.business.book.library_service.LibraryService/UpdateShelfMeta"
+	LibraryService_CreateNote_FullMethodName        = "/demo.business.book.library_service.LibraryService/CreateNote"
+	LibraryService_GetNoteMeta_FullMethodName       = "/demo.business.book.library_service.LibraryService/GetNoteMeta"
+	LibraryService_UpdateNoteMeta_FullMethodName    = "/demo.business.book.library_service.LibraryService/UpdateNoteMeta"
 	LibraryService_ArchiveBook_FullMethodName       = "/demo.business.book.library_service.LibraryService/ArchiveBook"
 )
 
@@ -54,6 +57,9 @@ type LibraryServiceClient interface {
 	DeleteShelf(ctx context.Context, in *DeleteShelfRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetShelfMeta(ctx context.Context, in *GetShelfMetaRequest, opts ...grpc.CallOption) (*GetShelfMetaResponse, error)
 	UpdateShelfMeta(ctx context.Context, in *UpdateShelfMetaRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CreateNote(ctx context.Context, in *CreateNoteRequest, opts ...grpc.CallOption) (*CreateNoteResponse, error)
+	GetNoteMeta(ctx context.Context, in *GetNoteMetaRequest, opts ...grpc.CallOption) (*GetNoteMetaResponse, error)
+	UpdateNoteMeta(ctx context.Context, in *UpdateNoteMetaRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ArchiveBook(ctx context.Context, in *book.ArchiveBookRequest, opts ...grpc.CallOption) (*book.ArchiveBookResponse, error)
 }
 
@@ -195,6 +201,36 @@ func (c *libraryServiceClient) UpdateShelfMeta(ctx context.Context, in *UpdateSh
 	return out, nil
 }
 
+func (c *libraryServiceClient) CreateNote(ctx context.Context, in *CreateNoteRequest, opts ...grpc.CallOption) (*CreateNoteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateNoteResponse)
+	err := c.cc.Invoke(ctx, LibraryService_CreateNote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *libraryServiceClient) GetNoteMeta(ctx context.Context, in *GetNoteMetaRequest, opts ...grpc.CallOption) (*GetNoteMetaResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetNoteMetaResponse)
+	err := c.cc.Invoke(ctx, LibraryService_GetNoteMeta_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *libraryServiceClient) UpdateNoteMeta(ctx context.Context, in *UpdateNoteMetaRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, LibraryService_UpdateNoteMeta_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *libraryServiceClient) ArchiveBook(ctx context.Context, in *book.ArchiveBookRequest, opts ...grpc.CallOption) (*book.ArchiveBookResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(book.ArchiveBookResponse)
@@ -222,6 +258,9 @@ type LibraryServiceServer interface {
 	DeleteShelf(context.Context, *DeleteShelfRequest) (*emptypb.Empty, error)
 	GetShelfMeta(context.Context, *GetShelfMetaRequest) (*GetShelfMetaResponse, error)
 	UpdateShelfMeta(context.Context, *UpdateShelfMetaRequest) (*emptypb.Empty, error)
+	CreateNote(context.Context, *CreateNoteRequest) (*CreateNoteResponse, error)
+	GetNoteMeta(context.Context, *GetNoteMetaRequest) (*GetNoteMetaResponse, error)
+	UpdateNoteMeta(context.Context, *UpdateNoteMetaRequest) (*emptypb.Empty, error)
 	ArchiveBook(context.Context, *book.ArchiveBookRequest) (*book.ArchiveBookResponse, error)
 	mustEmbedUnimplementedLibraryServiceServer()
 }
@@ -271,6 +310,15 @@ func (UnimplementedLibraryServiceServer) GetShelfMeta(context.Context, *GetShelf
 }
 func (UnimplementedLibraryServiceServer) UpdateShelfMeta(context.Context, *UpdateShelfMetaRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateShelfMeta not implemented")
+}
+func (UnimplementedLibraryServiceServer) CreateNote(context.Context, *CreateNoteRequest) (*CreateNoteResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateNote not implemented")
+}
+func (UnimplementedLibraryServiceServer) GetNoteMeta(context.Context, *GetNoteMetaRequest) (*GetNoteMetaResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetNoteMeta not implemented")
+}
+func (UnimplementedLibraryServiceServer) UpdateNoteMeta(context.Context, *UpdateNoteMetaRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateNoteMeta not implemented")
 }
 func (UnimplementedLibraryServiceServer) ArchiveBook(context.Context, *book.ArchiveBookRequest) (*book.ArchiveBookResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ArchiveBook not implemented")
@@ -530,6 +578,60 @@ func _LibraryService_UpdateShelfMeta_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LibraryService_CreateNote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateNoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).CreateNote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_CreateNote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).CreateNote(ctx, req.(*CreateNoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LibraryService_GetNoteMeta_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNoteMetaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).GetNoteMeta(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_GetNoteMeta_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).GetNoteMeta(ctx, req.(*GetNoteMetaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LibraryService_UpdateNoteMeta_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateNoteMetaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).UpdateNoteMeta(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_UpdateNoteMeta_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).UpdateNoteMeta(ctx, req.(*UpdateNoteMetaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LibraryService_ArchiveBook_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(book.ArchiveBookRequest)
 	if err := dec(in); err != nil {
@@ -606,6 +708,18 @@ var LibraryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateShelfMeta",
 			Handler:    _LibraryService_UpdateShelfMeta_Handler,
+		},
+		{
+			MethodName: "CreateNote",
+			Handler:    _LibraryService_CreateNote_Handler,
+		},
+		{
+			MethodName: "GetNoteMeta",
+			Handler:    _LibraryService_GetNoteMeta_Handler,
+		},
+		{
+			MethodName: "UpdateNoteMeta",
+			Handler:    _LibraryService_UpdateNoteMeta_Handler,
 		},
 		{
 			MethodName: "ArchiveBook",

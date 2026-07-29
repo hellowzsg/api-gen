@@ -142,6 +142,9 @@ func renderServiceRPCs(sb *strings.Builder, e *ir.EntityIR, hctx httpRenderConte
 func renderMessages(sb *strings.Builder, e *ir.EntityIR) {
 	if e.Create != nil {
 		sb.WriteString(fmt.Sprintf("message %s {\n", e.Create.RequestName))
+		if e.Create.KeyField != nil {
+			sb.WriteString(fmt.Sprintf("  %s %s = %d;\n", e.Create.KeyField.Type, e.Create.KeyField.Name, e.Create.KeyField.Number))
+		}
 		for _, f := range e.Create.RequestFields {
 			sb.WriteString(fmt.Sprintf("  %s %s = %d;\n", f.Type, f.Name, f.Number))
 		}

@@ -66,6 +66,15 @@ service LibraryService {
   rpc UpdateShelfMeta(UpdateShelfMetaRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = { patch: "/library/LibraryService/shelf/{key.code}/meta" body: "*" };
   }
+  rpc CreateNote(CreateNoteRequest) returns (CreateNoteResponse) {
+    option (google.api.http) = { post: "/library/LibraryService/note/{key.id}" body: "*" };
+  }
+  rpc GetNoteMeta(GetNoteMetaRequest) returns (GetNoteMetaResponse) {
+    option (google.api.http) = { get: "/library/LibraryService/note/{key.id}/meta" };
+  }
+  rpc UpdateNoteMeta(UpdateNoteMetaRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = { patch: "/library/LibraryService/note/{key.id}/meta" body: "*" };
+  }
   rpc ArchiveBook(ArchiveBookRequest) returns (ArchiveBookResponse) {
     option (google.api.http) = { post: "/library/LibraryService/book/{book_id}:archive" body: "*" };
   }
@@ -126,5 +135,20 @@ message GetShelfMetaResponse {
 message UpdateShelfMetaRequest {
   demo.common.Shelf meta = 1;
   demo.common.ShelfId key = 2;
+}
+
+message CreateNoteRequest {
+  demo.business.book.NoteId key = 1;
+  demo.business.book.NoteMeta meta = 2;
+}
+message CreateNoteResponse { demo.business.book.NoteId key = 1; }
+
+message GetNoteMetaRequest { demo.business.book.NoteId key = 1; }
+message GetNoteMetaResponse {
+  demo.business.book.NoteMeta note_meta = 1;
+}
+message UpdateNoteMetaRequest {
+  demo.business.book.NoteMeta meta = 1;
+  demo.business.book.NoteId key = 2;
 }
 

@@ -296,10 +296,22 @@ An entity consists of a key and one or more resources. A resource represents an 
 | --- | --- | --- |
 | `name` | `string` | Entity name in `snake_case`, used as the naming stem for generated types and methods. |
 | `key.type_` | `string` | Key message type; can use a fully-qualified name. |
-| `create` | `object` | Set to `{}` to generate `Create`, whose response carries only the key. |
+| `create` | `object` | Generates `Create`. Supports a `key` sub-field to specify the key provider (see table below). |
+| `create.key` | `string` | Key provider: `server` (default, server-side generation) or `client` (client-specified). |
 | `delete` | `object` | Set to `{}` to generate a hard-delete `Delete`. |
 | `delete_soft` | `object` | Set to `{}` to generate a soft-delete `DeleteSoft`; can coexist with `delete`. |
 | `resources` | `[]object` | At least one resource is required. |
+
+#### Create Key Generation Mode
+
+`create.key` determines who provides the primary key in the Create request:
+
+| Mode | Config | Request Shape | HTTP Path | Response |
+| --- | --- | --- | --- | --- |
+| Server-generated (default) | `create: {}` or `create: { key: server }` | `{ <resources> = 1..N }` (no key) | `POST /{prefix}/{Service}/{collection}` body:`"*"` | `{ key = 1 }` |
+| Client-specified | `create: { key: client }` | `{ key = 1; <resources> = 2..N+1 }` | `POST /{prefix}/{Service}/{collection}/{key leaves...}` body:`"*"` | `{ key = 1 }` (echo) |
+
+> **Note**: Do not switch modes after release — switching changes request field numbers (key appears/disappears), which is a breaking change.
 
 #### Resource Fields
 

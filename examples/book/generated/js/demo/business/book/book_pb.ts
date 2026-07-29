@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file demo/business/book/book.proto.
  */
 export const file_demo_business_book_book: GenFile = /*@__PURE__*/
-  fileDesc("Ch1kZW1vL2J1c2luZXNzL2Jvb2svYm9vay5wcm90bxISZGVtby5idXNpbmVzcy5ib29rIhQKBkJvb2tJZBIKCgJpZBgBIAEoCSJkCghCb29rTWV0YRINCgV0aXRsZRgBIAEoCRIOCgZhdXRob3IYAiABKAkSDAoEaXNibhgDIAEoCRIrCgtjcmVhdGVfdGltZRgEIAEoCzIWLmRlbW8uY29tbW9uLlRpbWVzdGFtcCIwCgtCb29rQ29udGVudBIMCgR0ZXh0GAEgASgJEhMKC2NvdmVyX2ltYWdlGAIgASgMIiUKEkFyY2hpdmVCb29rUmVxdWVzdBIPCgdib29rX2lkGAEgASgJIicKE0FyY2hpdmVCb29rUmVzcG9uc2USEAoIYXJjaGl2ZWQYASABKAgiYQoOQm9va01ldGFGaWx0ZXISDgoGYXV0aG9yGAEgASgJEg0KBXRpdGxlGAIgASgJEhEKCXllYXJfZnJvbRgDIAEoDRIPCgd5ZWFyX3RvGAQgASgNEgwKBHRhZ3MYBSADKAlCQFo+Z2l0aHViLmNvbS9hY21lL2RlbW8tYm9vay9nZW5lcmF0ZWQvZ28vZGVtby9idXNpbmVzcy9ib29rO2Jvb2tiBnByb3RvMw", [file_demo_common_types]);
+  fileDesc("Ch1kZW1vL2J1c2luZXNzL2Jvb2svYm9vay5wcm90bxISZGVtby5idXNpbmVzcy5ib29rIhQKBkJvb2tJZBIKCgJpZBgBIAEoCSJkCghCb29rTWV0YRINCgV0aXRsZRgBIAEoCRIOCgZhdXRob3IYAiABKAkSDAoEaXNibhgDIAEoCRIrCgtjcmVhdGVfdGltZRgEIAEoCzIWLmRlbW8uY29tbW9uLlRpbWVzdGFtcCIwCgtCb29rQ29udGVudBIMCgR0ZXh0GAEgASgJEhMKC2NvdmVyX2ltYWdlGAIgASgMIiUKEkFyY2hpdmVCb29rUmVxdWVzdBIPCgdib29rX2lkGAEgASgJIicKE0FyY2hpdmVCb29rUmVzcG9uc2USEAoIYXJjaGl2ZWQYASABKAgiYQoOQm9va01ldGFGaWx0ZXISDgoGYXV0aG9yGAEgASgJEg0KBXRpdGxlGAIgASgJEhEKCXllYXJfZnJvbRgDIAEoDRIPCgd5ZWFyX3RvGAQgASgNEgwKBHRhZ3MYBSADKAkiFAoGTm90ZUlkEgoKAmlkGAEgASgJIicKCE5vdGVNZXRhEg0KBXRpdGxlGAEgASgJEgwKBGJvZHkYAiABKAlCQFo+Z2l0aHViLmNvbS9hY21lL2RlbW8tYm9vay9nZW5lcmF0ZWQvZ28vZGVtby9idXNpbmVzcy9ib29rO2Jvb2tiBnByb3RvMw", [file_demo_common_types]);
 
 /**
  * @generated from message demo.business.book.BookId
@@ -155,4 +155,43 @@ export type BookMetaFilter = Message<"demo.business.book.BookMetaFilter"> & {
  */
 export const BookMetaFilterSchema: GenMessage<BookMetaFilter> = /*@__PURE__*/
   messageDesc(file_demo_business_book_book, 5);
+
+/**
+ * @generated from message demo.business.book.NoteId
+ */
+export type NoteId = Message<"demo.business.book.NoteId"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message demo.business.book.NoteId.
+ * Use `create(NoteIdSchema)` to create a new message.
+ */
+export const NoteIdSchema: GenMessage<NoteId> = /*@__PURE__*/
+  messageDesc(file_demo_business_book_book, 6);
+
+/**
+ * @generated from message demo.business.book.NoteMeta
+ */
+export type NoteMeta = Message<"demo.business.book.NoteMeta"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string body = 2;
+   */
+  body: string;
+};
+
+/**
+ * Describes the message demo.business.book.NoteMeta.
+ * Use `create(NoteMetaSchema)` to create a new message.
+ */
+export const NoteMetaSchema: GenMessage<NoteMeta> = /*@__PURE__*/
+  messageDesc(file_demo_business_book_book, 7);
 

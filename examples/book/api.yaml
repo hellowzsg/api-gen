@@ -68,11 +68,29 @@ entities:
         writer:
           update: {}
 
+  # Entity 3: note — uses create: { key: client } (client-specified key).
+  # Demonstrates the client-key Create mode: the key is carried in the
+  # request (field 1) and HTTP path, resources in the body.
+  - name: note
+    key:
+      type_: NoteId
+
+    create: { key: client }
+
+    resources:
+      - name: meta
+        type_: NoteMeta
+        version: { kind: NONE }
+        reader: {}
+        writer:
+          update: {}
+
 services:
   - name: LibraryService
     entities:
       - name: book
       - name: shelf
+      - name: note
     # P2: custom_method HTTP 路由（AIP-136 冒号语法）
     custom_methods:
       - name: ArchiveBook

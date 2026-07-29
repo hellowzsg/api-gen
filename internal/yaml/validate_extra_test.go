@@ -351,3 +351,56 @@ func TestValidateServiceNarrowing_ValidMetaNarrowing(t *testing.T) {
 		t.Errorf("should pass for valid narrowing: %v", err)
 	}
 }
+
+// TestValidateCreateKey: create.key must be "server", "client", or "" (default server).
+// Invalid values like "clinet" (typo) should fail-fast with entity name and valid values.
+func TestValidateCreateKey(t *testing.T) {
+	tests := []struct {
+		name      string
+		key       string
+		wantError bool
+		errSubstr string
+	}{
+		{"empty defaults to server", "", false, ""},
+		{"server explicit", "server", false, ""},
+		{"client", "client", false, ""},
+		{"typo clinet", "clinet", true, "create.key"},
+		{"invalid random", "auto", true, "create.key"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{
+				Syntax: "v1",
+				Name:   "foo",
+				Entities: []Entity{{
+					Name:    "message",
+					Key:     KeyDef{Type: "MessageId"},
+					Create:  &CreateDef{Key: tt.key},
+					Resources: []Resource{
+						{Name: "meta", Type: "MessageMeta", Version: VersionDef{Kind: "NONE"}},
+					},
+				}},
+			}
+			err := cfg.ValidateReferences()
+			if tt.wantError {
+				if err == nil {
+					t.Fatalf("ValidateReferences should fail for create.key=%q, got nil", tt.key)
+				}
+				if !strings.Contains(err.Error(), tt.errSubstr) {
+					t.Errorf("error %q should contain %q", err.Error(), tt.errSubstr)
+				}
+				// Error message should mention entity name and valid values.
+				if !strings.Contains(err.Error(), "message") {
+					t.Errorf("error %q should contain entity name 'message'", err.Error())
+				}
+				if !strings.Contains(err.Error(), "server") || !strings.Contains(err.Error(), "client") {
+					t.Errorf("error %q should mention valid values server/client", err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("ValidateReferences should pass for create.key=%q, got %v", tt.key, err)
+				}
+			}
+		})
+	}
+}

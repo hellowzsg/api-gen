@@ -75,10 +75,18 @@ type HTTPOverride struct {
 type Entity struct {
 	Name       string     `yaml:"name"`
 	Key        KeyDef     `yaml:"key"`
-	Create     *struct{}  `yaml:"create,omitempty"`
+	Create     *CreateDef `yaml:"create,omitempty"`
 	Delete     *struct{}  `yaml:"delete,omitempty"`
 	DeleteSoft *struct{}  `yaml:"delete_soft,omitempty"`
 	Resources  []Resource `yaml:"resources"`
+}
+
+// CreateDef declares entity-level Create configuration.
+// Key specifies who generates the primary key: "server" (default, server-side
+// generation) or "client" (client-specified key in the request).
+// Empty string is equivalent to "server" (backward compatible with create: {}).
+type CreateDef struct {
+	Key string `yaml:"key,omitempty"`
 }
 
 // KeyDef declares the primary key type.

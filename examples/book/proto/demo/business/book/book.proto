@@ -44,3 +44,15 @@ message BookMetaFilter {
   uint32 year_to = 4;
   repeated string tags = 5;
 }
+
+// NoteId 是 Note 实体的主键类型。
+// Note 使用 client-key 模式（create: { key: client }），主键由客户端指定。
+message NoteId {
+  string id = 1;
+}
+
+// NoteMeta 是 Note 的元数据面资源。
+message NoteMeta {
+  string title = 1;
+  string body = 2;
+}

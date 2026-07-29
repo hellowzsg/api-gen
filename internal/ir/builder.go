@@ -68,6 +68,10 @@ type CreateIR struct {
 	RPCName          string
 	RequestName      string
 	ResponseName     string
+	// KeyField is non-nil when create.key = "client": the request carries
+	// the client-specified key at field 1, and resource fields are numbered
+	// 2..N+1. When nil (server mode), resource fields start at 1.
+	KeyField         *FieldIR
 	RequestFields    []FieldIR
 	ResponseKeyField FieldIR
 	HTTPAnnotation   *HTTPAnnotation
@@ -350,8 +354,8 @@ func buildEntity(e *apigenyaml.Entity, cfg *apigenyaml.Config, opts BuildOptions
 		httpCtx.bodyStyle = cfg.Settings.HTTP.BodyStyle
 	}
 	if e.Create != nil {
-		entity.Create = buildCreate(pascalName, e.Resources, entity.KeyType, cfg)
-		ann, err := httpCtx.buildCreateAnnotationWithResources(len(e.Resources))
+		entity.Create = buildCreate(pascalName, e.Resources, entity.KeyType, e.Create, cfg)
+		ann, err := httpCtx.buildCreateAnnotationWithResources(len(e.Resources), e.Create)
 		if err != nil {
 			return nil, err
 		}
@@ -411,18 +415,24 @@ type httpBuildContext struct {
 // buildCreateAnnotationWithResources builds the Create HTTP annotation,
 // returning an error when body_style: resource is set but the entity has
 // multiple resources (ambiguous which resource field to bind as body).
-func (h *httpBuildContext) buildCreateAnnotationWithResources(resourceCount int) (*HTTPAnnotation, error) {
+// In client-key mode, KeyLeaves are populated so the path includes key
+// segments (e.g. /svc/book/{key.id}).
+func (h *httpBuildContext) buildCreateAnnotationWithResources(resourceCount int, createDef *apigenyaml.CreateDef) (*HTTPAnnotation, error) {
 	if !h.enabled {
 		return nil, nil
 	}
 	if h.bodyStyle == "resource" && resourceCount > 1 {
 		return nil, fmt.Errorf("body_style: resource is ambiguous for Create with %d resources; use body_style: wrapper (default) for multi-resource Create", resourceCount)
 	}
-	return &HTTPAnnotation{
+	ann := &HTTPAnnotation{
 		Verb:   "POST",
 		Body:   "*",
 		Entity: h.entity,
-	}, nil
+	}
+	if createDef != nil && createDef.Key == "client" {
+		ann.KeyLeaves = h.keyLeaves
+	}
+	return ann, nil
 }
 
 func (h *httpBuildContext) buildDeleteAnnotation() *HTTPAnnotation {
@@ -559,17 +569,23 @@ func (h *httpBuildContext) bodyForStyle(bodyStyle, resourceName string) string {
 	return "*"
 }
 
-func buildCreate(entityName string, resources []apigenyaml.Resource, keyType string, cfg *apigenyaml.Config) *CreateIR {
+func buildCreate(entityName string, resources []apigenyaml.Resource, keyType string, createDef *apigenyaml.CreateDef, cfg *apigenyaml.Config) *CreateIR {
 	c := &CreateIR{
 		RPCName:      "Create" + entityName,
 		RequestName:  "Create" + entityName + "Request",
 		ResponseName: "Create" + entityName + "Response",
 	}
+	isClient := createDef != nil && createDef.Key == "client"
+	startNum := 1
+	if isClient {
+		c.KeyField = &FieldIR{Name: "key", Type: keyType, Number: 1}
+		startNum = 2
+	}
 	for i, r := range resources {
 		c.RequestFields = append(c.RequestFields, FieldIR{
 			Name:   r.Name,
 			Type:   cfg.ResolveTypeName(r.Type),
-			Number: i + 1,
+			Number: i + startNum,
 		})
 	}
 	c.ResponseKeyField = FieldIR{Name: "key", Type: keyType, Number: 1}

@@ -23,6 +23,26 @@ func (c *Config) ValidateReferences() error {
 	if err := c.validatePlugins(); err != nil {
 		return err
 	}
+	if err := c.validateCreateKey(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// validateCreateKey validates that create.key is one of "server", "client",
+// or "" (default, equivalent to "server"). Invalid values fail-fast with
+// the entity name and valid options.
+func (c *Config) validateCreateKey() error {
+	for i, e := range c.Entities {
+		if e.Create == nil {
+			continue
+		}
+		k := e.Create.Key
+		if k == "" || k == "server" || k == "client" {
+			continue
+		}
+		return fmt.Errorf("entities[%d].create.key: invalid value %q for entity %q (only \"server\" or \"client\" is supported)", i, k, e.Name)
+	}
 	return nil
 }
 

@@ -305,10 +305,22 @@ key: { type_: demo.common.ShelfId }
 | --- | --- | --- |
 | `name` | `string` | 实体名，使用 `snake_case`，作为生成类型和方法的命名词干。 |
 | `key.type_` | `string` | 主键 message 类型；可使用全限定名。 |
-| `create` | `object` | 设为 `{}` 时生成 `Create`，响应仅携带 key。 |
+| `create` | `object` | 生成 `Create`。支持 `key` 子字段指定主键生成方（见下表）。 |
+| `create.key` | `string` | 主键生成方：`server`（默认，服务端生成）或 `client`（客户端指定）。 |
 | `delete` | `object` | 设为 `{}` 时生成硬删除 `Delete`。 |
 | `delete_soft` | `object` | 设为 `{}` 时生成软删除 `DeleteSoft`；可与 `delete` 并存。 |
 | `resources` | `[]object` | 至少声明一个资源。 |
+
+#### Create 主键生成模式
+
+`create.key` 决定 Create 请求的主键由谁提供：
+
+| 模式 | 配置 | 请求形态 | HTTP 路径 | 响应 |
+| --- | --- | --- | --- | --- |
+| 服务端生成（默认） | `create: {}` 或 `create: { key: server }` | `{ <资源> = 1..N }`（不含 key） | `POST /{prefix}/{Service}/{collection}` body:`"*"` | `{ key = 1 }` |
+| 客户端指定 | `create: { key: client }` | `{ key = 1; <资源> = 2..N+1 }` | `POST /{prefix}/{Service}/{collection}/{key叶子段...}` body:`"*"` | `{ key = 1 }`（回显） |
+
+> **注意**：模式一经发布不要切换——切换会导致请求字段号变化（key 出现/消失），属于 breaking change。
 
 #### 资源字段
 

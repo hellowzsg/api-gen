@@ -3,6 +3,8 @@ package ir
 import (
 	"testing"
 
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	apigenyaml "github.com/hellowzsg/api-gen/internal/yaml"
 )
 
@@ -16,7 +18,7 @@ func TestBuildMultiEntity(t *testing.T) {
 			{
 				Name: "book",
 				Key:  apigenyaml.KeyDef{Type: "BookId"},
-				Create: &struct{}{},
+				Create: &apigenyaml.CreateDef{},
 				Delete: &struct{}{},
 				Resources: []apigenyaml.Resource{{
 					Name:    "meta",
@@ -455,7 +457,7 @@ func TestBuildCreateFieldNumbers(t *testing.T) {
 		Entities: []apigenyaml.Entity{{
 			Name:   "book",
 			Key:    apigenyaml.KeyDef{Type: "BookId"},
-			Create: &struct{}{},
+			Create: &apigenyaml.CreateDef{},
 			Resources: []apigenyaml.Resource{
 				{Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"}},
 				{Name: "content", Type: "BookContent", Version: apigenyaml.VersionDef{Kind: "NONE"}},
@@ -542,5 +544,149 @@ func TestBuildListRequestFields(t *testing.T) {
 	}
 	if l.NextPageToken.Name != "next_page_token" || l.NextPageToken.Number != 2 {
 		t.Errorf("NextPageToken = {%s, %d}, want {next_page_token, 2}", l.NextPageToken.Name, l.NextPageToken.Number)
+	}
+}
+
+// TestBuildCreateClientKey: client mode → key=1 prefixed, resources 2..N+1.
+func TestBuildCreateClientKey(t *testing.T) {
+	cfg := &apigenyaml.Config{
+		Syntax: "v1", Name: "test",
+		Entities: []apigenyaml.Entity{{
+			Name:   "message",
+			Key:    apigenyaml.KeyDef{Type: "MessageId"},
+			Create: &apigenyaml.CreateDef{Key: "client"},
+			Resources: []apigenyaml.Resource{
+				{Name: "meta", Type: "MessageMeta", Version: apigenyaml.VersionDef{Kind: "NONE"}},
+				{Name: "content", Type: "MessageContent", Version: apigenyaml.VersionDef{Kind: "NONE"}},
+			},
+		}},
+	}
+	ir, err := Build(cfg)
+	if err != nil {
+		t.Fatalf("Build failed: %v", err)
+	}
+	c := ir.Entities[0].Create
+	// key field should be prefixed at field 1.
+	if c.KeyField == nil {
+		t.Fatal("KeyField is nil, want non-nil for client mode")
+	}
+	if c.KeyField.Name != "key" || c.KeyField.Number != 1 || c.KeyField.Type != "test.MessageId" {
+		t.Errorf("KeyField = {%s, %s, %d}, want {key, test.MessageId, 1}", c.KeyField.Name, c.KeyField.Type, c.KeyField.Number)
+	}
+	// Resources should be numbered 2..N+1.
+	if len(c.RequestFields) != 2 {
+		t.Fatalf("RequestFields = %d, want 2", len(c.RequestFields))
+	}
+	if c.RequestFields[0].Name != "meta" || c.RequestFields[0].Number != 2 {
+		t.Errorf("RequestFields[0] = {%s, %d}, want {meta, 2}", c.RequestFields[0].Name, c.RequestFields[0].Number)
+	}
+	if c.RequestFields[1].Name != "content" || c.RequestFields[1].Number != 3 {
+		t.Errorf("RequestFields[1] = {%s, %d}, want {content, 3}", c.RequestFields[1].Name, c.RequestFields[1].Number)
+	}
+}
+
+// TestBuildCreateServerKey: server mode (default) → no key field, resources 1..N.
+func TestBuildCreateServerKey(t *testing.T) {
+	cfg := &apigenyaml.Config{
+		Syntax: "v1", Name: "test",
+		Entities: []apigenyaml.Entity{{
+			Name:   "book",
+			Key:    apigenyaml.KeyDef{Type: "BookId"},
+			Create: &apigenyaml.CreateDef{},
+			Resources: []apigenyaml.Resource{
+				{Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"}},
+			},
+		}},
+	}
+	ir, err := Build(cfg)
+	if err != nil {
+		t.Fatalf("Build failed: %v", err)
+	}
+	c := ir.Entities[0].Create
+	if c.KeyField != nil {
+		t.Errorf("KeyField = %+v, want nil for server mode", c.KeyField)
+	}
+	if len(c.RequestFields) != 1 || c.RequestFields[0].Number != 1 {
+		t.Errorf("RequestFields = %+v, want [{meta, 1}]", c.RequestFields)
+	}
+}
+
+// TestBuildCreateClientKeyHTTPAnnotation: client mode + HTTP enabled →
+// Create HTTP annotation carries KeyLeaves (path has key segments).
+func TestBuildCreateClientKeyHTTPAnnotation(t *testing.T) {
+	keyDesc := buildTestKeyDesc(t) // BookId{string id=1;} → 1 leaf "id"
+	cfg := &apigenyaml.Config{
+		Syntax: "v1",
+		Name:   "test",
+		Settings: apigenyaml.Settings{
+			HTTP: &apigenyaml.HTTPConfig{Enable: true, Prefix: "/api"},
+		},
+		Entities: []apigenyaml.Entity{{
+			Name:   "book",
+			Key:    apigenyaml.KeyDef{Type: "BookId"},
+			Create: &apigenyaml.CreateDef{Key: "client"},
+			Resources: []apigenyaml.Resource{
+				{Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"}},
+			},
+		}},
+	}
+	keyDescs := map[string]protoreflect.MessageDescriptor{
+		"test.BookId": keyDesc,
+	}
+	irData, err := BuildWithOptions(cfg, BuildOptions{KeyDescriptors: keyDescs})
+	if err != nil {
+		t.Fatalf("BuildWithOptions failed: %v", err)
+	}
+	c := irData.Entities[0].Create
+	if c.HTTPAnnotation == nil {
+		t.Fatal("HTTPAnnotation is nil")
+	}
+	if len(c.HTTPAnnotation.KeyLeaves) != 1 {
+		t.Fatalf("KeyLeaves = %d, want 1", len(c.HTTPAnnotation.KeyLeaves))
+	}
+	if c.HTTPAnnotation.KeyLeaves[0].DotPath != "id" {
+		t.Errorf("KeyLeaves[0].DotPath = %q, want id", c.HTTPAnnotation.KeyLeaves[0].DotPath)
+	}
+	// ResolvePath should include {key.id} segment.
+	if got := c.HTTPAnnotation.ResolvePath("/api", "Svc"); got != "/api/Svc/book/{key.id}" {
+		t.Errorf("ResolvePath = %q, want /api/Svc/book/{key.id}", got)
+	}
+}
+
+// TestBuildCreateServerKeyHTTPAnnotation: server mode + HTTP enabled →
+// Create HTTP annotation has no KeyLeaves (path has no key segments).
+func TestBuildCreateServerKeyHTTPAnnotation(t *testing.T) {
+	keyDesc := buildTestKeyDesc(t)
+	cfg := &apigenyaml.Config{
+		Syntax: "v1",
+		Name:   "test",
+		Settings: apigenyaml.Settings{
+			HTTP: &apigenyaml.HTTPConfig{Enable: true, Prefix: "/api"},
+		},
+		Entities: []apigenyaml.Entity{{
+			Name:   "book",
+			Key:    apigenyaml.KeyDef{Type: "BookId"},
+			Create: &apigenyaml.CreateDef{Key: "server"},
+			Resources: []apigenyaml.Resource{
+				{Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"}},
+			},
+		}},
+	}
+	keyDescs := map[string]protoreflect.MessageDescriptor{
+		"test.BookId": keyDesc,
+	}
+	irData, err := BuildWithOptions(cfg, BuildOptions{KeyDescriptors: keyDescs})
+	if err != nil {
+		t.Fatalf("BuildWithOptions failed: %v", err)
+	}
+	c := irData.Entities[0].Create
+	if c.HTTPAnnotation == nil {
+		t.Fatal("HTTPAnnotation is nil")
+	}
+	if len(c.HTTPAnnotation.KeyLeaves) != 0 {
+		t.Errorf("KeyLeaves = %d, want 0 for server mode", len(c.HTTPAnnotation.KeyLeaves))
+	}
+	if got := c.HTTPAnnotation.ResolvePath("/api", "Svc"); got != "/api/Svc/book" {
+		t.Errorf("ResolvePath = %q, want /api/Svc/book", got)
 	}
 }

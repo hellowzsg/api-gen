@@ -40,6 +40,8 @@ type mockLibraryServer struct {
 	lastDeleteShelf  *libpb.DeleteShelfRequest
 	lastGetShelf     *libpb.GetShelfMetaRequest
 	lastUpdateShelf  *libpb.UpdateShelfMetaRequest
+
+	lastCreateNote   *libpb.CreateNoteRequest
 }
 
 func (m *mockLibraryServer) CreateBook(_ context.Context, req *libpb.CreateBookRequest) (*libpb.CreateBookResponse, error) {
@@ -112,6 +114,13 @@ func (m *mockLibraryServer) GetShelfMeta(_ context.Context, req *libpb.GetShelfM
 func (m *mockLibraryServer) UpdateShelfMeta(_ context.Context, req *libpb.UpdateShelfMetaRequest) (*emptypb.Empty, error) {
 	m.lastUpdateShelf = req
 	return &emptypb.Empty{}, nil
+}
+
+// Note entity RPC (client-key Create)
+func (m *mockLibraryServer) CreateNote(_ context.Context, req *libpb.CreateNoteRequest) (*libpb.CreateNoteResponse, error) {
+	m.lastCreateNote = req
+	// Echo back the client-specified key.
+	return &libpb.CreateNoteResponse{Key: req.GetKey()}, nil
 }
 
 // ---- Mock AdminServiceServer ----
@@ -549,3 +558,40 @@ func TestE2EHTTPPerMethodOverride(t *testing.T) {
 // 防 import 误删
 var _ = fieldmaskpb.FieldMask{}
 var _ = strings.Builder{}
+
+// ---- client-key Create e2e test ----
+// TestE2EHTTP_CreateClientKey: verify that an entity with create: { key: client }
+// generates a Create RPC where the key is carried in the HTTP path and resources
+// in the body. The server receives the key (from path) and resources (from body).
+func TestE2EHTTP_CreateClientKey(t *testing.T) {
+	srv := &mockLibraryServer{}
+	mux := newGatewayMux(t, srv, nil)
+	ts := httptest.NewServer(mux)
+	defer ts.Close()
+
+	t.Run("CreateNote POST /{key.id} body=* (client key)", func(t *testing.T) {
+		// note entity uses create: { key: client }, so the path carries {key.id}
+		// and the body carries the resource (meta).
+		resp := doReq(t, ts, "POST", "/library/LibraryService/note/note-001", map[string]any{
+			"meta": map[string]any{"title": "My Note"},
+		})
+		if resp.StatusCode != http.StatusOK {
+			b, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			t.Fatalf("status=%d body=%s", resp.StatusCode, string(b))
+		}
+		// Verify server received key from path injection.
+		if got := srv.lastCreateNote.GetKey().GetId(); got != "note-001" {
+			t.Errorf("key.id got=%q want=note-001", got)
+		}
+		// Verify server received resource from body.
+		if got := srv.lastCreateNote.GetMeta().GetTitle(); got != "My Note" {
+			t.Errorf("meta.title got=%q want=My Note", got)
+		}
+		// Response echoes key.
+		body := mustReadJSON(t, resp)
+		if got, _ := body["key"].(map[string]any); got["id"] != "note-001" {
+			t.Errorf("response key.id=%v want=note-001", body)
+		}
+	})
+}

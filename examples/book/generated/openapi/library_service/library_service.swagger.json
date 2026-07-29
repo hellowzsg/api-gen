@@ -347,6 +347,111 @@
         ]
       }
     },
+    "/library/LibraryService/note/{key.id}": {
+      "post": {
+        "operationId": "LibraryService_CreateNote",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/library_serviceCreateNoteResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LibraryServiceCreateNoteBody"
+            }
+          }
+        ],
+        "tags": [
+          "LibraryService"
+        ]
+      }
+    },
+    "/library/LibraryService/note/{key.id}/meta": {
+      "get": {
+        "operationId": "LibraryService_GetNoteMeta",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/library_serviceGetNoteMetaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "LibraryService"
+        ]
+      },
+      "patch": {
+        "operationId": "LibraryService_UpdateNoteMeta",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LibraryServiceUpdateNoteMetaBody"
+            }
+          }
+        ],
+        "tags": [
+          "LibraryService"
+        ]
+      }
+    },
     "/library/LibraryService/shelf": {
       "post": {
         "operationId": "LibraryService_CreateShelf",
@@ -482,6 +587,17 @@
     "LibraryServiceArchiveBookBody": {
       "type": "object"
     },
+    "LibraryServiceCreateNoteBody": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "object"
+        },
+        "meta": {
+          "$ref": "#/definitions/bookNoteMeta"
+        }
+      }
+    },
     "LibraryServiceUpdateBookContentBody": {
       "type": "object",
       "properties": {
@@ -508,6 +624,17 @@
         "version": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "LibraryServiceUpdateNoteMetaBody": {
+      "type": "object",
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/bookNoteMeta"
+        },
+        "key": {
+          "type": "object"
         }
       }
     },
@@ -592,6 +719,25 @@
         }
       }
     },
+    "bookNoteId": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "bookNoteMeta": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        }
+      }
+    },
     "commonShelf": {
       "type": "object",
       "properties": {
@@ -668,6 +814,14 @@
         }
       }
     },
+    "library_serviceCreateNoteResponse": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "$ref": "#/definitions/bookNoteId"
+        }
+      }
+    },
     "library_serviceCreateShelfRequest": {
       "type": "object",
       "properties": {
@@ -709,6 +863,14 @@
         "version": {
           "type": "string",
           "format": "uint64"
+        }
+      }
+    },
+    "library_serviceGetNoteMetaResponse": {
+      "type": "object",
+      "properties": {
+        "note_meta": {
+          "$ref": "#/definitions/bookNoteMeta"
         }
       }
     },
