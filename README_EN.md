@@ -354,6 +354,7 @@ A service can expose an entity's full capabilities, or narrow them to a subset o
 | `custom_methods[].name` | `string` | Custom RPC name in `PascalCase`. |
 | `custom_methods[].request` | `string` | Request message type. |
 | `custom_methods[].response` | `string` | Response message type. |
+| `custom_methods[].stream` | `string` | Streaming mode: `""` (unary, default) / `server` / `client` / `bidi` (abbreviation for bidirectional). See streaming section below. |
 | `custom_methods[].http` | `object` | When HTTP is enabled, set `verb`, `path`, and `body`; paths support AIP-136 colon syntax. |
 
 ```yaml
@@ -376,6 +377,32 @@ services:
           verb: post
           path: /library/books/{book_id}:archive
           body: "*"
+```
+
+### Streaming Custom Methods
+
+`custom_methods[].stream` supports three gRPC streaming modes:
+
+| Value | Generated Syntax | HTTP Compatible |
+| --- | --- | --- |
+| `""` (default) | `rpc X(Req) returns (Resp)` | Yes |
+| `server` | `rpc X(Req) returns (stream Resp)` | Yes (grpc-gateway converts to chunked response) |
+| `client` | `rpc X(stream Req) returns (Resp)` | No (compile-time error) |
+| `bidi` | `rpc X(stream Req) returns (stream Resp)` | No (compile-time error) |
+
+`bidi` is the standard gRPC abbreviation for `bidirectional`. When `http.enable=true` and `stream` is `client` or `bidi`, the `validate` stage fails fast (grpc-gateway does not support these streaming modes). The `stream` field is immutable after release (unary ↔ streaming is a breaking change).
+
+```yaml
+custom_methods:
+  # server-streaming: HTTP can coexist
+  - name: StreamBookMetas
+    request: StreamBookMetasRequest
+    response: StreamBookMetasResponse
+    stream: server
+    http:
+      verb: post
+      path: /library/LibraryService/book:streamMetas
+      body: "*"
 ```
 
 ## Project Structure

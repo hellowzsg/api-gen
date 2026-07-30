@@ -78,6 +78,9 @@ service LibraryService {
   rpc ArchiveBook(ArchiveBookRequest) returns (ArchiveBookResponse) {
     option (google.api.http) = { post: "/library/LibraryService/book/{book_id}:archive" body: "*" };
   }
+  rpc StreamBookMetas(StreamBookMetasRequest) returns (stream StreamBookMetasResponse) {
+    option (google.api.http) = { post: "/library/LibraryService/book:streamMetas" body: "*" };
+  }
 }
 
 message CreateBookRequest {

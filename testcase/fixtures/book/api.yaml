@@ -63,6 +63,15 @@ services:
           verb: post
           path: /library/LibraryService/book/{book_id}:archive
           body: "*"
+      # server-streaming custom_method（HTTP 可并存）
+      - name: StreamBookMetas
+        request: StreamBookMetasRequest
+        response: StreamBookMetasResponse
+        stream: server
+        http:
+          verb: post
+          path: /library/LibraryService/book:streamMetas
+          body: "*"
 
   - name: AdminService
     entities:

@@ -112,6 +112,8 @@ type mockLibraryServer struct {
 	lastGetContent  *libpb.GetBookContentRequest
 	lastUpdateCont  *libpb.UpdateBookContentRequest
 	lastArchiveReq  *bookpb.ArchiveBookRequest
+
+	lastStreamMetasReq *bookpb.StreamBookMetasRequest
 }
 
 func (m *mockLibraryServer) CreateBook(_ context.Context, req *libpb.CreateBookRequest) (*libpb.CreateBookResponse, error) {
@@ -164,6 +166,22 @@ func (m *mockLibraryServer) UpdateBookContent(_ context.Context, req *libpb.Upda
 func (m *mockLibraryServer) ArchiveBook(_ context.Context, req *bookpb.ArchiveBookRequest) (*bookpb.ArchiveBookResponse, error) {
 	m.lastArchiveReq = req
 	return &bookpb.ArchiveBookResponse{Archived: true}, nil
+}
+
+// StreamBookMetas implements the server-streaming custom method.
+// It sends two BookMeta items back to the client.
+func (m *mockLibraryServer) StreamBookMetas(req *bookpb.StreamBookMetasRequest, stream libpb.LibraryService_StreamBookMetasServer) error {
+	m.lastStreamMetasReq = req
+	metas := []*bookpb.BookMeta{
+		{Title: "stream-1", Author: req.GetAuthor()},
+		{Title: "stream-2", Author: req.GetAuthor()},
+	}
+	for _, meta := range metas {
+		if err := stream.Send(&bookpb.StreamBookMetasResponse{Meta: meta}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // ---- Mock AdminServiceServer ----

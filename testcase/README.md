@@ -70,8 +70,8 @@ go test ./negative/... -v -count=1
 ## 测试覆盖
 
 ### 正向测试（positive/）
-- **generate 产物验证**：检查生成的 proto 文件结构（service、RPC、message 字段、AdminService 收窄）
-- **gRPC 全方法**：LibraryService 10 个 RPC + AdminService 6 个收窄方法 + shelf 跨 package 类型引用
+- **generate 产物验证**：检查生成的 proto 文件结构（service、RPC、message 字段、AdminService 收窄、server-streaming `stream` 关键字）
+- **gRPC 全方法**：LibraryService 11 个 RPC（含 server-streaming `StreamBookMetas`）+ AdminService 6 个收窄方法 + shelf 跨 package 类型引用
 - **HTTP gateway 全路由**：所有 HTTP 端点（POST/GET/PATCH/DELETE + custom method 冒号语法 + shelf 路由）
 - **OpenAPI spec**：swagger.json 有效性、路径完整性、HTTP verb 正确性
 - **simple fixture P0**：验证无 HTTP 注解、无 annotations import、仅 gRPC service
@@ -98,6 +98,7 @@ go test ./negative/... -v -count=1
 - **option**（I1-I7）：非法 target、缺失 path、空名、空格、非法字符
 - **CLI 类型引用**（J1-J2）：key/resource 类型不在 proto 中
 - **依赖解析**（K1-K3）：glob 无匹配、protocompile 失败、api.lock 损坏
+- **流式接口**：非法 stream 取值、client/bidi + HTTP 不兼容
 - **HTTP 运行时**：404 未注册路由、错误 method、无效 JSON body
 - **gRPC 运行时**：Unimplemented、nil 请求、cancelled context
 

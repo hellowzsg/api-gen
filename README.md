@@ -363,6 +363,7 @@ key: { type_: demo.common.ShelfId }
 | `custom_methods[].name` | `string` | 自定义 RPC 名，使用 `PascalCase`。 |
 | `custom_methods[].request` | `string` | Request message 类型。 |
 | `custom_methods[].response` | `string` | Response message 类型。 |
+| `custom_methods[].stream` | `string` | 流式模式：`""`（unary，默认）/ `server` / `client` / `bidi`（bidirectional 缩写）。详见下方流式接口说明。 |
 | `custom_methods[].http` | `object` | 启用 HTTP 后可设置 `verb`、`path`、`body`；路径支持 AIP-136 冒号语法。 |
 
 ```yaml
@@ -385,6 +386,32 @@ services:
           verb: post
           path: /library/books/{book_id}:archive
           body: "*"
+```
+
+### 流式自定义接口
+
+`custom_methods[].stream` 支持三种 gRPC 流式模式：
+
+| 取值 | 生成语法 | HTTP 兼容 |
+| --- | --- | --- |
+| `""`（默认） | `rpc X(Req) returns (Resp)` | 是 |
+| `server` | `rpc X(Req) returns (stream Resp)` | 是（grpc-gateway 转 chunked 响应） |
+| `client` | `rpc X(stream Req) returns (Resp)` | 否（编译期报错） |
+| `bidi` | `rpc X(stream Req) returns (stream Resp)` | 否（编译期报错） |
+
+`bidi` 是 `bidirectional` 的标准 gRPC 缩写。当 `http.enable=true` 且 `stream` 为 `client` 或 `bidi` 时，`validate` 阶段会 fail-fast 报错（grpc-gateway 不支持这两种流式）。`stream` 字段一经发布不可切换（unary ↔ streaming 属于 breaking change）。
+
+```yaml
+custom_methods:
+  # server-streaming：HTTP 可并存
+  - name: StreamBookMetas
+    request: StreamBookMetasRequest
+    response: StreamBookMetasResponse
+    stream: server
+    http:
+      verb: post
+      path: /library/LibraryService/book:streamMetas
+      body: "*"
 ```
 
 ## 项目结构

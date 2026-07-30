@@ -203,7 +203,77 @@ apigen entity list -f api.yaml -v       # 含 verbose 依赖日志
 
 ---
 
-## 场景 8：源码级开发
+## 场景 8：流式自定义接口（server-streaming / client-streaming / bidi）
+
+`custom_methods[].stream` 支持三种流式模式。以下示例同时展示 server-streaming（HTTP 可并存）和 client-streaming（纯 gRPC）：
+
+```yaml
+syntax: v1
+name: demo.business.book
+
+import_protos:
+  - path: "proto/**/*.proto"
+
+settings:
+  go_repo: github.com/acme/demo-book
+  http:
+    enable: true
+    prefix: /library
+  out:
+    proto: generated/proto
+    go:  generated/go
+
+entities:
+  - name: book
+    key: { type_: BookId }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+        reader: {}
+
+services:
+  - name: LibraryService
+    entities:
+      - name: book
+    custom_methods:
+      # server-streaming: HTTP 可并存（grpc-gateway 转 chunked 响应）
+      - name: StreamBookMetas
+        request: StreamBookMetasRequest
+        response: StreamBookMetasResponse
+        stream: server
+        http:
+          verb: post
+          path: /library/LibraryService/book:streamMetas
+          body: "*"
+
+      # client-streaming: HTTP 不可启用（grpc-gateway 不支持）
+      # 当 http.enable=true 时，validate 阶段会报错
+      # 以下配置仅适用于 http.enable=false 的场景
+      - name: ImportBookMetas
+        request: BookMeta
+        response: ImportBookMetasResponse
+        stream: client
+```
+
+生成的 proto：
+
+```proto
+service LibraryService {
+  // server-streaming + HTTP annotation
+  rpc StreamBookMetas(StreamBookMetasRequest) returns (stream StreamBookMetasResponse) {
+    option (google.api.http) = { post: "/library/LibraryService/book:streamMetas" body: "*" };
+  }
+  // client-streaming（仅纯 gRPC，无 HTTP annotation）
+  rpc ImportBookMetas(stream BookMeta) returns (ImportBookMetasResponse);
+}
+```
+
+> **注意**：`bidi`（bidirectional-streaming）的用法与 `client` 类似，生成 `rpc X(stream Req) returns (stream Resp)`，同样不兼容 HTTP。`stream` 字段一经发布不可切换。
+
+---
+
+## 场景 9：源码级开发
 
 ```bash
 cd <project-root>

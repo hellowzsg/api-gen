@@ -40,13 +40,26 @@ func RenderHTTPAnnotation(ann *ir.HTTPAnnotation, prefix, svcName string) string
 }
 
 // renderRPCWithHTTP writes an RPC declaration with an optional google.api.http
-// annotation indented inside the RPC body.
-func renderRPCWithHTTP(sb *strings.Builder, rpcName, reqType, respType string, ann *ir.HTTPAnnotation, hctx httpRenderContext) {
+// annotation indented inside the RPC body. streamMode controls the `stream`
+// keyword placement: "" (unary), "server" (stream response), "client"
+// (stream request), "bidi" (stream both request and response).
+func renderRPCWithHTTP(sb *strings.Builder, rpcName, reqType, respType, streamMode string, ann *ir.HTTPAnnotation, hctx httpRenderContext) {
+	reqSide := reqType
+	respSide := respType
+	switch streamMode {
+	case "server":
+		respSide = "stream " + respType
+	case "client":
+		reqSide = "stream " + reqType
+	case "bidi":
+		reqSide = "stream " + reqType
+		respSide = "stream " + respType
+	}
 	if ann == nil {
-		sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s);\n", rpcName, reqType, respType))
+		sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s);\n", rpcName, reqSide, respSide))
 		return
 	}
-	sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s) {\n", rpcName, reqType, respType))
+	sb.WriteString(fmt.Sprintf("  rpc %s(%s) returns (%s) {\n", rpcName, reqSide, respSide))
 	sb.WriteString(fmt.Sprintf("    %s\n", RenderHTTPAnnotation(ann, hctx.prefix, hctx.svcName)))
 	sb.WriteString("  }\n")
 }

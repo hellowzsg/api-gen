@@ -450,6 +450,46 @@ func TestBuildCustomMethodNoHTTP(t *testing.T) {
 	}
 }
 
+// TestBuildCustomMethodStream: custom_methods[].stream is propagated to IR.
+func TestBuildCustomMethodStream(t *testing.T) {
+	tests := []struct {
+		name   string
+		stream string
+	}{
+		{"unary (empty)", ""},
+		{"server", "server"},
+		{"client", "client"},
+		{"bidi", "bidi"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &apigenyaml.Config{
+				Syntax: "v1", Name: "test",
+				Entities: []apigenyaml.Entity{{
+					Name: "book", Key: apigenyaml.KeyDef{Type: "BookId"},
+					Resources: []apigenyaml.Resource{{Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"}}},
+				}},
+				Services: []apigenyaml.Service{{
+					Name: "Svc",
+					Entities: []apigenyaml.ServiceEntity{{Name: "book"}},
+					CustomMethods: []apigenyaml.CustomMethod{{
+						Name: "CustomOp", Request: "CustomRequest", Response: "CustomResponse",
+						Stream: tt.stream,
+					}},
+				}},
+			}
+			irData, err := Build(cfg)
+			if err != nil {
+				t.Fatalf("Build failed: %v", err)
+			}
+			cm := irData.Services[0].CustomMethods[0]
+			if cm.Stream != tt.stream {
+				t.Errorf("CustomMethodIR.Stream = %q, want %q", cm.Stream, tt.stream)
+			}
+		})
+	}
+}
+
 // TestBuildCreateFieldNumbers: create request fields numbered from 1 per resource.
 func TestBuildCreateFieldNumbers(t *testing.T) {
 	cfg := &apigenyaml.Config{

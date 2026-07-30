@@ -135,6 +135,73 @@ func TestRenderCustomMethodHTTP(t *testing.T) {
 	}
 }
 
+// TestRenderCustomMethodStream: custom_methods[].stream renders the `stream`
+// keyword on request and/or response side.
+func TestRenderCustomMethodStream(t *testing.T) {
+	tests := []struct {
+		name        string
+		stream      string
+		httpAnn     *ir.HTTPAnnotation
+		expectedRPC string
+	}{
+		{
+			name:   "unary no HTTP",
+			stream: "",
+			expectedRPC: `  rpc CustomOp(CustomRequest) returns (CustomResponse);`,
+		},
+		{
+			name:   "server-stream no HTTP",
+			stream: "server",
+			expectedRPC: `  rpc CustomOp(CustomRequest) returns (stream CustomResponse);`,
+		},
+		{
+			name:   "server-stream with HTTP",
+			stream: "server",
+			httpAnn: &ir.HTTPAnnotation{
+				Verb: "POST", IsOverride: true, OverridePath: "/svc/book:stream", Body: "*",
+			},
+			expectedRPC: `  rpc CustomOp(CustomRequest) returns (stream CustomResponse) {
+    option (google.api.http) = { post: "/svc/book:stream" body: "*" };
+  }`,
+		},
+		{
+			name:   "client-stream no HTTP",
+			stream: "client",
+			expectedRPC: `  rpc CustomOp(stream CustomRequest) returns (CustomResponse);`,
+		},
+		{
+			name:   "bidi no HTTP",
+			stream: "bidi",
+			expectedRPC: `  rpc CustomOp(stream CustomRequest) returns (stream CustomResponse);`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			irData := &ir.IR{PackageName: "test"}
+			svc := ir.ServiceIR{
+				Name:         "Svc",
+				ProtoPackage: "test.svc",
+				GoPackage:    "svc",
+				Entities:     []ir.ServiceEntityIR{},
+				CustomMethods: []ir.CustomMethodIR{{
+					Name:           "CustomOp",
+					Request:        "CustomRequest",
+					Response:       "CustomResponse",
+					Stream:         tt.stream,
+					HTTPAnnotation: tt.httpAnn,
+				}},
+			}
+			output, err := RenderServiceProto(irData, svc)
+			if err != nil {
+				t.Fatalf("RenderServiceProto failed: %v", err)
+			}
+			if !strings.Contains(output, tt.expectedRPC) {
+				t.Errorf("output does not contain expected RPC.\nExpected:\n%s\nGot:\n%s", tt.expectedRPC, output)
+			}
+		})
+	}
+}
+
 // TestExemptionsBodyStyle: body_style:resource suppresses core::0133::http-body
 // exemption for Create; body_style:wrapper emits it.
 func TestExemptionsBodyStyle(t *testing.T) {

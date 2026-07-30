@@ -26,6 +26,9 @@ func (c *Config) ValidateReferences() error {
 	if err := c.validateCreateKey(); err != nil {
 		return err
 	}
+	if err := c.validateCustomMethodStream(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -250,6 +253,41 @@ func (c *Config) validatePlugins() error {
 	for _, p := range c.Settings.Plugins.JS {
 		if p != "es" {
 			return fmt.Errorf("settings.plugins.js: unknown JS plugin %q (only \"es\" is supported)", p)
+		}
+	}
+	return nil
+}
+
+// validStreamModes lists the allowed values for custom_methods[].stream.
+// Empty string (unary) is handled separately as the default.
+var validStreamModes = map[string]bool{
+	"server": true,
+	"client": true,
+	"bidi":   true,
+}
+
+// streamSupportsHTTP returns true if the given stream mode can coexist with
+// HTTP (grpc-gateway). grpc-gateway v2 only supports unary and server-streaming;
+// client-streaming and bidirectional-streaming are incompatible.
+func streamSupportsHTTP(stream string) bool {
+	return stream == "" || stream == "server"
+}
+
+// validateCustomMethodStream validates that custom_methods[].stream is one of
+// "", "server", "client", or "bidi". When HTTP is enabled, "client" and "bidi"
+// are rejected (grpc-gateway does not support them). Invalid values fail-fast
+// with the method name and valid options.
+func (c *Config) validateCustomMethodStream() error {
+	httpEnabled := c.Settings.HTTP != nil && c.Settings.HTTP.Enable
+	for i := range c.Services {
+		for j := range c.Services[i].CustomMethods {
+			cm := &c.Services[i].CustomMethods[j]
+			if cm.Stream != "" && !validStreamModes[cm.Stream] {
+				return fmt.Errorf("services[%d].custom_methods[%d].stream: invalid value %q for method %q (only \"\", \"server\", \"client\", or \"bidi\" is supported)", i, j, cm.Stream, cm.Name)
+			}
+			if httpEnabled && !streamSupportsHTTP(cm.Stream) {
+				return fmt.Errorf("services[%d].custom_methods[%d].stream: stream=%q is incompatible with http.enable=true for method %q (only unary and server-streaming support HTTP; client/bidi require pure gRPC)", i, j, cm.Stream, cm.Name)
+			}
 		}
 	}
 	return nil

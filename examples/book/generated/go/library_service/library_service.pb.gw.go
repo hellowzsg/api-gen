@@ -759,6 +759,29 @@ func local_request_LibraryService_ArchiveBook_0(ctx context.Context, marshaler r
 	return msg, metadata, err
 }
 
+func request_LibraryService_StreamBookMetas_0(ctx context.Context, marshaler runtime.Marshaler, client LibraryServiceClient, req *http.Request, pathParams map[string]string) (LibraryService_StreamBookMetasClient, runtime.ServerMetadata, error) {
+	var (
+		protoReq book.StreamBookMetasRequest
+		metadata runtime.ServerMetadata
+	)
+	if err := marshaler.NewDecoder(req.Body).Decode(&protoReq); err != nil && !errors.Is(err, io.EOF) {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if req.Body != nil {
+		_, _ = io.Copy(io.Discard, req.Body)
+	}
+	stream, err := client.StreamBookMetas(ctx, &protoReq)
+	if err != nil {
+		return nil, metadata, err
+	}
+	header, err := stream.Header()
+	if err != nil {
+		return nil, metadata, err
+	}
+	metadata.HeaderMD = header
+	return stream, metadata, nil
+}
+
 // RegisterLibraryServiceHandlerServer registers the http handlers for service LibraryService to "mux".
 // UnaryRPC     :call LibraryServiceServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -1106,6 +1129,13 @@ func RegisterLibraryServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		forward_LibraryService_ArchiveBook_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
 
+	mux.Handle(http.MethodPost, pattern_LibraryService_StreamBookMetas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		err := status.Error(codes.Unimplemented, "streaming calls are not yet supported in the in-process transport")
+		_, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+		return
+	})
+
 	return nil
 }
 
@@ -1434,6 +1464,23 @@ func RegisterLibraryServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		}
 		forward_LibraryService_ArchiveBook_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+	mux.Handle(http.MethodPost, pattern_LibraryService_StreamBookMetas_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/demo.business.book.library_service.LibraryService/StreamBookMetas", runtime.WithHTTPPathPattern("/library/LibraryService/book:streamMetas"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_LibraryService_StreamBookMetas_0(annotatedContext, inboundMarshaler, client, req, pathParams)
+		annotatedContext = runtime.NewServerMetadataContext(annotatedContext, md)
+		if err != nil {
+			runtime.HTTPError(annotatedContext, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		forward_LibraryService_StreamBookMetas_0(annotatedContext, mux, outboundMarshaler, w, req, func() (proto.Message, error) { return resp.Recv() }, mux.GetForwardResponseOptions()...)
+	})
 	return nil
 }
 
@@ -1455,6 +1502,7 @@ var (
 	pattern_LibraryService_GetNoteMeta_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"library", "LibraryService", "note", "key.id", "meta"}, ""))
 	pattern_LibraryService_UpdateNoteMeta_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"library", "LibraryService", "note", "key.id", "meta"}, ""))
 	pattern_LibraryService_ArchiveBook_0       = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"library", "LibraryService", "book", "book_id"}, "archive"))
+	pattern_LibraryService_StreamBookMetas_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"library", "LibraryService", "book"}, "streamMetas"))
 )
 
 var (
@@ -1475,4 +1523,5 @@ var (
 	forward_LibraryService_GetNoteMeta_0       = runtime.ForwardResponseMessage
 	forward_LibraryService_UpdateNoteMeta_0    = runtime.ForwardResponseMessage
 	forward_LibraryService_ArchiveBook_0       = runtime.ForwardResponseMessage
+	forward_LibraryService_StreamBookMetas_0   = runtime.ForwardResponseStream
 )

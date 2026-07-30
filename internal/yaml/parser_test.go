@@ -391,6 +391,132 @@ entities:
 	})
 }
 
+// TestParseCustomMethodStream tests parsing of custom_methods[].stream field.
+func TestParseCustomMethodStream(t *testing.T) {
+	t.Run("stream server", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+services:
+  - name: Svc
+    entities:
+      - name: book
+    custom_methods:
+      - name: StreamBookMetas
+        request: StreamBookMetasRequest
+        response: BookMeta
+        stream: server
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		cm := cfg.Services[0].CustomMethods[0]
+		if cm.Stream != "server" {
+			t.Errorf("CustomMethod.Stream = %q, want %q", cm.Stream, "server")
+		}
+	})
+
+	t.Run("stream client", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+services:
+  - name: Svc
+    entities:
+      - name: book
+    custom_methods:
+      - name: ImportBookMetas
+        request: BookMeta
+        response: ImportBookMetasResponse
+        stream: client
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		cm := cfg.Services[0].CustomMethods[0]
+		if cm.Stream != "client" {
+			t.Errorf("CustomMethod.Stream = %q, want %q", cm.Stream, "client")
+		}
+	})
+
+	t.Run("stream bidi", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+services:
+  - name: Svc
+    entities:
+      - name: book
+    custom_methods:
+      - name: ChatBookMetas
+        request: BookMeta
+        response: BookMeta
+        stream: bidi
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		cm := cfg.Services[0].CustomMethods[0]
+		if cm.Stream != "bidi" {
+			t.Errorf("CustomMethod.Stream = %q, want %q", cm.Stream, "bidi")
+		}
+	})
+
+	t.Run("stream omitted defaults to empty", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+services:
+  - name: Svc
+    entities:
+      - name: book
+    custom_methods:
+      - name: ArchiveBook
+        request: ArchiveBookRequest
+        response: ArchiveBookResponse
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		cm := cfg.Services[0].CustomMethods[0]
+		if cm.Stream != "" {
+			t.Errorf("CustomMethod.Stream = %q, want empty (default unary)", cm.Stream)
+		}
+	})
+}
+
 // TestParseCreateKey tests parsing of create.key configuration (server/client).
 func TestParseCreateKey(t *testing.T) {
 	// Subtest 1: create: { key: client }

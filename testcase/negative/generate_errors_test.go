@@ -229,3 +229,42 @@ func TestGenerateError_CreateKey(t *testing.T) {
 		})
 	}
 }
+
+// TestGenerateError_CustomMethodStream verifies custom_methods[].stream validation errors:
+// invalid stream value and HTTP incompatibility (client/bidi + http.enable=true).
+func TestGenerateError_CustomMethodStream(t *testing.T) {
+	binary := apigenBinary(t)
+	dir := fixtureDir(t)
+
+	tests := []struct {
+		name    string
+		fixture string
+		errMsgs []string
+	}{
+		{
+			name:    "invalid stream value",
+			fixture: "stream_invalid_value.yaml",
+			errMsgs: []string{"stream", "both", "server", "client", "bidi"},
+		},
+		{
+			name:    "client-stream + HTTP incompatible",
+			fixture: "stream_http_incompatible.yaml",
+			errMsgs: []string{"stream", "client", "http", "incompatible"},
+		},
+		{
+			name:    "bidi-stream + HTTP incompatible",
+			fixture: "stream_bidi_http_incompatible.yaml",
+			errMsgs: []string{"stream", "bidi", "http", "incompatible"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			output, exitCode := runGenerate(t, binary, filepath.Join(dir, tt.fixture))
+			assertExitNonZero(t, tt.fixture, exitCode)
+			for _, msg := range tt.errMsgs {
+				assertErrorContains(t, tt.fixture, output, msg)
+			}
+		})
+	}
+}

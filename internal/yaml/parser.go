@@ -161,7 +161,12 @@ type CustomMethod struct {
 	Name     string        `yaml:"name"`
 	Request  string        `yaml:"request"`
 	Response string        `yaml:"response"`
-	HTTP     *HTTPOverride `yaml:"http,omitempty"`
+	// Stream declares the streaming mode: "" (unary, default), "server"
+	// (server-streaming), "client" (client-streaming), or "bidi"
+	// (bidirectional-streaming). "bidi" is the standard gRPC abbreviation
+	// for "bidirectional".
+	Stream string        `yaml:"stream,omitempty"`
+	HTTP    *HTTPOverride `yaml:"http,omitempty"`
 }
 
 // namePattern validates proto package names (dotted.identifier).

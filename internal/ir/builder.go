@@ -282,6 +282,9 @@ type CustomMethodIR struct {
 	Name     string
 	Request  string
 	Response string
+	// Stream declares the streaming mode: "" (unary), "server", "client", "bidi".
+	// Propagated from CustomMethod.Stream for proto rendering.
+	Stream string
 	// HTTPAnnotation is populated when the custom method declares an http
 	// block and HTTP is enabled. nil otherwise.
 	HTTPAnnotation *HTTPAnnotation
@@ -767,7 +770,7 @@ func buildService(s *apigenyaml.Service, cfg *apigenyaml.Config, httpEnabled boo
 		sir.Entities = append(sir.Entities, ser)
 	}
 	for _, cm := range s.CustomMethods {
-		cmIR := CustomMethodIR{Name: cm.Name, Request: cm.Request, Response: cm.Response}
+		cmIR := CustomMethodIR{Name: cm.Name, Request: cm.Request, Response: cm.Response, Stream: cm.Stream}
 		if httpEnabled && cm.HTTP != nil {
 			// Custom method paths are fully user-declared (AIP-136 colon
 			// syntax included) — stored verbatim, never rewritten.

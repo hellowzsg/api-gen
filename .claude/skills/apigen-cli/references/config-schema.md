@@ -110,7 +110,19 @@ import_protos:
 | `custom_methods[].name` | string | RPC 名，`PascalCase` |
 | `custom_methods[].request` | string | Request message 类型 |
 | `custom_methods[].response` | string | Response message 类型 |
+| `custom_methods[].stream` | string | 流式模式：`""`（unary，默认）/ `server` / `client` / `bidi`（bidirectional 缩写） |
 | `custom_methods[].http` | object | HTTP 启用时可设置 `verb`、`path`（AIP-136 冒号语法）、`body` |
+
+`custom_methods[].stream` HTTP 兼容矩阵：
+
+| stream 取值 | http.enable=true | http.enable=false |
+| --- | --- | --- |
+| `""` (unary) | 允许 | 允许 |
+| `server` | 允许（grpc-gateway 转 chunked 响应） | 允许 |
+| `client` | **报错**（grpc-gateway 不支持 client-streaming） | 允许 |
+| `bidi` | **报错**（grpc-gateway 不支持 bidirectional-streaming） | 允许 |
+
+`stream` 字段一经发布不可切换（unary ↔ streaming 会改变 gRPC 方法类型，属于 breaking change）。
 
 示例：
 

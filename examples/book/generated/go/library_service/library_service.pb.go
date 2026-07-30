@@ -1356,7 +1356,7 @@ const file_library_service_library_service_proto_rawDesc = "" +
 	"\tnote_meta\x18\x01 \x01(\v2\x1c.demo.business.book.NoteMetaR\bnoteMeta\"w\n" +
 	"\x15UpdateNoteMetaRequest\x120\n" +
 	"\x04meta\x18\x01 \x01(\v2\x1c.demo.business.book.NoteMetaR\x04meta\x12,\n" +
-	"\x03key\x18\x02 \x01(\v2\x1a.demo.business.book.NoteIdR\x03key2\xf7\x16\n" +
+	"\x03key\x18\x02 \x01(\v2\x1a.demo.business.book.NoteIdR\x03key2\x9b\x18\n" +
 	"\x0eLibraryService\x12\xa4\x01\n" +
 	"\n" +
 	"CreateBook\x125.demo.business.book.library_service.CreateBookRequest\x1a6.demo.business.book.library_service.CreateBookResponse\"'\x82\xd3\xe4\x93\x02!:\x01*\"\x1c/library/LibraryService/book\x12\x8a\x01\n" +
@@ -1377,7 +1377,8 @@ const file_library_service_library_service_proto_rawDesc = "" +
 	"CreateNote\x125.demo.business.book.library_service.CreateNoteRequest\x1a6.demo.business.book.library_service.CreateNoteResponse\"0\x82\xd3\xe4\x93\x02*:\x01*\"%/library/LibraryService/note/{key.id}\x12\xb2\x01\n" +
 	"\vGetNoteMeta\x126.demo.business.book.library_service.GetNoteMetaRequest\x1a7.demo.business.book.library_service.GetNoteMetaResponse\"2\x82\xd3\xe4\x93\x02,\x12*/library/LibraryService/note/{key.id}/meta\x12\x9a\x01\n" +
 	"\x0eUpdateNoteMeta\x129.demo.business.book.library_service.UpdateNoteMetaRequest\x1a\x16.google.protobuf.Empty\"5\x82\xd3\xe4\x93\x02/:\x01*2*/library/LibraryService/note/{key.id}/meta\x12\x99\x01\n" +
-	"\vArchiveBook\x12&.demo.business.book.ArchiveBookRequest\x1a'.demo.business.book.ArchiveBookResponse\"9\x82\xd3\xe4\x93\x023:\x01*\"./library/LibraryService/book/{book_id}:archiveBHZFgithub.com/acme/demo-book/generated/go/library_service;library_serviceb\x06proto3"
+	"\vArchiveBook\x12&.demo.business.book.ArchiveBookRequest\x1a'.demo.business.book.ArchiveBookResponse\"9\x82\xd3\xe4\x93\x023:\x01*\"./library/LibraryService/book/{book_id}:archive\x12\xa1\x01\n" +
+	"\x0fStreamBookMetas\x12*.demo.business.book.StreamBookMetasRequest\x1a+.demo.business.book.StreamBookMetasResponse\"3\x82\xd3\xe4\x93\x02-:\x01*\"(/library/LibraryService/book:streamMetas0\x01BHZFgithub.com/acme/demo-book/generated/go/library_service;library_serviceb\x06proto3"
 
 var (
 	file_library_service_library_service_proto_rawDescOnce sync.Once
@@ -1393,44 +1394,46 @@ func file_library_service_library_service_proto_rawDescGZIP() []byte {
 
 var file_library_service_library_service_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_library_service_library_service_proto_goTypes = []any{
-	(*CreateBookRequest)(nil),         // 0: demo.business.book.library_service.CreateBookRequest
-	(*CreateBookResponse)(nil),        // 1: demo.business.book.library_service.CreateBookResponse
-	(*DeleteBookRequest)(nil),         // 2: demo.business.book.library_service.DeleteBookRequest
-	(*DeleteBookSoftRequest)(nil),     // 3: demo.business.book.library_service.DeleteBookSoftRequest
-	(*GetBookMetaRequest)(nil),        // 4: demo.business.book.library_service.GetBookMetaRequest
-	(*GetBookMetaResponse)(nil),       // 5: demo.business.book.library_service.GetBookMetaResponse
-	(*BatchGetBookMetasRequest)(nil),  // 6: demo.business.book.library_service.BatchGetBookMetasRequest
-	(*BatchGetBookMetasResponse)(nil), // 7: demo.business.book.library_service.BatchGetBookMetasResponse
-	(*ListBookMetasRequest)(nil),      // 8: demo.business.book.library_service.ListBookMetasRequest
-	(*ListBookMetasResponse)(nil),     // 9: demo.business.book.library_service.ListBookMetasResponse
-	(*UpdateBookMetaRequest)(nil),     // 10: demo.business.book.library_service.UpdateBookMetaRequest
-	(*UpdateBookMetaResponse)(nil),    // 11: demo.business.book.library_service.UpdateBookMetaResponse
-	(*GetBookContentRequest)(nil),     // 12: demo.business.book.library_service.GetBookContentRequest
-	(*GetBookContentResponse)(nil),    // 13: demo.business.book.library_service.GetBookContentResponse
-	(*UpdateBookContentRequest)(nil),  // 14: demo.business.book.library_service.UpdateBookContentRequest
-	(*CreateShelfRequest)(nil),        // 15: demo.business.book.library_service.CreateShelfRequest
-	(*CreateShelfResponse)(nil),       // 16: demo.business.book.library_service.CreateShelfResponse
-	(*DeleteShelfRequest)(nil),        // 17: demo.business.book.library_service.DeleteShelfRequest
-	(*GetShelfMetaRequest)(nil),       // 18: demo.business.book.library_service.GetShelfMetaRequest
-	(*GetShelfMetaResponse)(nil),      // 19: demo.business.book.library_service.GetShelfMetaResponse
-	(*UpdateShelfMetaRequest)(nil),    // 20: demo.business.book.library_service.UpdateShelfMetaRequest
-	(*CreateNoteRequest)(nil),         // 21: demo.business.book.library_service.CreateNoteRequest
-	(*CreateNoteResponse)(nil),        // 22: demo.business.book.library_service.CreateNoteResponse
-	(*GetNoteMetaRequest)(nil),        // 23: demo.business.book.library_service.GetNoteMetaRequest
-	(*GetNoteMetaResponse)(nil),       // 24: demo.business.book.library_service.GetNoteMetaResponse
-	(*UpdateNoteMetaRequest)(nil),     // 25: demo.business.book.library_service.UpdateNoteMetaRequest
-	(*book.BookMeta)(nil),             // 26: demo.business.book.BookMeta
-	(*book.BookContent)(nil),          // 27: demo.business.book.BookContent
-	(*book.BookId)(nil),               // 28: demo.business.book.BookId
-	(*book.BookMetaFilter)(nil),       // 29: demo.business.book.BookMetaFilter
-	(*fieldmaskpb.FieldMask)(nil),     // 30: google.protobuf.FieldMask
-	(*common.Shelf)(nil),              // 31: demo.common.Shelf
-	(*common.ShelfId)(nil),            // 32: demo.common.ShelfId
-	(*book.NoteId)(nil),               // 33: demo.business.book.NoteId
-	(*book.NoteMeta)(nil),             // 34: demo.business.book.NoteMeta
-	(*book.ArchiveBookRequest)(nil),   // 35: demo.business.book.ArchiveBookRequest
-	(*emptypb.Empty)(nil),             // 36: google.protobuf.Empty
-	(*book.ArchiveBookResponse)(nil),  // 37: demo.business.book.ArchiveBookResponse
+	(*CreateBookRequest)(nil),            // 0: demo.business.book.library_service.CreateBookRequest
+	(*CreateBookResponse)(nil),           // 1: demo.business.book.library_service.CreateBookResponse
+	(*DeleteBookRequest)(nil),            // 2: demo.business.book.library_service.DeleteBookRequest
+	(*DeleteBookSoftRequest)(nil),        // 3: demo.business.book.library_service.DeleteBookSoftRequest
+	(*GetBookMetaRequest)(nil),           // 4: demo.business.book.library_service.GetBookMetaRequest
+	(*GetBookMetaResponse)(nil),          // 5: demo.business.book.library_service.GetBookMetaResponse
+	(*BatchGetBookMetasRequest)(nil),     // 6: demo.business.book.library_service.BatchGetBookMetasRequest
+	(*BatchGetBookMetasResponse)(nil),    // 7: demo.business.book.library_service.BatchGetBookMetasResponse
+	(*ListBookMetasRequest)(nil),         // 8: demo.business.book.library_service.ListBookMetasRequest
+	(*ListBookMetasResponse)(nil),        // 9: demo.business.book.library_service.ListBookMetasResponse
+	(*UpdateBookMetaRequest)(nil),        // 10: demo.business.book.library_service.UpdateBookMetaRequest
+	(*UpdateBookMetaResponse)(nil),       // 11: demo.business.book.library_service.UpdateBookMetaResponse
+	(*GetBookContentRequest)(nil),        // 12: demo.business.book.library_service.GetBookContentRequest
+	(*GetBookContentResponse)(nil),       // 13: demo.business.book.library_service.GetBookContentResponse
+	(*UpdateBookContentRequest)(nil),     // 14: demo.business.book.library_service.UpdateBookContentRequest
+	(*CreateShelfRequest)(nil),           // 15: demo.business.book.library_service.CreateShelfRequest
+	(*CreateShelfResponse)(nil),          // 16: demo.business.book.library_service.CreateShelfResponse
+	(*DeleteShelfRequest)(nil),           // 17: demo.business.book.library_service.DeleteShelfRequest
+	(*GetShelfMetaRequest)(nil),          // 18: demo.business.book.library_service.GetShelfMetaRequest
+	(*GetShelfMetaResponse)(nil),         // 19: demo.business.book.library_service.GetShelfMetaResponse
+	(*UpdateShelfMetaRequest)(nil),       // 20: demo.business.book.library_service.UpdateShelfMetaRequest
+	(*CreateNoteRequest)(nil),            // 21: demo.business.book.library_service.CreateNoteRequest
+	(*CreateNoteResponse)(nil),           // 22: demo.business.book.library_service.CreateNoteResponse
+	(*GetNoteMetaRequest)(nil),           // 23: demo.business.book.library_service.GetNoteMetaRequest
+	(*GetNoteMetaResponse)(nil),          // 24: demo.business.book.library_service.GetNoteMetaResponse
+	(*UpdateNoteMetaRequest)(nil),        // 25: demo.business.book.library_service.UpdateNoteMetaRequest
+	(*book.BookMeta)(nil),                // 26: demo.business.book.BookMeta
+	(*book.BookContent)(nil),             // 27: demo.business.book.BookContent
+	(*book.BookId)(nil),                  // 28: demo.business.book.BookId
+	(*book.BookMetaFilter)(nil),          // 29: demo.business.book.BookMetaFilter
+	(*fieldmaskpb.FieldMask)(nil),        // 30: google.protobuf.FieldMask
+	(*common.Shelf)(nil),                 // 31: demo.common.Shelf
+	(*common.ShelfId)(nil),               // 32: demo.common.ShelfId
+	(*book.NoteId)(nil),                  // 33: demo.business.book.NoteId
+	(*book.NoteMeta)(nil),                // 34: demo.business.book.NoteMeta
+	(*book.ArchiveBookRequest)(nil),      // 35: demo.business.book.ArchiveBookRequest
+	(*book.StreamBookMetasRequest)(nil),  // 36: demo.business.book.StreamBookMetasRequest
+	(*emptypb.Empty)(nil),                // 37: google.protobuf.Empty
+	(*book.ArchiveBookResponse)(nil),     // 38: demo.business.book.ArchiveBookResponse
+	(*book.StreamBookMetasResponse)(nil), // 39: demo.business.book.StreamBookMetasResponse
 }
 var file_library_service_library_service_proto_depIdxs = []int32{
 	26, // 0: demo.business.book.library_service.CreateBookRequest.meta:type_name -> demo.business.book.BookMeta
@@ -1482,25 +1485,27 @@ var file_library_service_library_service_proto_depIdxs = []int32{
 	23, // 46: demo.business.book.library_service.LibraryService.GetNoteMeta:input_type -> demo.business.book.library_service.GetNoteMetaRequest
 	25, // 47: demo.business.book.library_service.LibraryService.UpdateNoteMeta:input_type -> demo.business.book.library_service.UpdateNoteMetaRequest
 	35, // 48: demo.business.book.library_service.LibraryService.ArchiveBook:input_type -> demo.business.book.ArchiveBookRequest
-	1,  // 49: demo.business.book.library_service.LibraryService.CreateBook:output_type -> demo.business.book.library_service.CreateBookResponse
-	36, // 50: demo.business.book.library_service.LibraryService.DeleteBook:output_type -> google.protobuf.Empty
-	36, // 51: demo.business.book.library_service.LibraryService.DeleteBookSoft:output_type -> google.protobuf.Empty
-	5,  // 52: demo.business.book.library_service.LibraryService.GetBookMeta:output_type -> demo.business.book.library_service.GetBookMetaResponse
-	7,  // 53: demo.business.book.library_service.LibraryService.BatchGetBookMetas:output_type -> demo.business.book.library_service.BatchGetBookMetasResponse
-	9,  // 54: demo.business.book.library_service.LibraryService.ListBookMetas:output_type -> demo.business.book.library_service.ListBookMetasResponse
-	11, // 55: demo.business.book.library_service.LibraryService.UpdateBookMeta:output_type -> demo.business.book.library_service.UpdateBookMetaResponse
-	13, // 56: demo.business.book.library_service.LibraryService.GetBookContent:output_type -> demo.business.book.library_service.GetBookContentResponse
-	36, // 57: demo.business.book.library_service.LibraryService.UpdateBookContent:output_type -> google.protobuf.Empty
-	16, // 58: demo.business.book.library_service.LibraryService.CreateShelf:output_type -> demo.business.book.library_service.CreateShelfResponse
-	36, // 59: demo.business.book.library_service.LibraryService.DeleteShelf:output_type -> google.protobuf.Empty
-	19, // 60: demo.business.book.library_service.LibraryService.GetShelfMeta:output_type -> demo.business.book.library_service.GetShelfMetaResponse
-	36, // 61: demo.business.book.library_service.LibraryService.UpdateShelfMeta:output_type -> google.protobuf.Empty
-	22, // 62: demo.business.book.library_service.LibraryService.CreateNote:output_type -> demo.business.book.library_service.CreateNoteResponse
-	24, // 63: demo.business.book.library_service.LibraryService.GetNoteMeta:output_type -> demo.business.book.library_service.GetNoteMetaResponse
-	36, // 64: demo.business.book.library_service.LibraryService.UpdateNoteMeta:output_type -> google.protobuf.Empty
-	37, // 65: demo.business.book.library_service.LibraryService.ArchiveBook:output_type -> demo.business.book.ArchiveBookResponse
-	49, // [49:66] is the sub-list for method output_type
-	32, // [32:49] is the sub-list for method input_type
+	36, // 49: demo.business.book.library_service.LibraryService.StreamBookMetas:input_type -> demo.business.book.StreamBookMetasRequest
+	1,  // 50: demo.business.book.library_service.LibraryService.CreateBook:output_type -> demo.business.book.library_service.CreateBookResponse
+	37, // 51: demo.business.book.library_service.LibraryService.DeleteBook:output_type -> google.protobuf.Empty
+	37, // 52: demo.business.book.library_service.LibraryService.DeleteBookSoft:output_type -> google.protobuf.Empty
+	5,  // 53: demo.business.book.library_service.LibraryService.GetBookMeta:output_type -> demo.business.book.library_service.GetBookMetaResponse
+	7,  // 54: demo.business.book.library_service.LibraryService.BatchGetBookMetas:output_type -> demo.business.book.library_service.BatchGetBookMetasResponse
+	9,  // 55: demo.business.book.library_service.LibraryService.ListBookMetas:output_type -> demo.business.book.library_service.ListBookMetasResponse
+	11, // 56: demo.business.book.library_service.LibraryService.UpdateBookMeta:output_type -> demo.business.book.library_service.UpdateBookMetaResponse
+	13, // 57: demo.business.book.library_service.LibraryService.GetBookContent:output_type -> demo.business.book.library_service.GetBookContentResponse
+	37, // 58: demo.business.book.library_service.LibraryService.UpdateBookContent:output_type -> google.protobuf.Empty
+	16, // 59: demo.business.book.library_service.LibraryService.CreateShelf:output_type -> demo.business.book.library_service.CreateShelfResponse
+	37, // 60: demo.business.book.library_service.LibraryService.DeleteShelf:output_type -> google.protobuf.Empty
+	19, // 61: demo.business.book.library_service.LibraryService.GetShelfMeta:output_type -> demo.business.book.library_service.GetShelfMetaResponse
+	37, // 62: demo.business.book.library_service.LibraryService.UpdateShelfMeta:output_type -> google.protobuf.Empty
+	22, // 63: demo.business.book.library_service.LibraryService.CreateNote:output_type -> demo.business.book.library_service.CreateNoteResponse
+	24, // 64: demo.business.book.library_service.LibraryService.GetNoteMeta:output_type -> demo.business.book.library_service.GetNoteMetaResponse
+	37, // 65: demo.business.book.library_service.LibraryService.UpdateNoteMeta:output_type -> google.protobuf.Empty
+	38, // 66: demo.business.book.library_service.LibraryService.ArchiveBook:output_type -> demo.business.book.ArchiveBookResponse
+	39, // 67: demo.business.book.library_service.LibraryService.StreamBookMetas:output_type -> demo.business.book.StreamBookMetasResponse
+	50, // [50:68] is the sub-list for method output_type
+	32, // [32:50] is the sub-list for method input_type
 	32, // [32:32] is the sub-list for extension type_name
 	32, // [32:32] is the sub-list for extension extendee
 	0,  // [0:32] is the sub-list for field type_name

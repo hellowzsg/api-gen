@@ -347,6 +347,47 @@
         ]
       }
     },
+    "/library/LibraryService/book:streamMetas": {
+      "post": {
+        "operationId": "LibraryService_StreamBookMetas",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/bookStreamBookMetasResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of bookStreamBookMetasResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bookStreamBookMetasRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LibraryService"
+        ]
+      }
+    },
     "/library/LibraryService/note/{key.id}": {
       "post": {
         "operationId": "LibraryService_CreateNote",
@@ -735,6 +776,22 @@
         },
         "body": {
           "type": "string"
+        }
+      }
+    },
+    "bookStreamBookMetasRequest": {
+      "type": "object",
+      "properties": {
+        "author": {
+          "type": "string"
+        }
+      }
+    },
+    "bookStreamBookMetasResponse": {
+      "type": "object",
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/bookBookMeta"
         }
       }
     },

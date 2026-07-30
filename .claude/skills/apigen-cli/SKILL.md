@@ -160,6 +160,18 @@ services:
 | `reader.list: true` | `List<Entity><Resource>s` | 资源读 |
 | `writer.update: {}` | `Update<Entity><Resource>` | 资源写 |
 | `custom_methods[].name` | `<Name>` | 自定义 RPC |
+| `custom_methods[].stream` | `<Name>`（流式变体） | 自定义 RPC |
+
+`custom_methods[].stream` 取值：
+
+| 取值 | proto 生成 | HTTP 支持 |
+| --- | --- | --- |
+| `""`（默认，省略） | `rpc X(Req) returns (Resp)` | 是 |
+| `server` | `rpc X(Req) returns (stream Resp)` | 是（chunked 响应） |
+| `client` | `rpc X(stream Req) returns (Resp)` | 否（编译期报错） |
+| `bidi` | `rpc X(stream Req) returns (stream Resp)` | 否（编译期报错） |
+
+`bidi` 是 `bidirectional` 的标准 gRPC 缩写。`stream` 字段一经发布不可切换（unary ↔ streaming 属于 breaking change）。
 
 HTTP 路径（flat 风格，`http.enable` 时）：
 

@@ -46,7 +46,7 @@ func RenderServiceProto(irData *ir.IR, svc ir.ServiceIR) (string, error) {
 		renderServiceRPCs(&sb, &entities[i], hctx)
 	}
 	for _, cm := range svc.CustomMethods {
-		renderRPCWithHTTP(&sb, cm.Name, cm.Request, cm.Response, cm.HTTPAnnotation, hctx)
+		renderRPCWithHTTP(&sb, cm.Name, cm.Request, cm.Response, cm.Stream, cm.HTTPAnnotation, hctx)
 	}
 	sb.WriteString("}\n\n")
 	for i := range entities {
@@ -115,26 +115,26 @@ func narrowEntity(e ir.EntityIR, se ir.ServiceEntityIR) ir.EntityIR {
 
 func renderServiceRPCs(sb *strings.Builder, e *ir.EntityIR, hctx httpRenderContext) {
 	if e.Create != nil {
-		renderRPCWithHTTP(sb, e.Create.RPCName, e.Create.RequestName, e.Create.ResponseName, e.Create.HTTPAnnotation, hctx)
+		renderRPCWithHTTP(sb, e.Create.RPCName, e.Create.RequestName, e.Create.ResponseName, "", e.Create.HTTPAnnotation, hctx)
 	}
 	if e.Delete != nil {
-		renderRPCWithHTTP(sb, e.Delete.RPCName, e.Delete.RequestName, e.Delete.ResponseName, e.Delete.HTTPAnnotation, hctx)
+		renderRPCWithHTTP(sb, e.Delete.RPCName, e.Delete.RequestName, e.Delete.ResponseName, "", e.Delete.HTTPAnnotation, hctx)
 	}
 	if e.DeleteSoft != nil {
-		renderRPCWithHTTP(sb, e.DeleteSoft.RPCName, e.DeleteSoft.RequestName, e.DeleteSoft.ResponseName, e.DeleteSoft.HTTPAnnotation, hctx)
+		renderRPCWithHTTP(sb, e.DeleteSoft.RPCName, e.DeleteSoft.RequestName, e.DeleteSoft.ResponseName, "", e.DeleteSoft.HTTPAnnotation, hctx)
 	}
 	for _, r := range e.Resources {
 		if r.Get != nil {
-			renderRPCWithHTTP(sb, r.Get.RPCName, r.Get.RequestName, r.Get.ResponseName, r.Get.HTTPAnnotation, hctx)
+			renderRPCWithHTTP(sb, r.Get.RPCName, r.Get.RequestName, r.Get.ResponseName, "", r.Get.HTTPAnnotation, hctx)
 		}
 		if r.BatchGet != nil {
-			renderRPCWithHTTP(sb, r.BatchGet.RPCName, r.BatchGet.RequestName, r.BatchGet.ResponseName, r.BatchGet.HTTPAnnotation, hctx)
+			renderRPCWithHTTP(sb, r.BatchGet.RPCName, r.BatchGet.RequestName, r.BatchGet.ResponseName, "", r.BatchGet.HTTPAnnotation, hctx)
 		}
 		if r.List != nil {
-			renderRPCWithHTTP(sb, r.List.RPCName, r.List.RequestName, r.List.ResponseName, r.List.HTTPAnnotation, hctx)
+			renderRPCWithHTTP(sb, r.List.RPCName, r.List.RequestName, r.List.ResponseName, "", r.List.HTTPAnnotation, hctx)
 		}
 		if r.Update != nil {
-			renderRPCWithHTTP(sb, r.Update.RPCName, r.Update.RequestName, r.Update.ResponseName, r.Update.HTTPAnnotation, hctx)
+			renderRPCWithHTTP(sb, r.Update.RPCName, r.Update.RequestName, r.Update.ResponseName, "", r.Update.HTTPAnnotation, hctx)
 		}
 	}
 }

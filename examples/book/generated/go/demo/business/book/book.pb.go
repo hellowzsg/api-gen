@@ -350,6 +350,94 @@ func (x *BookMetaFilter) GetTags() []string {
 	return nil
 }
 
+type StreamBookMetasRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Author        string                 `protobuf:"bytes,1,opt,name=author,proto3" json:"author,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamBookMetasRequest) Reset() {
+	*x = StreamBookMetasRequest{}
+	mi := &file_demo_business_book_book_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamBookMetasRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamBookMetasRequest) ProtoMessage() {}
+
+func (x *StreamBookMetasRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_demo_business_book_book_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamBookMetasRequest.ProtoReflect.Descriptor instead.
+func (*StreamBookMetasRequest) Descriptor() ([]byte, []int) {
+	return file_demo_business_book_book_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *StreamBookMetasRequest) GetAuthor() string {
+	if x != nil {
+		return x.Author
+	}
+	return ""
+}
+
+type StreamBookMetasResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Meta          *BookMeta              `protobuf:"bytes,1,opt,name=meta,proto3" json:"meta,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamBookMetasResponse) Reset() {
+	*x = StreamBookMetasResponse{}
+	mi := &file_demo_business_book_book_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamBookMetasResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamBookMetasResponse) ProtoMessage() {}
+
+func (x *StreamBookMetasResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_demo_business_book_book_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamBookMetasResponse.ProtoReflect.Descriptor instead.
+func (*StreamBookMetasResponse) Descriptor() ([]byte, []int) {
+	return file_demo_business_book_book_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *StreamBookMetasResponse) GetMeta() *BookMeta {
+	if x != nil {
+		return x.Meta
+	}
+	return nil
+}
+
 type NoteId struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -359,7 +447,7 @@ type NoteId struct {
 
 func (x *NoteId) Reset() {
 	*x = NoteId{}
-	mi := &file_demo_business_book_book_proto_msgTypes[6]
+	mi := &file_demo_business_book_book_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -371,7 +459,7 @@ func (x *NoteId) String() string {
 func (*NoteId) ProtoMessage() {}
 
 func (x *NoteId) ProtoReflect() protoreflect.Message {
-	mi := &file_demo_business_book_book_proto_msgTypes[6]
+	mi := &file_demo_business_book_book_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -384,7 +472,7 @@ func (x *NoteId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NoteId.ProtoReflect.Descriptor instead.
 func (*NoteId) Descriptor() ([]byte, []int) {
-	return file_demo_business_book_book_proto_rawDescGZIP(), []int{6}
+	return file_demo_business_book_book_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *NoteId) GetId() string {
@@ -404,7 +492,7 @@ type NoteMeta struct {
 
 func (x *NoteMeta) Reset() {
 	*x = NoteMeta{}
-	mi := &file_demo_business_book_book_proto_msgTypes[7]
+	mi := &file_demo_business_book_book_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -416,7 +504,7 @@ func (x *NoteMeta) String() string {
 func (*NoteMeta) ProtoMessage() {}
 
 func (x *NoteMeta) ProtoReflect() protoreflect.Message {
-	mi := &file_demo_business_book_book_proto_msgTypes[7]
+	mi := &file_demo_business_book_book_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -429,7 +517,7 @@ func (x *NoteMeta) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NoteMeta.ProtoReflect.Descriptor instead.
 func (*NoteMeta) Descriptor() ([]byte, []int) {
-	return file_demo_business_book_book_proto_rawDescGZIP(), []int{7}
+	return file_demo_business_book_book_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *NoteMeta) GetTitle() string {
@@ -472,7 +560,11 @@ const file_demo_business_book_book_proto_rawDesc = "" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x1b\n" +
 	"\tyear_from\x18\x03 \x01(\rR\byearFrom\x12\x17\n" +
 	"\ayear_to\x18\x04 \x01(\rR\x06yearTo\x12\x12\n" +
-	"\x04tags\x18\x05 \x03(\tR\x04tags\"\x18\n" +
+	"\x04tags\x18\x05 \x03(\tR\x04tags\"0\n" +
+	"\x16StreamBookMetasRequest\x12\x16\n" +
+	"\x06author\x18\x01 \x01(\tR\x06author\"K\n" +
+	"\x17StreamBookMetasResponse\x120\n" +
+	"\x04meta\x18\x01 \x01(\v2\x1c.demo.business.book.BookMetaR\x04meta\"\x18\n" +
 	"\x06NoteId\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"4\n" +
 	"\bNoteMeta\x12\x14\n" +
@@ -491,25 +583,28 @@ func file_demo_business_book_book_proto_rawDescGZIP() []byte {
 	return file_demo_business_book_book_proto_rawDescData
 }
 
-var file_demo_business_book_book_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_demo_business_book_book_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_demo_business_book_book_proto_goTypes = []any{
-	(*BookId)(nil),              // 0: demo.business.book.BookId
-	(*BookMeta)(nil),            // 1: demo.business.book.BookMeta
-	(*BookContent)(nil),         // 2: demo.business.book.BookContent
-	(*ArchiveBookRequest)(nil),  // 3: demo.business.book.ArchiveBookRequest
-	(*ArchiveBookResponse)(nil), // 4: demo.business.book.ArchiveBookResponse
-	(*BookMetaFilter)(nil),      // 5: demo.business.book.BookMetaFilter
-	(*NoteId)(nil),              // 6: demo.business.book.NoteId
-	(*NoteMeta)(nil),            // 7: demo.business.book.NoteMeta
-	(*common.Timestamp)(nil),    // 8: demo.common.Timestamp
+	(*BookId)(nil),                  // 0: demo.business.book.BookId
+	(*BookMeta)(nil),                // 1: demo.business.book.BookMeta
+	(*BookContent)(nil),             // 2: demo.business.book.BookContent
+	(*ArchiveBookRequest)(nil),      // 3: demo.business.book.ArchiveBookRequest
+	(*ArchiveBookResponse)(nil),     // 4: demo.business.book.ArchiveBookResponse
+	(*BookMetaFilter)(nil),          // 5: demo.business.book.BookMetaFilter
+	(*StreamBookMetasRequest)(nil),  // 6: demo.business.book.StreamBookMetasRequest
+	(*StreamBookMetasResponse)(nil), // 7: demo.business.book.StreamBookMetasResponse
+	(*NoteId)(nil),                  // 8: demo.business.book.NoteId
+	(*NoteMeta)(nil),                // 9: demo.business.book.NoteMeta
+	(*common.Timestamp)(nil),        // 10: demo.common.Timestamp
 }
 var file_demo_business_book_book_proto_depIdxs = []int32{
-	8, // 0: demo.business.book.BookMeta.create_time:type_name -> demo.common.Timestamp
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	10, // 0: demo.business.book.BookMeta.create_time:type_name -> demo.common.Timestamp
+	1,  // 1: demo.business.book.StreamBookMetasResponse.meta:type_name -> demo.business.book.BookMeta
+	2,  // [2:2] is the sub-list for method output_type
+	2,  // [2:2] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_demo_business_book_book_proto_init() }
@@ -523,7 +618,7 @@ func file_demo_business_book_book_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_demo_business_book_book_proto_rawDesc), len(file_demo_business_book_book_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file demo/business/book/book.proto.
  */
 export const file_demo_business_book_book: GenFile = /*@__PURE__*/
-  fileDesc("Ch1kZW1vL2J1c2luZXNzL2Jvb2svYm9vay5wcm90bxISZGVtby5idXNpbmVzcy5ib29rIhQKBkJvb2tJZBIKCgJpZBgBIAEoCSJkCghCb29rTWV0YRINCgV0aXRsZRgBIAEoCRIOCgZhdXRob3IYAiABKAkSDAoEaXNibhgDIAEoCRIrCgtjcmVhdGVfdGltZRgEIAEoCzIWLmRlbW8uY29tbW9uLlRpbWVzdGFtcCIwCgtCb29rQ29udGVudBIMCgR0ZXh0GAEgASgJEhMKC2NvdmVyX2ltYWdlGAIgASgMIiUKEkFyY2hpdmVCb29rUmVxdWVzdBIPCgdib29rX2lkGAEgASgJIicKE0FyY2hpdmVCb29rUmVzcG9uc2USEAoIYXJjaGl2ZWQYASABKAgiYQoOQm9va01ldGFGaWx0ZXISDgoGYXV0aG9yGAEgASgJEg0KBXRpdGxlGAIgASgJEhEKCXllYXJfZnJvbRgDIAEoDRIPCgd5ZWFyX3RvGAQgASgNEgwKBHRhZ3MYBSADKAkiFAoGTm90ZUlkEgoKAmlkGAEgASgJIicKCE5vdGVNZXRhEg0KBXRpdGxlGAEgASgJEgwKBGJvZHkYAiABKAlCQFo+Z2l0aHViLmNvbS9hY21lL2RlbW8tYm9vay9nZW5lcmF0ZWQvZ28vZGVtby9idXNpbmVzcy9ib29rO2Jvb2tiBnByb3RvMw", [file_demo_common_types]);
+  fileDesc("Ch1kZW1vL2J1c2luZXNzL2Jvb2svYm9vay5wcm90bxISZGVtby5idXNpbmVzcy5ib29rIhQKBkJvb2tJZBIKCgJpZBgBIAEoCSJkCghCb29rTWV0YRINCgV0aXRsZRgBIAEoCRIOCgZhdXRob3IYAiABKAkSDAoEaXNibhgDIAEoCRIrCgtjcmVhdGVfdGltZRgEIAEoCzIWLmRlbW8uY29tbW9uLlRpbWVzdGFtcCIwCgtCb29rQ29udGVudBIMCgR0ZXh0GAEgASgJEhMKC2NvdmVyX2ltYWdlGAIgASgMIiUKEkFyY2hpdmVCb29rUmVxdWVzdBIPCgdib29rX2lkGAEgASgJIicKE0FyY2hpdmVCb29rUmVzcG9uc2USEAoIYXJjaGl2ZWQYASABKAgiYQoOQm9va01ldGFGaWx0ZXISDgoGYXV0aG9yGAEgASgJEg0KBXRpdGxlGAIgASgJEhEKCXllYXJfZnJvbRgDIAEoDRIPCgd5ZWFyX3RvGAQgASgNEgwKBHRhZ3MYBSADKAkiKAoWU3RyZWFtQm9va01ldGFzUmVxdWVzdBIOCgZhdXRob3IYASABKAkiRQoXU3RyZWFtQm9va01ldGFzUmVzcG9uc2USKgoEbWV0YRgBIAEoCzIcLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rTWV0YSIUCgZOb3RlSWQSCgoCaWQYASABKAkiJwoITm90ZU1ldGESDQoFdGl0bGUYASABKAkSDAoEYm9keRgCIAEoCUJAWj5naXRodWIuY29tL2FjbWUvZGVtby1ib29rL2dlbmVyYXRlZC9nby9kZW1vL2J1c2luZXNzL2Jvb2s7Ym9va2IGcHJvdG8z", [file_demo_common_types]);
 
 /**
  * @generated from message demo.business.book.BookId
@@ -157,6 +157,40 @@ export const BookMetaFilterSchema: GenMessage<BookMetaFilter> = /*@__PURE__*/
   messageDesc(file_demo_business_book_book, 5);
 
 /**
+ * @generated from message demo.business.book.StreamBookMetasRequest
+ */
+export type StreamBookMetasRequest = Message<"demo.business.book.StreamBookMetasRequest"> & {
+  /**
+   * @generated from field: string author = 1;
+   */
+  author: string;
+};
+
+/**
+ * Describes the message demo.business.book.StreamBookMetasRequest.
+ * Use `create(StreamBookMetasRequestSchema)` to create a new message.
+ */
+export const StreamBookMetasRequestSchema: GenMessage<StreamBookMetasRequest> = /*@__PURE__*/
+  messageDesc(file_demo_business_book_book, 6);
+
+/**
+ * @generated from message demo.business.book.StreamBookMetasResponse
+ */
+export type StreamBookMetasResponse = Message<"demo.business.book.StreamBookMetasResponse"> & {
+  /**
+   * @generated from field: demo.business.book.BookMeta meta = 1;
+   */
+  meta?: BookMeta | undefined;
+};
+
+/**
+ * Describes the message demo.business.book.StreamBookMetasResponse.
+ * Use `create(StreamBookMetasResponseSchema)` to create a new message.
+ */
+export const StreamBookMetasResponseSchema: GenMessage<StreamBookMetasResponse> = /*@__PURE__*/
+  messageDesc(file_demo_business_book_book, 7);
+
+/**
  * @generated from message demo.business.book.NoteId
  */
 export type NoteId = Message<"demo.business.book.NoteId"> & {
@@ -171,7 +205,7 @@ export type NoteId = Message<"demo.business.book.NoteId"> & {
  * Use `create(NoteIdSchema)` to create a new message.
  */
 export const NoteIdSchema: GenMessage<NoteId> = /*@__PURE__*/
-  messageDesc(file_demo_business_book_book, 6);
+  messageDesc(file_demo_business_book_book, 8);
 
 /**
  * @generated from message demo.business.book.NoteMeta
@@ -193,5 +227,5 @@ export type NoteMeta = Message<"demo.business.book.NoteMeta"> & {
  * Use `create(NoteMetaSchema)` to create a new message.
  */
 export const NoteMetaSchema: GenMessage<NoteMeta> = /*@__PURE__*/
-  messageDesc(file_demo_business_book_book, 7);
+  messageDesc(file_demo_business_book_book, 9);
 

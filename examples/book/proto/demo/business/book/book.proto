@@ -45,6 +45,16 @@ message BookMetaFilter {
   repeated string tags = 5;
 }
 
+// StreamBookMetasRequest 是 StreamBookMetas 自定义方法（server-streaming）的请求。
+message StreamBookMetasRequest {
+  string author = 1;
+}
+
+// StreamBookMetasResponse 是 StreamBookMetas 自定义方法（server-streaming）的单条响应。
+message StreamBookMetasResponse {
+  BookMeta meta = 1;
+}
+
 // NoteId 是 Note 实体的主键类型。
 // Note 使用 client-key 模式（create: { key: client }），主键由客户端指定。
 message NoteId {

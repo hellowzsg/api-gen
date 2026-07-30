@@ -49,7 +49,7 @@ func assertNotContains(t *testing.T, name, s, substr string) {
 func TestGenerateBookProtoStructure(t *testing.T) {
 	dir := fixtureBookDir(t)
 
-	t.Run("LibraryService proto has all 10 RPCs", func(t *testing.T) {
+	t.Run("LibraryService proto has all 11 RPCs", func(t *testing.T) {
 		proto := mustReadFile(t, filepath.Join(dir, "generated", "proto", "library_service", "library_service.proto"))
 		rpcs := []string{
 			"rpc CreateBook(",
@@ -62,10 +62,19 @@ func TestGenerateBookProtoStructure(t *testing.T) {
 			"rpc GetBookContent(",
 			"rpc UpdateBookContent(",
 			"rpc ArchiveBook(",
+			"rpc StreamBookMetas(",
 		}
 		for _, rpc := range rpcs {
 			assertContains(t, "library_service.proto", proto, rpc)
 		}
+	})
+
+	t.Run("LibraryService proto has server-streaming RPC with stream keyword", func(t *testing.T) {
+		proto := mustReadFile(t, filepath.Join(dir, "generated", "proto", "library_service", "library_service.proto"))
+		// server-streaming: returns (stream Response)
+		assertContains(t, "library_service.proto", proto, "returns (stream StreamBookMetasResponse)")
+		// HTTP annotation coexists with server-streaming
+		assertContains(t, "library_service.proto", proto, `post: "/library/LibraryService/book:streamMetas"`)
 	})
 
 	t.Run("AdminService is narrowed (no BatchGet, no GetContent, no UpdateContent)", func(t *testing.T) {

@@ -38,6 +38,7 @@ const (
 	LibraryService_GetNoteMeta_FullMethodName       = "/demo.business.book.library_service.LibraryService/GetNoteMeta"
 	LibraryService_UpdateNoteMeta_FullMethodName    = "/demo.business.book.library_service.LibraryService/UpdateNoteMeta"
 	LibraryService_ArchiveBook_FullMethodName       = "/demo.business.book.library_service.LibraryService/ArchiveBook"
+	LibraryService_StreamBookMetas_FullMethodName   = "/demo.business.book.library_service.LibraryService/StreamBookMetas"
 )
 
 // LibraryServiceClient is the client API for LibraryService service.
@@ -61,6 +62,7 @@ type LibraryServiceClient interface {
 	GetNoteMeta(ctx context.Context, in *GetNoteMetaRequest, opts ...grpc.CallOption) (*GetNoteMetaResponse, error)
 	UpdateNoteMeta(ctx context.Context, in *UpdateNoteMetaRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ArchiveBook(ctx context.Context, in *book.ArchiveBookRequest, opts ...grpc.CallOption) (*book.ArchiveBookResponse, error)
+	StreamBookMetas(ctx context.Context, in *book.StreamBookMetasRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[book.StreamBookMetasResponse], error)
 }
 
 type libraryServiceClient struct {
@@ -241,6 +243,25 @@ func (c *libraryServiceClient) ArchiveBook(ctx context.Context, in *book.Archive
 	return out, nil
 }
 
+func (c *libraryServiceClient) StreamBookMetas(ctx context.Context, in *book.StreamBookMetasRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[book.StreamBookMetasResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &LibraryService_ServiceDesc.Streams[0], LibraryService_StreamBookMetas_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[book.StreamBookMetasRequest, book.StreamBookMetasResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type LibraryService_StreamBookMetasClient = grpc.ServerStreamingClient[book.StreamBookMetasResponse]
+
 // LibraryServiceServer is the server API for LibraryService service.
 // All implementations must embed UnimplementedLibraryServiceServer
 // for forward compatibility.
@@ -262,6 +283,7 @@ type LibraryServiceServer interface {
 	GetNoteMeta(context.Context, *GetNoteMetaRequest) (*GetNoteMetaResponse, error)
 	UpdateNoteMeta(context.Context, *UpdateNoteMetaRequest) (*emptypb.Empty, error)
 	ArchiveBook(context.Context, *book.ArchiveBookRequest) (*book.ArchiveBookResponse, error)
+	StreamBookMetas(*book.StreamBookMetasRequest, grpc.ServerStreamingServer[book.StreamBookMetasResponse]) error
 	mustEmbedUnimplementedLibraryServiceServer()
 }
 
@@ -322,6 +344,9 @@ func (UnimplementedLibraryServiceServer) UpdateNoteMeta(context.Context, *Update
 }
 func (UnimplementedLibraryServiceServer) ArchiveBook(context.Context, *book.ArchiveBookRequest) (*book.ArchiveBookResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ArchiveBook not implemented")
+}
+func (UnimplementedLibraryServiceServer) StreamBookMetas(*book.StreamBookMetasRequest, grpc.ServerStreamingServer[book.StreamBookMetasResponse]) error {
+	return status.Error(codes.Unimplemented, "method StreamBookMetas not implemented")
 }
 func (UnimplementedLibraryServiceServer) mustEmbedUnimplementedLibraryServiceServer() {}
 func (UnimplementedLibraryServiceServer) testEmbeddedByValue()                        {}
@@ -650,6 +675,17 @@ func _LibraryService_ArchiveBook_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LibraryService_StreamBookMetas_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(book.StreamBookMetasRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(LibraryServiceServer).StreamBookMetas(m, &grpc.GenericServerStream[book.StreamBookMetasRequest, book.StreamBookMetasResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type LibraryService_StreamBookMetasServer = grpc.ServerStreamingServer[book.StreamBookMetasResponse]
+
 // LibraryService_ServiceDesc is the grpc.ServiceDesc for LibraryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -726,6 +762,12 @@ var LibraryService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _LibraryService_ArchiveBook_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "StreamBookMetas",
+			Handler:       _LibraryService_StreamBookMetas_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "library_service/library_service.proto",
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"net"
 	"testing"
 
@@ -262,6 +263,38 @@ func TestLibraryServiceGRPC_AllMethods(t *testing.T) {
 		}
 		if srv.lastArchiveReq.GetBookId() != "bk-001" {
 			t.Errorf("book_id=%q want bk-001", srv.lastArchiveReq.GetBookId())
+		}
+	})
+
+	t.Run("StreamBookMetas server-streaming custom method", func(t *testing.T) {
+		stream, err := libCli.StreamBookMetas(ctx, &bookpb.StreamBookMetasRequest{
+			Author: "Alice",
+		})
+		if err != nil {
+			t.Fatalf("StreamBookMetas: %v", err)
+		}
+		var received []*bookpb.StreamBookMetasResponse
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				t.Fatalf("stream.Recv: %v", err)
+			}
+			received = append(received, resp)
+		}
+		if len(received) != 2 {
+			t.Fatalf("received %d items, want 2", len(received))
+		}
+		if received[0].GetMeta().GetTitle() != "stream-1" {
+			t.Errorf("first item title=%q want stream-1", received[0].GetMeta().GetTitle())
+		}
+		if received[1].GetMeta().GetTitle() != "stream-2" {
+			t.Errorf("second item title=%q want stream-2", received[1].GetMeta().GetTitle())
+		}
+		if srv.lastStreamMetasReq.GetAuthor() != "Alice" {
+			t.Errorf("server received author=%q want Alice", srv.lastStreamMetasReq.GetAuthor())
 		}
 	})
 }
