@@ -103,6 +103,7 @@ type mockLibraryServer struct {
 	libpb.UnimplementedLibraryServiceServer
 
 	lastCreateReq   *libpb.CreateBookRequest
+	lastBatchCreate *libpb.BatchCreateBooksRequest
 	lastDeleteReq   *libpb.DeleteBookRequest
 	lastDeleteSoft  *libpb.DeleteBookSoftRequest
 	lastGetMetaReq  *libpb.GetBookMetaRequest
@@ -119,6 +120,14 @@ type mockLibraryServer struct {
 func (m *mockLibraryServer) CreateBook(_ context.Context, req *libpb.CreateBookRequest) (*libpb.CreateBookResponse, error) {
 	m.lastCreateReq = req
 	return &libpb.CreateBookResponse{Key: &bookpb.BookId{Id: "new-id"}}, nil
+}
+func (m *mockLibraryServer) BatchCreateBooks(_ context.Context, req *libpb.BatchCreateBooksRequest) (*libpb.BatchCreateBooksResponse, error) {
+	m.lastBatchCreate = req
+	keys := make([]*bookpb.BookId, 0, len(req.GetRequests()))
+	for range req.GetRequests() {
+		keys = append(keys, &bookpb.BookId{Id: "new-id"})
+	}
+	return &libpb.BatchCreateBooksResponse{Keys: keys}, nil
 }
 func (m *mockLibraryServer) DeleteBook(_ context.Context, req *libpb.DeleteBookRequest) (*emptypb.Empty, error) {
 	m.lastDeleteReq = req

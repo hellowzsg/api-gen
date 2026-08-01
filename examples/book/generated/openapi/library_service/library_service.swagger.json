@@ -48,6 +48,38 @@
         ]
       }
     },
+    "/library/LibraryService/book/batchCreate": {
+      "post": {
+        "operationId": "LibraryService_BatchCreateBooks",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/library_serviceBatchCreateBooksResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/library_serviceBatchCreateBooksRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LibraryService"
+        ]
+      }
+    },
     "/library/LibraryService/book/deleteSoft": {
       "post": {
         "operationId": "LibraryService_DeleteBookSoft",
@@ -825,6 +857,30 @@
         "millis": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "library_serviceBatchCreateBooksRequest": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/library_serviceCreateBookRequest"
+          }
+        }
+      }
+    },
+    "library_serviceBatchCreateBooksResponse": {
+      "type": "object",
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bookBookId"
+          }
         }
       }
     },

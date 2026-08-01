@@ -6,7 +6,11 @@
 // (-- api-linter: core::0134::response-message-name=disabled --)
 // (-- api-linter: core::0134::request-unknown-fields=disabled --)
 // (-- api-linter: core::0135::request-name-field=disabled --)
+// (-- api-linter: core::0233::request-message-name=disabled --)
+// (-- api-linter: core::0233::method-name=disabled --)
 // (-- api-linter: core::0133::http-body=disabled --)
+// (-- api-linter: core::0233::http-body=disabled --)
+// (-- api-linter: core::0233::http-method=disabled --)
 // (-- api-linter: core::0132::http-method=disabled --)
 // (-- api-linter: core::0132::http-body=disabled --)
 // (-- api-linter: core::0135::http-method=disabled --)
@@ -24,6 +28,9 @@ option go_package = "github.com/acme/demo-book/generated/go/admin_service;admin_
 service AdminService {
   rpc CreateBook(CreateBookRequest) returns (CreateBookResponse) {
     option (google.api.http) = { post: "/library/AdminService/book" body: "*" };
+  }
+  rpc BatchCreateBooks(BatchCreateBooksRequest) returns (BatchCreateBooksResponse) {
+    option (google.api.http) = { post: "/library/AdminService/book/batchCreate" body: "*" };
   }
   rpc DeleteBook(DeleteBookRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = { delete: "/library/AdminService/book/{key.id}" };
@@ -47,6 +54,9 @@ message CreateBookRequest {
   demo.business.book.BookContent content = 2;
 }
 message CreateBookResponse { demo.business.book.BookId key = 1; }
+
+message BatchCreateBooksRequest { repeated CreateBookRequest requests = 1; }
+message BatchCreateBooksResponse { repeated demo.business.book.BookId keys = 1; }
 
 message DeleteBookRequest { demo.business.book.BookId key = 1; }
 message DeleteBookSoftRequest { demo.business.book.BookId key = 1; }

@@ -55,6 +55,7 @@ type EntityIR struct {
 	PascalName string
 	KeyType    string
 	Create     *CreateIR
+	BatchCreate *BatchCreateIR
 	Delete     *DeleteIR
 	DeleteSoft *DeleteIR
 	Resources  []ResourceIR
@@ -75,6 +76,18 @@ type CreateIR struct {
 	RequestFields    []FieldIR
 	ResponseKeyField FieldIR
 	HTTPAnnotation   *HTTPAnnotation
+}
+
+// BatchCreateIR describes a BatchCreate RPC (entity-level), generated when
+// create.batch: true. The request carries a repeated list of single Create
+// requests; the response returns the keys of created entities.
+type BatchCreateIR struct {
+	RPCName        string
+	RequestName    string
+	ResponseName   string
+	RequestsField  FieldIR // repeated Create<Entity>Request requests = 1
+	KeysField      FieldIR // repeated <KeyType> keys = 1
+	HTTPAnnotation *HTTPAnnotation
 }
 
 type DeleteIR struct {
@@ -363,6 +376,10 @@ func buildEntity(e *apigenyaml.Entity, cfg *apigenyaml.Config, opts BuildOptions
 			return nil, err
 		}
 		entity.Create.HTTPAnnotation = ann
+		if e.Create.Batch {
+			entity.BatchCreate = buildBatchCreate(e.Name, pascalName, entity.KeyType, entity.Create.RequestName, cfg)
+			entity.BatchCreate.HTTPAnnotation = httpCtx.buildBatchCreateAnnotation()
+		}
 	}
 	if e.Delete != nil {
 		entity.Delete = buildDelete(entity.KeyType, "Delete"+pascalName)
@@ -458,6 +475,22 @@ func (h *httpBuildContext) buildDeleteSoftAnnotation() *HTTPAnnotation {
 		Body:   "*",
 		Entity: h.entity,
 		Suffix: "deleteSoft",
+	}
+}
+
+// buildBatchCreateAnnotation builds the BatchCreate HTTP annotation:
+// POST /{prefix}/{Service}/{collection}/batchCreate body:"*".
+// No key leaves — BatchCreate is a collection-level operation, keys are
+// inside the body's repeated requests field.
+func (h *httpBuildContext) buildBatchCreateAnnotation() *HTTPAnnotation {
+	if !h.enabled {
+		return nil
+	}
+	return &HTTPAnnotation{
+		Verb:   "POST",
+		Body:   "*",
+		Entity: h.entity,
+		Suffix: "batchCreate",
 	}
 }
 
@@ -593,6 +626,19 @@ func buildCreate(entityName string, resources []apigenyaml.Resource, keyType str
 	}
 	c.ResponseKeyField = FieldIR{Name: "key", Type: keyType, Number: 1}
 	return c
+}
+
+func buildBatchCreate(entityName, pascalName, keyType, requestName string, cfg *apigenyaml.Config) *BatchCreateIR {
+	return &BatchCreateIR{
+		RPCName:       "BatchCreate" + pascalName + "s",
+		RequestName:   "BatchCreate" + pascalName + "sRequest",
+		ResponseName:  "BatchCreate" + pascalName + "sResponse",
+		// RequestsField.Type uses the unqualified Create<Entity>Request name:
+		// it is a tool-generated message in the same proto file, not a
+		// user-defined type — no package qualification needed.
+		RequestsField: FieldIR{Name: "requests", Type: requestName, Number: 1, Repeated: true},
+		KeysField:     FieldIR{Name: "keys", Type: keyType, Number: 1, Repeated: true},
+	}
 }
 
 func buildDelete(keyType, rpcName string) *DeleteIR {

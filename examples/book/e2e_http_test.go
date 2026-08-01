@@ -26,6 +26,7 @@ type mockLibraryServer struct {
 	libpb.UnimplementedLibraryServiceServer
 
 	lastCreateReq    *libpb.CreateBookRequest
+	lastBatchCreate  *libpb.BatchCreateBooksRequest
 	lastDeleteReq    *libpb.DeleteBookRequest
 	lastDeleteSoft   *libpb.DeleteBookSoftRequest
 	lastGetMetaReq   *libpb.GetBookMetaRequest
@@ -49,6 +50,14 @@ type mockLibraryServer struct {
 func (m *mockLibraryServer) CreateBook(_ context.Context, req *libpb.CreateBookRequest) (*libpb.CreateBookResponse, error) {
 	m.lastCreateReq = req
 	return &libpb.CreateBookResponse{Key: &bookpb.BookId{Id: "new-id"}}, nil
+}
+func (m *mockLibraryServer) BatchCreateBooks(_ context.Context, req *libpb.BatchCreateBooksRequest) (*libpb.BatchCreateBooksResponse, error) {
+	m.lastBatchCreate = req
+	keys := make([]*bookpb.BookId, 0, len(req.GetRequests()))
+	for range req.GetRequests() {
+		keys = append(keys, &bookpb.BookId{Id: "new-id"})
+	}
+	return &libpb.BatchCreateBooksResponse{Keys: keys}, nil
 }
 func (m *mockLibraryServer) DeleteBook(_ context.Context, req *libpb.DeleteBookRequest) (*emptypb.Empty, error) {
 	m.lastDeleteReq = req
@@ -248,6 +257,29 @@ func TestLibraryServiceHTTP_AllMethods(t *testing.T) {
 		body := mustReadJSON(t, resp)
 		if got, _ := body["key"].(map[string]any); got["id"] != "new-id" {
 			t.Errorf("response key.id=%v want=new-id", body)
+		}
+	})
+
+	t.Run("BatchCreateBooks POST /batchCreate body=*", func(t *testing.T) {
+		resp := doReq(t, ts, "POST", "/library/LibraryService/book/batchCreate", map[string]any{
+			"requests": []map[string]any{
+				{"meta": map[string]any{"title": "B1"}},
+				{"meta": map[string]any{"title": "B2"}},
+			},
+		})
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("status=%d", resp.StatusCode)
+		}
+		if n := len(srv.lastBatchCreate.GetRequests()); n != 2 {
+			t.Fatalf("requests len=%d want 2", n)
+		}
+		if got := srv.lastBatchCreate.GetRequests()[0].GetMeta().GetTitle(); got != "B1" {
+			t.Errorf("requests[0].meta.title=%q want B1", got)
+		}
+		body := mustReadJSON(t, resp)
+		keys, _ := body["keys"].([]any)
+		if len(keys) != 2 {
+			t.Errorf("keys len=%d want 2", len(keys))
 		}
 	})
 

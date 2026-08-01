@@ -597,3 +597,113 @@ entities:
 		}
 	})
 }
+
+// TestParseCreateBatch tests parsing of create.batch configuration.
+func TestParseCreateBatch(t *testing.T) {
+	// Subtest 1: create: { batch: true }
+	t.Run("batch true", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    create: { batch: true }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		if cfg.Entities[0].Create == nil {
+			t.Fatal("Create is nil, want non-nil")
+		}
+		if !cfg.Entities[0].Create.Batch {
+			t.Errorf("Create.Batch = false, want true")
+		}
+	})
+
+	// Subtest 2: create: { key: client, batch: true }
+	t.Run("key client batch true", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    create: { key: client, batch: true }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		if cfg.Entities[0].Create == nil {
+			t.Fatal("Create is nil, want non-nil")
+		}
+		if cfg.Entities[0].Create.Key != "client" {
+			t.Errorf("Create.Key = %q, want %q", cfg.Entities[0].Create.Key, "client")
+		}
+		if !cfg.Entities[0].Create.Batch {
+			t.Errorf("Create.Batch = false, want true")
+		}
+	})
+
+	// Subtest 3: create: {} → Batch defaults to false
+	t.Run("batch omitted defaults to false", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    create: {}
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		if cfg.Entities[0].Create == nil {
+			t.Fatal("Create is nil, want non-nil")
+		}
+		if cfg.Entities[0].Create.Batch {
+			t.Errorf("Create.Batch = true, want false (default)")
+		}
+	})
+
+	// Subtest 4: create: { batch: false } → explicit false
+	t.Run("batch explicit false", func(t *testing.T) {
+		input := `
+syntax: v1
+name: foo
+entities:
+  - name: book
+    key: { type_: BookId }
+    create: { batch: false }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+`
+		cfg, err := Parse(strings.NewReader(input))
+		if err != nil {
+			t.Fatalf("Parse failed: %v", err)
+		}
+		if cfg.Entities[0].Create == nil {
+			t.Fatal("Create is nil, want non-nil")
+		}
+		if cfg.Entities[0].Create.Batch {
+			t.Errorf("Create.Batch = true, want false")
+		}
+	})
+}

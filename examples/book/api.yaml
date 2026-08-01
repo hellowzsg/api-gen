@@ -27,7 +27,7 @@ entities:
     key:
       type_: BookId
 
-    create: {}
+    create: { batch: true }
     delete: {}
     delete_soft: {}
 

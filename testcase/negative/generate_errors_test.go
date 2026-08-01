@@ -93,6 +93,7 @@ func TestGenerateError_YAMLParsing(t *testing.T) {
 		{"resource_missing_type.yaml", "type_ is required"},
 		{"resource_missing_version.yaml", "kind is required"},
 		{"unknown_yaml_field.yaml", "decode api.yaml"},
+		{"batch_outside_create.yaml", "decode api.yaml"},
 	}
 
 	for _, tt := range tests {

@@ -67,6 +67,27 @@ func TestLibraryServiceGRPC_AllMethods(t *testing.T) {
 		}
 	})
 
+	t.Run("BatchCreateBooks", func(t *testing.T) {
+		resp, err := libCli.BatchCreateBooks(ctx, &libpb.BatchCreateBooksRequest{
+			Requests: []*libpb.CreateBookRequest{
+				{Meta: &bookpb.BookMeta{Title: "B1"}},
+				{Meta: &bookpb.BookMeta{Title: "B2"}},
+			},
+		})
+		if err != nil {
+			t.Fatalf("BatchCreateBooks: %v", err)
+		}
+		if len(resp.GetKeys()) != 2 {
+			t.Fatalf("keys len=%d want 2", len(resp.GetKeys()))
+		}
+		if len(srv.lastBatchCreate.GetRequests()) != 2 {
+			t.Errorf("server received requests=%d want 2", len(srv.lastBatchCreate.GetRequests()))
+		}
+		if srv.lastBatchCreate.GetRequests()[0].GetMeta().GetTitle() != "B1" {
+			t.Errorf("requests[0].meta.title=%q want B1", srv.lastBatchCreate.GetRequests()[0].GetMeta().GetTitle())
+		}
+	})
+
 	t.Run("DeleteBook", func(t *testing.T) {
 		_, err := libCli.DeleteBook(ctx, &libpb.DeleteBookRequest{
 			Key: &bookpb.BookId{Id: "bk-1"},

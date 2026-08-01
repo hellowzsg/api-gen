@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	LibraryService_CreateBook_FullMethodName        = "/demo.business.book.library_service.LibraryService/CreateBook"
+	LibraryService_BatchCreateBooks_FullMethodName  = "/demo.business.book.library_service.LibraryService/BatchCreateBooks"
 	LibraryService_DeleteBook_FullMethodName        = "/demo.business.book.library_service.LibraryService/DeleteBook"
 	LibraryService_DeleteBookSoft_FullMethodName    = "/demo.business.book.library_service.LibraryService/DeleteBookSoft"
 	LibraryService_GetBookMeta_FullMethodName       = "/demo.business.book.library_service.LibraryService/GetBookMeta"
@@ -46,6 +47,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LibraryServiceClient interface {
 	CreateBook(ctx context.Context, in *CreateBookRequest, opts ...grpc.CallOption) (*CreateBookResponse, error)
+	BatchCreateBooks(ctx context.Context, in *BatchCreateBooksRequest, opts ...grpc.CallOption) (*BatchCreateBooksResponse, error)
 	DeleteBook(ctx context.Context, in *DeleteBookRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteBookSoft(ctx context.Context, in *DeleteBookSoftRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetBookMeta(ctx context.Context, in *GetBookMetaRequest, opts ...grpc.CallOption) (*GetBookMetaResponse, error)
@@ -77,6 +79,16 @@ func (c *libraryServiceClient) CreateBook(ctx context.Context, in *CreateBookReq
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateBookResponse)
 	err := c.cc.Invoke(ctx, LibraryService_CreateBook_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *libraryServiceClient) BatchCreateBooks(ctx context.Context, in *BatchCreateBooksRequest, opts ...grpc.CallOption) (*BatchCreateBooksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchCreateBooksResponse)
+	err := c.cc.Invoke(ctx, LibraryService_BatchCreateBooks_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -267,6 +279,7 @@ type LibraryService_StreamBookMetasClient = grpc.ServerStreamingClient[book.Stre
 // for forward compatibility.
 type LibraryServiceServer interface {
 	CreateBook(context.Context, *CreateBookRequest) (*CreateBookResponse, error)
+	BatchCreateBooks(context.Context, *BatchCreateBooksRequest) (*BatchCreateBooksResponse, error)
 	DeleteBook(context.Context, *DeleteBookRequest) (*emptypb.Empty, error)
 	DeleteBookSoft(context.Context, *DeleteBookSoftRequest) (*emptypb.Empty, error)
 	GetBookMeta(context.Context, *GetBookMetaRequest) (*GetBookMetaResponse, error)
@@ -296,6 +309,9 @@ type UnimplementedLibraryServiceServer struct{}
 
 func (UnimplementedLibraryServiceServer) CreateBook(context.Context, *CreateBookRequest) (*CreateBookResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateBook not implemented")
+}
+func (UnimplementedLibraryServiceServer) BatchCreateBooks(context.Context, *BatchCreateBooksRequest) (*BatchCreateBooksResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BatchCreateBooks not implemented")
 }
 func (UnimplementedLibraryServiceServer) DeleteBook(context.Context, *DeleteBookRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteBook not implemented")
@@ -383,6 +399,24 @@ func _LibraryService_CreateBook_Handler(srv interface{}, ctx context.Context, de
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LibraryServiceServer).CreateBook(ctx, req.(*CreateBookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LibraryService_BatchCreateBooks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchCreateBooksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).BatchCreateBooks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_BatchCreateBooks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).BatchCreateBooks(ctx, req.(*BatchCreateBooksRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -696,6 +730,10 @@ var LibraryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateBook",
 			Handler:    _LibraryService_CreateBook_Handler,
+		},
+		{
+			MethodName: "BatchCreateBooks",
+			Handler:    _LibraryService_BatchCreateBooks_Handler,
 		},
 		{
 			MethodName: "DeleteBook",

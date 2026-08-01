@@ -1,0 +1,26 @@
+# Invalid: batch declared at entity level (outside create block).
+# batch is a sub-field of create, not an entity-level field.
+# KnownFields(true) will reject this as an unknown field on Entity.
+syntax: v1
+name: test.invalid
+import_protos:
+  - path: "proto/**/*.proto"
+settings:
+  go_repo: github.com/test/repo
+  out:
+    proto: generated/proto
+    go: generated/go
+entities:
+  - name: foo
+    key:
+      type_: FooId
+    batch: true
+    resources:
+      - name: bar
+        type_: Bar
+        version: { kind: NONE }
+        reader: {}
+services:
+  - name: FooService
+    entities:
+      - name: foo

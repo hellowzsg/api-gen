@@ -85,8 +85,10 @@ type Entity struct {
 // Key specifies who generates the primary key: "server" (default, server-side
 // generation) or "client" (client-specified key in the request).
 // Empty string is equivalent to "server" (backward compatible with create: {}).
+// Batch specifies whether to additionally generate a BatchCreate RPC.
 type CreateDef struct {
-	Key string `yaml:"key,omitempty"`
+	Key   string `yaml:"key,omitempty"`
+	Batch bool   `yaml:"batch,omitempty"`
 }
 
 // KeyDef declares the primary key type.

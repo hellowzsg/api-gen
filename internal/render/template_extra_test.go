@@ -58,6 +58,79 @@ func TestRenderProto_BatchGet(t *testing.T) {
 	}
 }
 
+// TestRenderProto_BatchCreate: BatchCreate RPC with repeated requests/keys fields.
+func TestRenderProto_BatchCreate(t *testing.T) {
+	irData := &ir.IR{PackageName: "test", Entities: []ir.EntityIR{{
+		Name: "book", PascalName: "Book", KeyType: "test.BookId",
+		Create: &ir.CreateIR{
+			RPCName:      "CreateBook",
+			RequestName:  "CreateBookRequest",
+			ResponseName: "CreateBookResponse",
+			RequestFields: []ir.FieldIR{
+				{Name: "meta", Type: "test.BookMeta", Number: 1},
+			},
+			ResponseKeyField: ir.FieldIR{Name: "key", Type: "test.BookId", Number: 1},
+		},
+		BatchCreate: &ir.BatchCreateIR{
+			RPCName:       "BatchCreateBooks",
+			RequestName:   "BatchCreateBooksRequest",
+			ResponseName:  "BatchCreateBooksResponse",
+			RequestsField: ir.FieldIR{Name: "requests", Type: "CreateBookRequest", Number: 1, Repeated: true},
+			KeysField:     ir.FieldIR{Name: "keys", Type: "test.BookId", Number: 1, Repeated: true},
+		},
+	}}}
+	svc := ir.ServiceIR{Name: "Svc", ProtoPackage: "test.svc", GoPackage: "svc", Entities: []ir.ServiceEntityIR{{Name: "book"}}}
+	output, err := RenderServiceProto(irData, svc)
+	if err != nil {
+		t.Fatalf("RenderServiceProto failed: %v", err)
+	}
+	if !strings.Contains(output, "rpc BatchCreateBooks") {
+		t.Error("missing BatchCreateBooks RPC")
+	}
+	if !strings.Contains(output, "repeated CreateBookRequest requests") {
+		t.Error("missing repeated requests field")
+	}
+	if !strings.Contains(output, "repeated test.BookId keys") {
+		t.Error("missing repeated keys field in BatchCreate response")
+	}
+}
+
+// TestRenderProto_BatchCreate_HTTP: BatchCreate with HTTP annotation.
+func TestRenderProto_BatchCreate_HTTP(t *testing.T) {
+	irData := &ir.IR{
+		PackageName: "test", HTTPEnabled: true, HTTPPrefix: "/library",
+		Entities: []ir.EntityIR{{
+			Name: "book", PascalName: "Book", KeyType: "test.BookId",
+			Create: &ir.CreateIR{
+				RPCName:      "CreateBook",
+				RequestName:  "CreateBookRequest",
+				ResponseName: "CreateBookResponse",
+				RequestFields: []ir.FieldIR{
+					{Name: "meta", Type: "test.BookMeta", Number: 1},
+				},
+				ResponseKeyField: ir.FieldIR{Name: "key", Type: "test.BookId", Number: 1},
+				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Body: "*", Entity: "book"},
+			},
+			BatchCreate: &ir.BatchCreateIR{
+				RPCName:       "BatchCreateBooks",
+				RequestName:   "BatchCreateBooksRequest",
+				ResponseName:  "BatchCreateBooksResponse",
+				RequestsField: ir.FieldIR{Name: "requests", Type: "CreateBookRequest", Number: 1, Repeated: true},
+				KeysField:     ir.FieldIR{Name: "keys", Type: "test.BookId", Number: 1, Repeated: true},
+				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Body: "*", Entity: "book", Suffix: "batchCreate"},
+			},
+		}},
+	}
+	svc := ir.ServiceIR{Name: "LibraryService", ProtoPackage: "test.svc", GoPackage: "svc", Entities: []ir.ServiceEntityIR{{Name: "book"}}}
+	output, err := RenderServiceProto(irData, svc)
+	if err != nil {
+		t.Fatalf("RenderServiceProto failed: %v", err)
+	}
+	if !strings.Contains(output, `post: "/library/LibraryService/book/batchCreate"`) {
+		t.Error("missing BatchCreate HTTP annotation path")
+	}
+}
+
 // TestRenderProto_List: List RPC with pagination fields.
 func TestRenderProto_List(t *testing.T) {
 	totalSize := ir.FieldIR{Name: "total_size", Type: "int32", Number: 3}

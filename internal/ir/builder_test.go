@@ -866,3 +866,216 @@ func TestBodyStyleResource(t *testing.T) {
 		}
 	})
 }
+
+// TestBuildBatchCreate tests BatchCreate IR generation when create.batch: true.
+func TestBuildBatchCreate(t *testing.T) {
+	// Subtest 1: create: { batch: true } generates BatchCreate IR
+	t.Run("batch true server key", func(t *testing.T) {
+		cfg := &apigenyaml.Config{
+			Syntax: "v1",
+			Name:   "test",
+			Entities: []apigenyaml.Entity{{
+				Name:   "book",
+				Key:    apigenyaml.KeyDef{Type: "BookId"},
+				Create: &apigenyaml.CreateDef{Batch: true},
+				Resources: []apigenyaml.Resource{{
+					Name:    "meta",
+					Type:    "BookMeta",
+					Version: apigenyaml.VersionDef{Kind: "NONE"},
+				}},
+			}},
+		}
+		irData, err := Build(cfg)
+		if err != nil {
+			t.Fatalf("Build failed: %v", err)
+		}
+		e := irData.Entities[0]
+		if e.BatchCreate == nil {
+			t.Fatal("BatchCreate is nil, want non-nil")
+		}
+		bc := e.BatchCreate
+		if bc.RPCName != "BatchCreateBooks" {
+			t.Errorf("BatchCreate.RPCName = %q, want %q", bc.RPCName, "BatchCreateBooks")
+		}
+		if bc.RequestName != "BatchCreateBooksRequest" {
+			t.Errorf("BatchCreate.RequestName = %q, want %q", bc.RequestName, "BatchCreateBooksRequest")
+		}
+		if bc.ResponseName != "BatchCreateBooksResponse" {
+			t.Errorf("BatchCreate.ResponseName = %q, want %q", bc.ResponseName, "BatchCreateBooksResponse")
+		}
+		// requests field: repeated CreateBookRequest requests = 1
+		if bc.RequestsField.Name != "requests" {
+			t.Errorf("BatchCreate.RequestsField.Name = %q, want %q", bc.RequestsField.Name, "requests")
+		}
+		if bc.RequestsField.Type != "CreateBookRequest" {
+			t.Errorf("BatchCreate.RequestsField.Type = %q, want %q", bc.RequestsField.Type, "CreateBookRequest")
+		}
+		if bc.RequestsField.Number != 1 {
+			t.Errorf("BatchCreate.RequestsField.Number = %d, want 1", bc.RequestsField.Number)
+		}
+		if !bc.RequestsField.Repeated {
+			t.Error("BatchCreate.RequestsField should be repeated")
+		}
+		// keys field: repeated BookId keys = 1
+		if bc.KeysField.Name != "keys" {
+			t.Errorf("BatchCreate.KeysField.Name = %q, want %q", bc.KeysField.Name, "keys")
+		}
+		if bc.KeysField.Type != "test.BookId" {
+			t.Errorf("BatchCreate.KeysField.Type = %q, want %q", bc.KeysField.Type, "test.BookId")
+		}
+		if bc.KeysField.Number != 1 {
+			t.Errorf("BatchCreate.KeysField.Number = %d, want 1", bc.KeysField.Number)
+		}
+		if !bc.KeysField.Repeated {
+			t.Error("BatchCreate.KeysField should be repeated")
+		}
+	})
+
+	// Subtest 2: create without batch → BatchCreate is nil
+	t.Run("batch omitted", func(t *testing.T) {
+		cfg := &apigenyaml.Config{
+			Syntax: "v1",
+			Name:   "test",
+			Entities: []apigenyaml.Entity{{
+				Name:   "book",
+				Key:    apigenyaml.KeyDef{Type: "BookId"},
+				Create: &apigenyaml.CreateDef{},
+				Resources: []apigenyaml.Resource{{
+					Name:    "meta",
+					Type:    "BookMeta",
+					Version: apigenyaml.VersionDef{Kind: "NONE"},
+				}},
+			}},
+		}
+		irData, err := Build(cfg)
+		if err != nil {
+			t.Fatalf("Build failed: %v", err)
+		}
+		if irData.Entities[0].BatchCreate != nil {
+			t.Error("BatchCreate should be nil when batch is not set")
+		}
+	})
+
+	// Subtest 3: create: { key: client, batch: true } — RequestsField.Type still Create<Entity>Request
+	t.Run("batch true client key", func(t *testing.T) {
+		cfg := &apigenyaml.Config{
+			Syntax: "v1",
+			Name:   "test",
+			Entities: []apigenyaml.Entity{{
+				Name:   "note",
+				Key:    apigenyaml.KeyDef{Type: "NoteId"},
+				Create: &apigenyaml.CreateDef{Key: "client", Batch: true},
+				Resources: []apigenyaml.Resource{{
+					Name:    "meta",
+					Type:    "NoteMeta",
+					Version: apigenyaml.VersionDef{Kind: "NONE"},
+				}},
+			}},
+		}
+		irData, err := Build(cfg)
+		if err != nil {
+			t.Fatalf("Build failed: %v", err)
+		}
+		e := irData.Entities[0]
+		if e.BatchCreate == nil {
+			t.Fatal("BatchCreate is nil, want non-nil")
+		}
+		bc := e.BatchCreate
+		if bc.RPCName != "BatchCreateNotes" {
+			t.Errorf("BatchCreate.RPCName = %q, want %q", bc.RPCName, "BatchCreateNotes")
+		}
+		if bc.RequestsField.Type != "CreateNoteRequest" {
+			t.Errorf("BatchCreate.RequestsField.Type = %q, want %q", bc.RequestsField.Type, "CreateNoteRequest")
+		}
+		if bc.KeysField.Type != "test.NoteId" {
+			t.Errorf("BatchCreate.KeysField.Type = %q, want %q", bc.KeysField.Type, "test.NoteId")
+		}
+	})
+
+	// Subtest 4: HTTP enabled — BatchCreate annotation has batchCreate suffix
+	t.Run("http annotation", func(t *testing.T) {
+		keyDesc := buildTestKeyDesc(t)
+		cfg := &apigenyaml.Config{
+			Syntax: "v1",
+			Name:   "test",
+			Settings: apigenyaml.Settings{
+				HTTP: &apigenyaml.HTTPConfig{
+					Enable: true,
+					Prefix: "/library",
+				},
+			},
+			Entities: []apigenyaml.Entity{{
+				Name:   "book",
+				Key:    apigenyaml.KeyDef{Type: "BookId"},
+				Create: &apigenyaml.CreateDef{Batch: true},
+				Resources: []apigenyaml.Resource{{
+					Name:    "meta",
+					Type:    "BookMeta",
+					Version: apigenyaml.VersionDef{Kind: "NONE"},
+				}},
+			}},
+			Services: []apigenyaml.Service{{
+				Name:     "LibraryService",
+				Entities: []apigenyaml.ServiceEntity{{Name: "book"}},
+			}},
+		}
+		keyDescs := map[string]protoreflect.MessageDescriptor{
+			"test.BookId": keyDesc,
+		}
+		irData, err := BuildWithOptions(cfg, BuildOptions{KeyDescriptors: keyDescs})
+		if err != nil {
+			t.Fatalf("BuildWithOptions failed: %v", err)
+		}
+		bc := irData.Entities[0].BatchCreate
+		if bc.HTTPAnnotation == nil {
+			t.Fatal("BatchCreate.HTTPAnnotation is nil")
+		}
+		ann := bc.HTTPAnnotation
+		if ann.Verb != "POST" {
+			t.Errorf("BatchCreate HTTPAnnotation.Verb = %q, want POST", ann.Verb)
+		}
+		if ann.Body != "*" {
+			t.Errorf("BatchCreate HTTPAnnotation.Body = %q, want *", ann.Body)
+		}
+		if ann.Entity != "book" {
+			t.Errorf("BatchCreate HTTPAnnotation.Entity = %q, want book", ann.Entity)
+		}
+		if ann.Suffix != "batchCreate" {
+			t.Errorf("BatchCreate HTTPAnnotation.Suffix = %q, want batchCreate", ann.Suffix)
+		}
+		if len(ann.KeyLeaves) != 0 {
+			t.Errorf("BatchCreate HTTPAnnotation.KeyLeaves len = %d, want 0 (no key in path)", len(ann.KeyLeaves))
+		}
+		got := ann.ResolvePath("/library", "LibraryService")
+		want := "/library/LibraryService/book/batchCreate"
+		if got != want {
+			t.Errorf("BatchCreate ResolvePath = %q, want %q", got, want)
+		}
+	})
+
+	// Subtest 5: HTTP disabled — BatchCreate annotation is nil
+	t.Run("http disabled no annotation", func(t *testing.T) {
+		cfg := &apigenyaml.Config{
+			Syntax: "v1",
+			Name:   "test",
+			Entities: []apigenyaml.Entity{{
+				Name:   "book",
+				Key:    apigenyaml.KeyDef{Type: "BookId"},
+				Create: &apigenyaml.CreateDef{Batch: true},
+				Resources: []apigenyaml.Resource{{
+					Name:    "meta",
+					Type:    "BookMeta",
+					Version: apigenyaml.VersionDef{Kind: "NONE"},
+				}},
+			}},
+		}
+		irData, err := Build(cfg)
+		if err != nil {
+			t.Fatalf("Build failed: %v", err)
+		}
+		bc := irData.Entities[0].BatchCreate
+		if bc.HTTPAnnotation != nil {
+			t.Error("BatchCreate.HTTPAnnotation should be nil when HTTP is disabled")
+		}
+	})
+}

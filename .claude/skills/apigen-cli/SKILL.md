@@ -152,6 +152,7 @@ services:
 | 配置 | 生成的方法 | 层级 |
 | --- | --- | --- |
 | `create: {}` | `Create<Entity>` | 实体写 |
+| `create: { batch: true }` | `Create<Entity>` + `BatchCreate<Entity>s` | 实体写 |
 | `create: { key: client }` | `Create<Entity>`（请求含 key） | 实体写 |
 | `delete: {}` | `Delete<Entity>` | 实体写 |
 | `delete_soft: {}` | `Delete<Entity>Soft` | 实体写 |

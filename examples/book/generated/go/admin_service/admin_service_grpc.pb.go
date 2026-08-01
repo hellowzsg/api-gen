@@ -20,12 +20,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AdminService_CreateBook_FullMethodName     = "/demo.business.book.admin_service.AdminService/CreateBook"
-	AdminService_DeleteBook_FullMethodName     = "/demo.business.book.admin_service.AdminService/DeleteBook"
-	AdminService_DeleteBookSoft_FullMethodName = "/demo.business.book.admin_service.AdminService/DeleteBookSoft"
-	AdminService_GetBookMeta_FullMethodName    = "/demo.business.book.admin_service.AdminService/GetBookMeta"
-	AdminService_ListBookMetas_FullMethodName  = "/demo.business.book.admin_service.AdminService/ListBookMetas"
-	AdminService_UpdateBookMeta_FullMethodName = "/demo.business.book.admin_service.AdminService/UpdateBookMeta"
+	AdminService_CreateBook_FullMethodName       = "/demo.business.book.admin_service.AdminService/CreateBook"
+	AdminService_BatchCreateBooks_FullMethodName = "/demo.business.book.admin_service.AdminService/BatchCreateBooks"
+	AdminService_DeleteBook_FullMethodName       = "/demo.business.book.admin_service.AdminService/DeleteBook"
+	AdminService_DeleteBookSoft_FullMethodName   = "/demo.business.book.admin_service.AdminService/DeleteBookSoft"
+	AdminService_GetBookMeta_FullMethodName      = "/demo.business.book.admin_service.AdminService/GetBookMeta"
+	AdminService_ListBookMetas_FullMethodName    = "/demo.business.book.admin_service.AdminService/ListBookMetas"
+	AdminService_UpdateBookMeta_FullMethodName   = "/demo.business.book.admin_service.AdminService/UpdateBookMeta"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -33,6 +34,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AdminServiceClient interface {
 	CreateBook(ctx context.Context, in *CreateBookRequest, opts ...grpc.CallOption) (*CreateBookResponse, error)
+	BatchCreateBooks(ctx context.Context, in *BatchCreateBooksRequest, opts ...grpc.CallOption) (*BatchCreateBooksResponse, error)
 	DeleteBook(ctx context.Context, in *DeleteBookRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteBookSoft(ctx context.Context, in *DeleteBookSoftRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetBookMeta(ctx context.Context, in *GetBookMetaRequest, opts ...grpc.CallOption) (*GetBookMetaResponse, error)
@@ -52,6 +54,16 @@ func (c *adminServiceClient) CreateBook(ctx context.Context, in *CreateBookReque
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateBookResponse)
 	err := c.cc.Invoke(ctx, AdminService_CreateBook_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) BatchCreateBooks(ctx context.Context, in *BatchCreateBooksRequest, opts ...grpc.CallOption) (*BatchCreateBooksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BatchCreateBooksResponse)
+	err := c.cc.Invoke(ctx, AdminService_BatchCreateBooks_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -113,6 +125,7 @@ func (c *adminServiceClient) UpdateBookMeta(ctx context.Context, in *UpdateBookM
 // for forward compatibility.
 type AdminServiceServer interface {
 	CreateBook(context.Context, *CreateBookRequest) (*CreateBookResponse, error)
+	BatchCreateBooks(context.Context, *BatchCreateBooksRequest) (*BatchCreateBooksResponse, error)
 	DeleteBook(context.Context, *DeleteBookRequest) (*emptypb.Empty, error)
 	DeleteBookSoft(context.Context, *DeleteBookSoftRequest) (*emptypb.Empty, error)
 	GetBookMeta(context.Context, *GetBookMetaRequest) (*GetBookMetaResponse, error)
@@ -130,6 +143,9 @@ type UnimplementedAdminServiceServer struct{}
 
 func (UnimplementedAdminServiceServer) CreateBook(context.Context, *CreateBookRequest) (*CreateBookResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateBook not implemented")
+}
+func (UnimplementedAdminServiceServer) BatchCreateBooks(context.Context, *BatchCreateBooksRequest) (*BatchCreateBooksResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BatchCreateBooks not implemented")
 }
 func (UnimplementedAdminServiceServer) DeleteBook(context.Context, *DeleteBookRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteBook not implemented")
@@ -181,6 +197,24 @@ func _AdminService_CreateBook_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AdminServiceServer).CreateBook(ctx, req.(*CreateBookRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_BatchCreateBooks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchCreateBooksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).BatchCreateBooks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_BatchCreateBooks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).BatchCreateBooks(ctx, req.(*BatchCreateBooksRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -285,6 +319,10 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateBook",
 			Handler:    _AdminService_CreateBook_Handler,
+		},
+		{
+			MethodName: "BatchCreateBooks",
+			Handler:    _AdminService_BatchCreateBooks_Handler,
 		},
 		{
 			MethodName: "DeleteBook",

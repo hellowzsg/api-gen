@@ -158,7 +158,39 @@ HTTP 路径：`POST /{prefix}/{Service}/note/{key.id}` body:`"*"`
 
 ---
 
-## 场景 5：Service 收窄
+## 场景 5：批量创建
+
+```yaml
+entities:
+  - name: book
+    key: { type_: BookId }
+    create: { batch: true }
+    resources:
+      - name: meta
+        type_: BookMeta
+        version: { kind: NONE }
+        reader: {}
+```
+
+同时生成 `CreateBook` 和 `BatchCreateBooks` 两个 RPC：
+
+```proto
+rpc CreateBook(CreateBookRequest) returns (CreateBookResponse);
+rpc BatchCreateBooks(BatchCreateBooksRequest) returns (BatchCreateBooksResponse);
+
+message CreateBookRequest { BookMeta meta = 1; }
+message CreateBookResponse { BookId key = 1; }
+message BatchCreateBooksRequest { repeated CreateBookRequest requests = 1; }
+message BatchCreateBooksResponse { repeated BookId keys = 1; }
+```
+
+HTTP 路径：`POST /{prefix}/{Service}/book/batchCreate` body:`"*"`
+
+`batch: true` 可与 `key: client` 组合，每个 `requests` 元素携带各自的 key。
+
+---
+
+## 场景 6：Service 收窄
 
 ```yaml
 services:
@@ -176,7 +208,7 @@ services:
 
 ---
 
-## 场景 6：远程依赖
+## 场景 7：远程依赖
 
 ```yaml
 import_protos:

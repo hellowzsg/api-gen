@@ -67,12 +67,13 @@ func RenderServiceProto(irData *ir.IR, svc ir.ServiceIR) (string, error) {
 //     narrowing only applies to resource-level methods.
 func narrowEntity(e ir.EntityIR, se ir.ServiceEntityIR) ir.EntityIR {
 	out := ir.EntityIR{
-		Name:       e.Name,
-		PascalName: e.PascalName,
-		KeyType:    e.KeyType,
-		Create:     e.Create,
-		Delete:     e.Delete,
-		DeleteSoft: e.DeleteSoft,
+		Name:        e.Name,
+		PascalName:  e.PascalName,
+		KeyType:     e.KeyType,
+		Create:      e.Create,
+		BatchCreate: e.BatchCreate,
+		Delete:      e.Delete,
+		DeleteSoft:  e.DeleteSoft,
 	}
 	if len(se.Resources) == 0 {
 		out.Resources = e.Resources
@@ -117,6 +118,9 @@ func renderServiceRPCs(sb *strings.Builder, e *ir.EntityIR, hctx httpRenderConte
 	if e.Create != nil {
 		renderRPCWithHTTP(sb, e.Create.RPCName, e.Create.RequestName, e.Create.ResponseName, "", e.Create.HTTPAnnotation, hctx)
 	}
+	if e.BatchCreate != nil {
+		renderRPCWithHTTP(sb, e.BatchCreate.RPCName, e.BatchCreate.RequestName, e.BatchCreate.ResponseName, "", e.BatchCreate.HTTPAnnotation, hctx)
+	}
 	if e.Delete != nil {
 		renderRPCWithHTTP(sb, e.Delete.RPCName, e.Delete.RequestName, e.Delete.ResponseName, "", e.Delete.HTTPAnnotation, hctx)
 	}
@@ -150,6 +154,10 @@ func renderMessages(sb *strings.Builder, e *ir.EntityIR) {
 		}
 		sb.WriteString("}\n")
 		sb.WriteString(fmt.Sprintf("message %s { %s key = %d; }\n\n", e.Create.ResponseName, e.Create.ResponseKeyField.Type, e.Create.ResponseKeyField.Number))
+	}
+	if e.BatchCreate != nil {
+		sb.WriteString(fmt.Sprintf("message %s { repeated %s %s = %d; }\n", e.BatchCreate.RequestName, e.BatchCreate.RequestsField.Type, e.BatchCreate.RequestsField.Name, e.BatchCreate.RequestsField.Number))
+		sb.WriteString(fmt.Sprintf("message %s { repeated %s %s = %d; }\n\n", e.BatchCreate.ResponseName, e.BatchCreate.KeysField.Type, e.BatchCreate.KeysField.Name, e.BatchCreate.KeysField.Number))
 	}
 	if e.Delete != nil {
 		sb.WriteString(fmt.Sprintf("message %s { %s key = %d; }\n", e.Delete.RequestName, e.Delete.KeyField.Type, e.Delete.KeyField.Number))
@@ -309,8 +317,10 @@ func generateImports(needEmpty, needMask, needWrapper, needHTTP bool, typeImport
 func generateExemptions(entities []ir.EntityIR, httpEnabled bool) []string {
 	var exemptions []string
 	hasCreate, hasDelete, hasDeleteSoft, hasGet, hasBatchGet, hasList, hasUpdate := false, false, false, false, false, false, false
+	hasBatchCreate := false
 	for _, e := range entities {
 		if e.Create != nil { hasCreate = true }
+		if e.BatchCreate != nil { hasBatchCreate = true }
 		if e.Delete != nil { hasDelete = true }
 		if e.DeleteSoft != nil { hasDeleteSoft = true }
 		for _, r := range e.Resources {
@@ -335,6 +345,9 @@ func generateExemptions(entities []ir.EntityIR, httpEnabled bool) []string {
 	if hasBatchGet {
 		exemptions = append(exemptions, "core::0231::response-message-name", "core::0231::method-name")
 	}
+	if hasBatchCreate {
+		exemptions = append(exemptions, "core::0233::request-message-name", "core::0233::method-name")
+	}
 	// HTTP-specific exemptions (only when HTTP is enabled).
 	if httpEnabled {
 		if hasCreate {
@@ -355,6 +368,9 @@ func generateExemptions(entities []ir.EntityIR, httpEnabled bool) []string {
 		}
 		if hasBatchGet {
 			exemptions = append(exemptions, "core::0231::http-body", "core::0231::http-method")
+		}
+		if hasBatchCreate {
+			exemptions = append(exemptions, "core::0233::http-body", "core::0233::http-method")
 		}
 		if hasList {
 			exemptions = append(exemptions, "core::0132::http-method", "core::0132::http-body")

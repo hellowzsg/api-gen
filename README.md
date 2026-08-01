@@ -179,6 +179,7 @@ apigen entity list -f api.yaml
 | 生成方法 | 来源配置 |
 | --- | --- |
 | `CreateBook` | `create: {}` |
+| `BatchCreateBooks` | `create: { batch: true }` |
 | `DeleteBook` | `delete: {}` |
 | `GetBookMeta` | `reader`（配置即默认生成） |
 | `BatchGetBookMetas` | `reader.batch: true` |
@@ -305,8 +306,9 @@ key: { type_: demo.common.ShelfId }
 | --- | --- | --- |
 | `name` | `string` | 实体名，使用 `snake_case`，作为生成类型和方法的命名词干。 |
 | `key.type_` | `string` | 主键 message 类型；可使用全限定名。 |
-| `create` | `object` | 生成 `Create`。支持 `key` 子字段指定主键生成方（见下表）。 |
+| `create` | `object` | 生成 `Create`。支持 `key` 和 `batch` 子字段。 |
 | `create.key` | `string` | 主键生成方：`server`（默认，服务端生成）或 `client`（客户端指定）。 |
+| `create.batch` | `bool` | 设为 `true` 时额外生成 `BatchCreate<Entity>s` RPC（批量创建）。默认 `false`。 |
 | `delete` | `object` | 设为 `{}` 时生成硬删除 `Delete`。 |
 | `delete_soft` | `object` | 设为 `{}` 时生成软删除 `DeleteSoft`；可与 `delete` 并存。 |
 | `resources` | `[]object` | 至少声明一个资源。 |
@@ -321,6 +323,19 @@ key: { type_: demo.common.ShelfId }
 | 客户端指定 | `create: { key: client }` | `{ key = 1; <资源> = 2..N+1 }` | `POST /{prefix}/{Service}/{collection}/{key叶子段...}` body:`"*"` | `{ key = 1 }`（回显） |
 
 > **注意**：模式一经发布不要切换——切换会导致请求字段号变化（key 出现/消失），属于 breaking change。
+
+#### 批量创建（BatchCreate）
+
+`create: { batch: true }` 时额外生成 `BatchCreate<Entity>s` RPC：
+
+| 方法 | 请求 | 响应 | HTTP 路径 |
+| --- | --- | --- | --- |
+| `BatchCreateBooks` | `{ repeated CreateBookRequest requests = 1 }` | `{ repeated BookId keys = 1 }` | `POST /{prefix}/{Service}/{collection}/batchCreate` body:`"*"` |
+
+- `requests` 元素复用单条 `Create<Entity>Request` 形态（含各自资源，支持部分创建）
+- `batch: true` 可与 `key: server` / `key: client` 任意组合
+- HTTP 路径不携带 key（集合级操作，key 在 body 的 requests 内）
+- `batch` 一经发布不要移除（移除会导致 RPC 消失，属于 breaking change）
 
 #### 资源字段
 

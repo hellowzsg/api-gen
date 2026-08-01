@@ -64,8 +64,9 @@ import_protos:
 | --- | --- | --- |
 | `name` | string | 实体名，`snake_case`；生成类型的命名词干 |
 | `key.type_` | string | 主键 message 类型；可使用全限定名 |
-| `create` | object | 生成 `Create`；支持 `key` 子字段 |
+| `create` | object | 生成 `Create`；支持 `key` 和 `batch` 子字段 |
 | `create.key` | string | 主键提供方：`server`（默认）或 `client` |
+| `create.batch` | bool | 设为 `true` 时额外生成 `BatchCreate<Entity>s` RPC；默认 `false` |
 | `delete` | object | 设为 `{}` 生成硬删除 `Delete` |
 | `delete_soft` | object | 设为 `{}` 生成软删除 `DeleteSoft`；可与 `delete` 并存 |
 | `resources` | []object | 至少声明一个资源 |
