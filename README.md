@@ -2,6 +2,8 @@
 
 > 基于实体模型生成 AIP 风格 gRPC 服务定义，并按需生成 Go、HTTP 网关、OpenAPI 和 TypeScript 代码。
 
+[![Release](https://github.com/hellowzsg/api-gen/actions/workflows/release.yml/badge.svg)](https://github.com/hellowzsg/api-gen/actions/workflows/release.yml)
+
 [English](README_EN.md) | 简体中文
 
 ## 目录

@@ -28,6 +28,8 @@ func runGenerate(ctx context.Context, apiYAMLPath string) error {
 // successfully. This makes generate atomic — a failure midway leaves the
 // previous output intact.
 func renderServiceProtos(p *Pipeline) error {
+	// Inject the release version (from ldflags) into generated proto headers.
+	render.Version = Version
 	protoOutDir := filepath.Join(p.BaseDir, p.Config.Settings.Out.Proto)
 	staging, err := newStagingDir(protoOutDir)
 	if err != nil {

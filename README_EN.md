@@ -5,6 +5,7 @@
 [![Go Version](https://img.shields.io/badge/Go-1.24%2B-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](#license)
 [![API Style](https://img.shields.io/badge/gRPC-AIP%20Style-green.svg)](https://aip.dev/)
+[![Release](https://github.com/hellowzsg/api-gen/actions/workflows/release.yml/badge.svg)](https://github.com/hellowzsg/api-gen/actions/workflows/release.yml)
 
 简体中文 | [English](README_EN.md)
 
