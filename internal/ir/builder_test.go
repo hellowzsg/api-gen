@@ -85,7 +85,6 @@ func TestBuildResourceLevelMethods(t *testing.T) {
 				Version: apigenyaml.VersionDef{Kind: "STRONG", Type: "U64"},
 				Reader: &apigenyaml.ReaderDef{
 					Batch: true,
-					List:  true,
 				},
 				Writer: &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{Mask: true}},
 			}},
@@ -110,12 +109,6 @@ func TestBuildResourceLevelMethods(t *testing.T) {
 	}
 	if r.BatchGet.RPCName != "BatchGetBookMetas" {
 		t.Errorf("BatchGet.RPCName = %q, want %q", r.BatchGet.RPCName, "BatchGetBookMetas")
-	}
-	if r.List == nil {
-		t.Fatal("List is nil")
-	}
-	if r.List.RPCName != "ListBookMetas" {
-		t.Errorf("List.RPCName = %q, want %q", r.List.RPCName, "ListBookMetas")
 	}
 	if r.Update == nil {
 		t.Fatal("Update is nil")
@@ -282,13 +275,13 @@ func TestBuild_HTTPEnabled(t *testing.T) {
 			Create:     &apigenyaml.CreateDef{},
 			Delete:     &struct{}{},
 			DeleteSoft: &struct{}{},
+			List:       &apigenyaml.EntityListDef{Resources: []string{"meta"}},
 			Resources: []apigenyaml.Resource{{
 				Name:    "meta",
 				Type:    "BookMeta",
 				Version: apigenyaml.VersionDef{Kind: "NONE"},
 				Reader: &apigenyaml.ReaderDef{
 					Batch: true,
-					List:  true,
 				},
 				Writer: &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{}},
 			}},
@@ -347,6 +340,16 @@ func TestBuild_HTTPEnabled(t *testing.T) {
 			t.Errorf("DeleteSoft.Body = %q, want *", e.DeleteSoft.HTTPAnnotation.Body)
 		}
 	}
+	if e.List == nil || e.List.HTTPAnnotation == nil {
+		t.Error("List.HTTPAnnotation should be non-nil when HTTP enabled")
+	} else {
+		if e.List.HTTPAnnotation.Verb != "POST" {
+			t.Errorf("List.Verb = %q, want POST", e.List.HTTPAnnotation.Verb)
+		}
+		if e.List.HTTPAnnotation.Body != "*" {
+			t.Errorf("List.Body = %q, want *", e.List.HTTPAnnotation.Body)
+		}
+	}
 	r := e.Resources[0]
 	if r.Get == nil || r.Get.HTTPAnnotation == nil {
 		t.Error("Get.HTTPAnnotation should be non-nil when HTTP enabled")
@@ -363,16 +366,6 @@ func TestBuild_HTTPEnabled(t *testing.T) {
 		}
 		if r.BatchGet.HTTPAnnotation.Body != "*" {
 			t.Errorf("BatchGet.Body = %q, want *", r.BatchGet.HTTPAnnotation.Body)
-		}
-	}
-	if r.List == nil || r.List.HTTPAnnotation == nil {
-		t.Error("List.HTTPAnnotation should be non-nil when HTTP enabled")
-	} else {
-		if r.List.HTTPAnnotation.Verb != "POST" {
-			t.Errorf("List.Verb = %q, want POST", r.List.HTTPAnnotation.Verb)
-		}
-		if r.List.HTTPAnnotation.Body != "*" {
-			t.Errorf("List.Body = %q, want *", r.List.HTTPAnnotation.Body)
 		}
 	}
 	if r.Update == nil || r.Update.HTTPAnnotation == nil {
@@ -407,11 +400,12 @@ func TestBuild_HTTPStructuredAnnotations(t *testing.T) {
 			Create:     &apigenyaml.CreateDef{},
 			Delete:     &struct{}{},
 			DeleteSoft: &struct{}{},
+			List:       &apigenyaml.EntityListDef{Resources: []string{"meta"}},
 			Resources: []apigenyaml.Resource{{
 				Name:    "meta",
 				Type:    "BookMeta",
 				Version: apigenyaml.VersionDef{Kind: "NONE"},
-				Reader:  &apigenyaml.ReaderDef{Batch: true, List: true},
+				Reader:  &apigenyaml.ReaderDef{Batch: true},
 				Writer:  &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{}},
 			}},
 		}},
@@ -465,6 +459,16 @@ func TestBuild_HTTPStructuredAnnotations(t *testing.T) {
 		t.Errorf("DeleteSoft ResolvePath = %q, want /library/LibraryService/book/deleteSoft", got)
 	}
 
+	// List: entity-level with list suffix, no resource segment.
+	ann = e.List.HTTPAnnotation
+	if ann.Resource != "" || ann.Suffix != "list" || len(ann.KeyLeaves) != 0 {
+		t.Errorf("List segments = {resource:%q suffix:%q leaves:%d}, want {\"\" list 0}",
+			ann.Resource, ann.Suffix, len(ann.KeyLeaves))
+	}
+	if got := ann.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/list" {
+		t.Errorf("List ResolvePath = %q, want /library/LibraryService/book/list", got)
+	}
+
 	r := e.Resources[0]
 	// Get: key leaves + resource.
 	if got := r.Get.HTTPAnnotation.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/{key.id}/meta" {
@@ -478,10 +482,6 @@ func TestBuild_HTTPStructuredAnnotations(t *testing.T) {
 	}
 	if got := ann.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/meta/batchGet" {
 		t.Errorf("BatchGet ResolvePath = %q, want /library/LibraryService/book/meta/batchGet", got)
-	}
-	// List: resource + list suffix.
-	if got := r.List.HTTPAnnotation.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/meta/list" {
-		t.Errorf("List ResolvePath = %q, want /library/LibraryService/book/meta/list", got)
 	}
 	// Update: key leaves + resource.
 	if got := r.Update.HTTPAnnotation.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/{key.id}/meta" {
@@ -518,26 +518,25 @@ func TestHTTPAnnotation_ResolvePath(t *testing.T) {
 	if got := ann.ResolvePath("/library", "AdminService"); got != "/custom/{key.id}/items" {
 		t.Errorf("verbatim override path = %q, want /custom/{key.id}/items", got)
 	}
-	// Override (template, entity-level reader/writer http): the path
-	// segment equal to OverrideTemplateSvc is replaced by the rendering
-	// service name so each service inheriting the entity gets an isolated
-	// route.
+	// Override (template, writer.update http): the path segment equal to
+	// OverrideTemplateSvc is replaced by the rendering service name so each
+	// service inheriting the entity gets an isolated route.
 	ann = &HTTPAnnotation{
-		Verb:                "GET",
+		Verb:                "PATCH",
 		Entity:              "book",
 		IsOverride:          true,
-		OverridePath:        "/library/LibraryService/book/meta/list",
+		OverridePath:        "/library/LibraryService/book/{key.id}/meta",
 		OverrideTemplateSvc: "LibraryService",
 	}
-	if got := ann.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/meta/list" {
-		t.Errorf("template override (same svc) = %q, want /library/LibraryService/book/meta/list", got)
+	if got := ann.ResolvePath("/library", "LibraryService"); got != "/library/LibraryService/book/{key.id}/meta" {
+		t.Errorf("template override (same svc) = %q, want /library/LibraryService/book/{key.id}/meta", got)
 	}
-	if got := ann.ResolvePath("/library", "AdminService"); got != "/library/AdminService/book/meta/list" {
-		t.Errorf("template override (AdminService) = %q, want /library/AdminService/book/meta/list", got)
+	if got := ann.ResolvePath("/library", "AdminService"); got != "/library/AdminService/book/{key.id}/meta" {
+		t.Errorf("template override (AdminService) = %q, want /library/AdminService/book/{key.id}/meta", got)
 	}
 }
 
-// TestBuildListFilterType: list_config.filter_type sets Filter.Type.
+// TestBuildListFilterType: entity.list.list_config.filter_type sets Filter.Type.
 func TestBuildListFilterType(t *testing.T) {
 	t.Run("filter_type declared uses custom message type", func(t *testing.T) {
 		cfg := &apigenyaml.Config{
@@ -545,17 +544,14 @@ func TestBuildListFilterType(t *testing.T) {
 			Entities: []apigenyaml.Entity{{
 				Name: "book",
 				Key:  apigenyaml.KeyDef{Type: "BookId"},
+				List: &apigenyaml.EntityListDef{
+					Resources:  []string{"meta"},
+					ListConfig: &apigenyaml.ListConfig{FilterType: "BookMetaFilter"},
+				},
 				Resources: []apigenyaml.Resource{{
 					Name:    "meta",
 					Type:    "BookMeta",
 					Version: apigenyaml.VersionDef{Kind: "NONE"},
-					Reader: &apigenyaml.ReaderDef{
-						List: true,
-						ListConfig: &apigenyaml.ListConfig{
-							TotalSize:  true,
-							FilterType: "BookMetaFilter",
-						},
-					},
 				}},
 			}},
 		}
@@ -563,7 +559,7 @@ func TestBuildListFilterType(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Build failed: %v", err)
 		}
-		l := irData.Entities[0].Resources[0].List
+		l := irData.Entities[0].List
 		if l == nil {
 			t.Fatal("List is nil")
 		}
@@ -581,16 +577,14 @@ func TestBuildListFilterType(t *testing.T) {
 			Entities: []apigenyaml.Entity{{
 				Name: "book",
 				Key:  apigenyaml.KeyDef{Type: "BookId"},
+				List: &apigenyaml.EntityListDef{
+					Resources:  []string{"meta"},
+					ListConfig: &apigenyaml.ListConfig{},
+				},
 				Resources: []apigenyaml.Resource{{
 					Name:    "meta",
 					Type:    "BookMeta",
 					Version: apigenyaml.VersionDef{Kind: "NONE"},
-					Reader: &apigenyaml.ReaderDef{
-						List: true,
-						ListConfig: &apigenyaml.ListConfig{
-							TotalSize: true,
-						},
-					},
 				}},
 			}},
 		}
@@ -598,7 +592,7 @@ func TestBuildListFilterType(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Build failed: %v", err)
 		}
-		l := irData.Entities[0].Resources[0].List
+		l := irData.Entities[0].List
 		if l == nil {
 			t.Fatal("List is nil")
 		}
@@ -616,13 +610,11 @@ func TestBuildListFilterType(t *testing.T) {
 			Entities: []apigenyaml.Entity{{
 				Name: "book",
 				Key:  apigenyaml.KeyDef{Type: "BookId"},
+				List: &apigenyaml.EntityListDef{Resources: []string{"meta"}},
 				Resources: []apigenyaml.Resource{{
 					Name:    "meta",
 					Type:    "BookMeta",
 					Version: apigenyaml.VersionDef{Kind: "NONE"},
-					Reader: &apigenyaml.ReaderDef{
-						List: true,
-					},
 				}},
 			}},
 		}
@@ -630,7 +622,7 @@ func TestBuildListFilterType(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Build failed: %v", err)
 		}
-		l := irData.Entities[0].Resources[0].List
+		l := irData.Entities[0].List
 		if l == nil {
 			t.Fatal("List is nil")
 		}
@@ -640,7 +632,7 @@ func TestBuildListFilterType(t *testing.T) {
 	})
 }
 
-// TestBuildPerMethodHTTPOverride: reader.http overrides default verb/path.
+// TestBuildPerMethodHTTPOverride: writer.update.http overrides default verb/body.
 func TestBuildPerMethodHTTPOverride(t *testing.T) {
 	cfg := &apigenyaml.Config{
 		Syntax: "v1",
@@ -657,13 +649,7 @@ func TestBuildPerMethodHTTPOverride(t *testing.T) {
 				Name:    "meta",
 				Type:    "BookMeta",
 				Version: apigenyaml.VersionDef{Kind: "NONE"},
-				Reader: &apigenyaml.ReaderDef{
-					List: true,
-					HTTP: &apigenyaml.HTTPOverride{
-						Verb: "get",
-						Path: "/custom/path/{key.id}/metadata",
-					},
-				},
+				Reader:  &apigenyaml.ReaderDef{},
 				Writer: &apigenyaml.WriterDef{
 					Update: &apigenyaml.UpdateDef{
 						Mask: true,
@@ -685,24 +671,6 @@ func TestBuildPerMethodHTTPOverride(t *testing.T) {
 	}
 	e := irData.Entities[0]
 	r := e.Resources[0]
-
-	// reader.http overrides List verb/path.
-	if r.List == nil || r.List.HTTPAnnotation == nil {
-		t.Fatal("List.HTTPAnnotation should be non-nil")
-	}
-	if r.List.HTTPAnnotation.Verb != "GET" {
-		t.Errorf("List.Verb = %q, want GET (overridden)", r.List.HTTPAnnotation.Verb)
-	}
-	if !r.List.HTTPAnnotation.IsOverride {
-		t.Error("List.IsOverride = false, want true (path overridden)")
-	}
-	if r.List.HTTPAnnotation.OverridePath != "/custom/path/{key.id}/metadata" {
-		t.Errorf("List.OverridePath = %q, want /custom/path/{key.id}/metadata (overridden)", r.List.HTTPAnnotation.OverridePath)
-	}
-	// List with verb=GET should have no body.
-	if r.List.HTTPAnnotation.Body != "" {
-		t.Errorf("List.Body = %q, want empty (GET has no body)", r.List.HTTPAnnotation.Body)
-	}
 
 	// writer.update.http overrides Update verb and body_style.
 	if r.Update == nil || r.Update.HTTPAnnotation == nil {

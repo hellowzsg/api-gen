@@ -159,6 +159,9 @@ func runEntityList(ctx context.Context, apiYAMLPath string) error {
 		if e.DeleteSoft != nil {
 			fmt.Printf("  DeleteSoft: %s\n", e.DeleteSoft.RPCName)
 		}
+		if e.List != nil {
+			fmt.Printf("  List: %s\n", e.List.RPCName)
+		}
 		for _, r := range e.Resources {
 			fmt.Printf("  Resource: %s (Type: %s, Version: %s)\n", r.Name, r.Type, r.Version.Kind)
 			if r.Get != nil {
@@ -166,9 +169,6 @@ func runEntityList(ctx context.Context, apiYAMLPath string) error {
 			}
 			if r.BatchGet != nil {
 				fmt.Printf("    BatchGet: %s\n", r.BatchGet.RPCName)
-			}
-			if r.List != nil {
-				fmt.Printf("    List: %s\n", r.List.RPCName)
 			}
 			if r.Update != nil {
 				fmt.Printf("    Update: %s\n", r.Update.RPCName)

@@ -113,13 +113,21 @@ entities:
     key: { type_: BookId }
     create: {}
     delete: {}
+    list:
+      resource: [meta, content]
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: STRONG, type: U64 }
-        reader: { batch: true, list: true }
+        reader: { batch: true }
         writer:
           update: { mask: true }
+      - name: content
+        type_: BookContent
+        version: { kind: NONE }
+        reader: {}
+        writer:
+          update: {}
 
 services:
   - name: LibraryService
@@ -158,7 +166,7 @@ services:
 | `delete_soft: {}` | `Delete<Entity>Soft` | 实体写 |
 | `reader: {}` | `Get<Entity><Resource>` | 资源读 |
 | `reader.batch: true` | `BatchGet<Entity><Resource>s` | 资源读 |
-| `reader.list: true` | `List<Entity><Resource>s` | 资源读 |
+| `list: { resource: [meta, content] }` | `List<Entity>s`（如 `ListBooks`，返回 `<Entity>Item`） | 实体读 |
 | `writer.update: {}` | `Update<Entity><Resource>` | 资源写 |
 | `custom_methods[].name` | `<Name>` | 自定义 RPC |
 | `custom_methods[].stream` | `<Name>`（流式变体） | 自定义 RPC |
@@ -182,7 +190,7 @@ HTTP 路径（flat 风格，`http.enable` 时）：
 | Create（客户端 key） | `POST /{prefix}/{Service}/{collection}/{key叶子段...}` |
 | Get | `GET /{prefix}/{Service}/{collection}/{key叶子段...}/{resource}` |
 | BatchGet | `POST /{prefix}/{Service}/{collection}/{resource}/batchGet` body:`"*"` |
-| List | `POST /{prefix}/{Service}/{collection}/{resource}/list` body:`"*"` |
+| List | `POST /{prefix}/{Service}/{collection}/list` body:`"*"`（实体级，无资源段、无 key 段） |
 | Update | `PATCH /{prefix}/{Service}/{collection}/{key叶子段...}/{resource}` |
 | Delete | `DELETE /{prefix}/{Service}/{collection}/{key叶子段...}` |
 | DeleteSoft | `POST /{prefix}/{Service}/{collection}/deleteSoft` body:`"*"` |

@@ -149,11 +149,13 @@ entities:
     key: { type_: BookId }
     create: {}
     delete: {}
+    list:
+      resource: [meta, content]
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: STRONG, type: U64 }
-        reader: { batch: true, list: true }
+        reader: { batch: true }
         writer:
           update: { mask: true }
 
@@ -185,7 +187,7 @@ apigen entity list -f api.yaml
 | `DeleteBook` | `delete: {}` |
 | `GetBookMeta` | `reader`（配置即默认生成） |
 | `BatchGetBookMetas` | `reader.batch: true` |
-| `ListBookMetas` | `reader.list: true` |
+| `ListBooks` | `list: { resource: [meta, content] }` |
 | `UpdateBookMeta` | `writer.update` |
 
 ## 命令参考
@@ -313,6 +315,7 @@ key: { type_: demo.common.ShelfId }
 | `create.batch` | `bool` | 设为 `true` 时额外生成 `BatchCreate<Entity>s` RPC（批量创建）。默认 `false`。 |
 | `delete` | `object` | 设为 `{}` 时生成硬删除 `Delete`。 |
 | `delete_soft` | `object` | 设为 `{}` 时生成软删除 `DeleteSoft`；可与 `delete` 并存。 |
+| `list` | `object` | 生成实体级 `List`。通过 `resource` 指定列表目标资源；`list_config` 可配置筛选类型。 |
 | `resources` | `[]object` | 至少声明一个资源。 |
 
 #### Create 主键生成模式
@@ -349,13 +352,31 @@ key: { type_: demo.common.ShelfId }
 | `version.type` | `string` | 版本值类型：`U64`、`U32` 或 `STRING`；`STRONG`、`WEAK` 时需要。 |
 | `reader` | `object` | 读取能力。配置 `reader: {}` 即生成 `Get`。 |
 | `reader.batch` | `bool` | 生成 `BatchGet`。 |
-| `reader.list` | `bool` | 生成 `List`，请求包含分页、`filter` 和 `order_by`。 |
-| `reader.list_config.total_size` | `bool` | List 响应是否包含 `total_size`；省略或为 `true` 时包含。 |
-| `reader.http` | `object` | 仅覆盖 `List` 的 HTTP `verb`、`path`、`body` 或 `body_style`。 |
 | `writer.update` | `object` | 配置后生成 `Update`。 |
 | `writer.update.mask` | `bool` | 是否在 Update 请求中加入 `google.protobuf.FieldMask` 类型的 `update_mask`。 |
 | `writer.update.http` | `object` | 覆盖 Update 的 HTTP `verb`、`path`、`body` 或 `body_style`。 |
 | `options` | `[]object` | 已解析并校验的预留配置；当前不会写入生成的 proto option。 |
+
+#### 实体级 List（`list`）
+
+`list` 是实体级能力，通过 `resource`（列表）指定列表查询覆盖的目标资源集合。它不以具体 key 为前提，HTTP 路径为 `/{prefix}/{Service}/{collection}/list`（集合级操作，无资源段、无 key 段）。
+
+| 字段 | 类型 | 作用 |
+| --- | --- | --- |
+| `list.resource` | `[]string` | 列表查询覆盖的资源名列表，每个必须是该实体下已声明的资源，不可为空、不可重复。 |
+| `list.list_config.filter_type` | `string` | 可选的 `filter` 字段类型引用。 |
+
+生成 `List<Entity>s` RPC（如 `ListBooks`），请求 `List<Entity>sRequest`：`limit = 1`、`offset = 2`、`filter = 3`（`list_config.filter_type` 指定时）、`order_by = 4`；响应 `List<Entity>sResponse`：`repeated <Entity>Item items = 1`、`total_size = 2`（必选）。同时自动生成 `<Entity>Item` 聚合类型（如 `BookItem`），字段 = 每个声明资源按序（`meta=1, content=2`）。分页采用 offset 风格，而非游标（page_token）。
+
+```yaml
+entities:
+  - name: book
+    key: { type_: BookId }
+    list:
+      resource: [meta, content]
+      list_config:
+        filter_type: BookMetaFilter
+```
 
 #### 版本策略
 
@@ -375,7 +396,8 @@ key: { type_: demo.common.ShelfId }
 | --- | --- | --- |
 | `services[].name` | `string` | Service 名，使用 `PascalCase`，如 `LibraryService`。 |
 | `services[].entities[].name` | `string` | 引用已在 `entities` 中定义的实体。 |
-| `services[].entities[].resources` | `[]object` | 可选的收窄规则；当前使用资源 `name`、`reader.batch`、`reader.list` 与 `writer.update`。省略时暴露该实体的全部能力。 |
+| `services[].entities[].list` | `bool` | 可选。设为 `false` 时收窄掉实体的 `List` 能力；省略或 `true` 时继承实体 `list` 配置。 |
+| `services[].entities[].resources` | `[]object` | 可选的收窄规则；当前使用资源 `name`、`reader.batch` 与 `writer.update`。省略时暴露该实体的全部能力。 |
 | `services[].custom_methods` | `[]object` | service 级自定义 RPC 列表。 |
 | `custom_methods[].name` | `string` | 自定义 RPC 名，使用 `PascalCase`。 |
 | `custom_methods[].request` | `string` | Request message 类型。 |
@@ -392,9 +414,7 @@ services:
   - name: AdminService
     entities:
       - name: book
-        resources:
-          - name: meta
-            reader: { list: true } # 仅暴露 ListBookMetas
+        list: true               # 暴露实体级 ListBooks
     custom_methods:
       - name: ArchiveBook
         request: ArchiveBookRequest

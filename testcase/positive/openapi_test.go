@@ -45,7 +45,7 @@ func TestOpenAPI_SpecValidity(t *testing.T) {
 			"/library/LibraryService/book/deleteSoft",                // DeleteSoft
 			"/library/LibraryService/book/{key.id}/meta",             // Get/Update meta
 			"/library/LibraryService/book/meta/batchGet",             // BatchGet
-			"/library/LibraryService/book/meta/list",                 // List
+			"/library/LibraryService/book/list",                      // List (entity-level)
 			"/library/LibraryService/book/{key.id}/content",          // Get/Update content
 			"/library/LibraryService/book/{book_id}:archive",         // custom method
 		}
@@ -107,8 +107,8 @@ func TestOpenAPI_SpecValidity(t *testing.T) {
 		if !ok {
 			t.Fatal("admin swagger.json missing 'paths'")
 		}
-		// AdminService should have ListBookMetas
-		if _, ok := paths["/library/AdminService/book/meta/list"]; !ok {
+		// AdminService should have ListBooks (entity-level /book/list)
+		if _, ok := paths["/library/AdminService/book/list"]; !ok {
 			t.Errorf("admin swagger.json missing List path; got: %v", pathKeys(paths))
 		}
 		// AdminService should NOT have BatchGetBookMetas (narrowed)

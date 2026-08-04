@@ -111,10 +111,10 @@ book/
 | 实体级 Delete + DeleteSoft 共存 | `DeleteBook`（硬删）+ `DeleteBookSoft`（软删） |
 | 资源级 Get（STRONG 回带 version） | `GetBookMeta` → `Response { BookMeta=1; uint64 version=2; }` |
 | 资源级 BatchGet | `BatchGetBookMetas`（`repeated keys` → `repeated metas`） |
-| 资源级 List（分页/过滤/排序/total_size） | `ListBookMetas` |
+| 实体级 List（limit/offset 分页/过滤/排序/total_size） | `ListBooks`（`list: { resource: [meta, content] }`，返回 `BookItem`） |
 | 资源级 Update（STRONG CAS + mask） | `UpdateBookMeta`（meta/key/update_mask/version → Response{version}） |
 | 资源级 Update（NONE，返 Empty） | `UpdateBookContent`（content/key/update_mask → Empty） |
-| 多 service 复用实体 + 收窄 | `AdminService` 只暴露 `ListBookMetas` |
+| 多 service 复用实体 + 收窄 | `AdminService` 只暴露 `ListBooks`（`entities[].list: true`） |
 | api-linter 豁免 | proto 顶部行内注释 |
 | type_ 全限定名 + 跨 package 引用 | `demo.business.book.BookMeta` 引用 `demo.common.Timestamp` |
 
@@ -126,7 +126,7 @@ book/
 | flat 风格 HTTP 路径 | `/{prefix}/{service}/{collection}/{key叶子段...}/{resource}` |
 | key 标量叶子做 URL path 段 | `BookId.id` → `{key.id}` |
 | grpc-gateway 生成 `*.pb.gw.go` | `library_service.pb.gw.go` |
-| BatchGet/List 用 POST + `body:"*"` | `POST /book/meta/batchGet` |
+| BatchGet/List 用 POST + `body:"*"` | `POST /book/meta/batchGet`、`POST /book/list`（实体级） |
 | DeleteSoft 用 POST + `body:"*"` | `POST /book/deleteSoft` |
 | `google.api.http` 注解 | 每个 RPC 上的 `option (google.api.http) = {...}` |
 | 多 service 独立 HTTP 路由前缀 | `/library/LibraryService/...` vs `/library/AdminService/...` |
@@ -136,7 +136,7 @@ book/
 | 特性 | 示例中的体现 |
 |------|-------------|
 | OpenAPI v2 生成 | `generated/openapi/*.swagger.json` |
-| 逐方法 http 覆盖 | `reader.http` 将 List 覆盖为 GET |
+| 实体级 List 的 HTTP 路由 | `POST /library/LibraryService/book/list`（无资源段、无 key 段） |
 | custom_methods HTTP 路由（AIP-136） | `POST /library/LibraryService/book/{book_id}:archive` |
 | TypeScript stub 生成 | `plugins.js: [es]` → `generated/js/*_pb.ts` |
 

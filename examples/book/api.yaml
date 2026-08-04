@@ -31,16 +31,17 @@ entities:
     delete: {}
     delete_soft: {}
 
+    list:
+      resource: [meta, content]
+      list_config:
+        filter_type: BookMetaFilter
+
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: STRONG, type: U64 }
         reader:
           batch: true
-          list: true
-          list_config:
-            total_size: true
-            filter_type: BookMetaFilter
         writer:
           update: { mask: true }
 
@@ -113,8 +114,6 @@ services:
   - name: AdminService
     entities:
       - name: book
-        resources:
-          - name: meta
-            reader: { list: true }
+        list: true
 
 

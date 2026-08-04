@@ -36,7 +36,7 @@ message ArchiveBookResponse {
   bool archived = 1;
 }
 
-// BookMetaFilter 是 ListBookMetas 的结构化过滤条件。
+// BookMetaFilter 是 ListBooks 的结构化过滤条件。
 message BookMetaFilter {
   string author = 1;
   string title = 2;

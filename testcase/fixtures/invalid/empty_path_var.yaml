@@ -21,10 +21,11 @@ entities:
       - name: bar
         type_: Bar
         version: { kind: NONE }
-        reader:
-          http:
-            verb: get
-            path: /api/foo/{}/bar
+        writer:
+          update:
+            http:
+              verb: patch
+              path: /api/foo/{}/bar
 services:
   - name: FooService
     entities:

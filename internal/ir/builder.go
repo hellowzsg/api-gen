@@ -58,6 +58,7 @@ type EntityIR struct {
 	BatchCreate *BatchCreateIR
 	Delete     *DeleteIR
 	DeleteSoft *DeleteIR
+	List       *ListIR
 	Resources  []ResourceIR
 	// KeyLeaves holds the scalar leaf fields extracted from the key type's
 	// message tree. Populated only when HTTP is enabled. Used by the
@@ -106,7 +107,6 @@ type ResourceIR struct {
 	Options    []apigenyaml.OptionDef
 	Get        *GetIR
 	BatchGet   *BatchGetIR
-	List       *ListIR
 	Update     *UpdateIR
 }
 
@@ -140,13 +140,13 @@ type ListIR struct {
 	RPCName        string
 	RequestName    string
 	ResponseName   string
-	PageSize       FieldIR
-	PageToken      FieldIR
+	ItemName       string
+	Limit          FieldIR
+	Offset         FieldIR
 	Filter         FieldIR
 	OrderBy        FieldIR
-	ResourcesField FieldIR
-	NextPageToken  FieldIR
-	TotalSize      *FieldIR
+	ItemFields     []FieldIR
+	TotalSize      FieldIR
 	HTTPAnnotation *HTTPAnnotation
 }
 
@@ -268,6 +268,10 @@ type ServiceIR struct {
 
 type ServiceEntityIR struct {
 	Name      string
+	// List controls entity-level List narrowing for this service.
+	// nil = inherit (expose List if the entity declares it);
+	// *true = force expose; *false = suppress.
+	List *bool
 	// Resources is the per-service resource narrowing spec. When non-empty,
 	// only the listed resources (and their narrowed reader/writer methods)
 	// are exposed by this service. When empty, the entity's full resource
@@ -284,7 +288,6 @@ type ResourceNarrowIR struct {
 
 type ReaderNarrowIR struct {
 	Batch *bool // nil = inherit, true/false = override
-	List  *bool
 }
 
 type WriterNarrowIR struct {
@@ -389,6 +392,23 @@ func buildEntity(e *apigenyaml.Entity, cfg *apigenyaml.Config, opts BuildOptions
 		entity.DeleteSoft = buildDelete(entity.KeyType, "Delete"+pascalName+"Soft")
 		entity.DeleteSoft.HTTPAnnotation = httpCtx.buildDeleteSoftAnnotation()
 	}
+	if e.List != nil {
+		// Collect the target resources in declaration order. Validate already
+		// ensures each name matches a declared resource.
+		targets := make([]apigenyaml.Resource, 0, len(e.List.Resources))
+		for _, name := range e.List.Resources {
+			for i := range e.Resources {
+				if e.Resources[i].Name == name {
+					targets = append(targets, e.Resources[i])
+					break
+				}
+			}
+		}
+		entity.List = buildList(pascalName, targets, cfg, e.List.ListConfig)
+		if entity.List != nil {
+			entity.List.HTTPAnnotation = httpCtx.buildListAnnotation()
+		}
+	}
 	for i := range e.Resources {
 		resource, err := buildResource(&e.Resources[i], pascalName, entity.KeyType, cfg)
 		if err != nil {
@@ -478,6 +498,22 @@ func (h *httpBuildContext) buildDeleteSoftAnnotation() *HTTPAnnotation {
 	}
 }
 
+// buildListAnnotation builds the List HTTP annotation:
+// POST /{prefix}/{Service}/{collection}/list body:"*".
+// List is an entity-level (collection) operation — no key leaves, no
+// resource segment in the path.
+func (h *httpBuildContext) buildListAnnotation() *HTTPAnnotation {
+	if !h.enabled {
+		return nil
+	}
+	return &HTTPAnnotation{
+		Verb:   "POST",
+		Body:   "*",
+		Entity: h.entity,
+		Suffix: "list",
+	}
+}
+
 // buildBatchCreateAnnotation builds the BatchCreate HTTP annotation:
 // POST /{prefix}/{Service}/{collection}/batchCreate body:"*".
 // No key leaves — BatchCreate is a collection-level operation, keys are
@@ -494,10 +530,10 @@ func (h *httpBuildContext) buildBatchCreateAnnotation() *HTTPAnnotation {
 	}
 }
 
-// fillResourceAnnotations populates HTTPAnnotation for Get/BatchGet/List/Update.
-// When yamlResource declares per-method HTTP overrides (reader.http /
-// writer.update.http), the overridden fields replace the defaults. Override
-// paths are validated against the entity's key leaves (fail-fast).
+// fillResourceAnnotations populates HTTPAnnotation for Get/BatchGet/Update.
+// When yamlResource declares per-method HTTP overrides (writer.update.http),
+// the overridden fields replace the defaults. Override paths are validated
+// against the entity's key leaves (fail-fast).
 func (h *httpBuildContext) fillResourceAnnotations(r *ResourceIR, yr *apigenyaml.Resource) error {
 	if !h.enabled {
 		return nil
@@ -509,12 +545,6 @@ func (h *httpBuildContext) fillResourceAnnotations(r *ResourceIR, yr *apigenyaml
 			KeyLeaves: h.keyLeaves,
 			Resource:  r.Name,
 		}
-		// Get has no http override in P2 (only reader-level List/BatchGet
-		// overrides are supported via reader.http, which applies to the
-		// reader block as a whole — but design §8.3 shows reader.http on
-		// the reader block. We interpret reader.http as applying to the
-		// List method when list is enabled, and to BatchGet when batch is
-		// enabled. Get does not use reader.http.)
 	}
 	if r.BatchGet != nil {
 		r.BatchGet.HTTPAnnotation = &HTTPAnnotation{
@@ -523,24 +553,6 @@ func (h *httpBuildContext) fillResourceAnnotations(r *ResourceIR, yr *apigenyaml
 			Entity:   h.entity,
 			Resource: r.Name,
 			Suffix:   "batchGet",
-		}
-		// reader.http override applies only to List (the primary reader
-		// method), not to BatchGet. BatchGet retains its default route.
-	}
-	if r.List != nil {
-		r.List.HTTPAnnotation = &HTTPAnnotation{
-			Verb:     "POST",
-			Body:     "*",
-			Entity:   h.entity,
-			Resource: r.Name,
-			Suffix:   "list",
-		}
-		if yr.Reader != nil && yr.Reader.HTTP != nil {
-			ann, err := h.applyOverride(r.List.HTTPAnnotation, yr.Reader.HTTP, r.Name, "List", h.templateSvc)
-			if err != nil {
-				return err
-			}
-			r.List.HTTPAnnotation = ann
 		}
 	}
 	if r.Update != nil {
@@ -664,9 +676,6 @@ func buildResource(r *apigenyaml.Resource, entityName, keyType string, cfg *apig
 		if r.Reader.Batch {
 			resource.BatchGet = buildBatchGet(entityName, pascalName, resource.Type, keyType)
 		}
-		if r.Reader.List {
-			resource.List = buildList(entityName, pascalName, resource.Type, r.Reader.ListConfig)
-		}
 	}
 	if r.Writer != nil && r.Writer.Update != nil {
 		resource.Update = buildUpdate(entityName, pascalName, resource.Type, keyType, resource.Version, r.Writer.Update.Mask)
@@ -698,26 +707,32 @@ func buildBatchGet(entityName, resourcePascal, resourceType, keyType string) *Ba
 	}
 }
 
-func buildList(entityName, resourcePascal, resourceType string, lc *apigenyaml.ListConfig) *ListIR {
+func buildList(entityPascal string, resources []apigenyaml.Resource, cfg *apigenyaml.Config, lc *apigenyaml.ListConfig) *ListIR {
 	filterType := "string"
 	if lc != nil && lc.FilterType != "" {
 		filterType = lc.FilterType
 	}
-	l := &ListIR{
-		RPCName:        "List" + entityName + resourcePascal + "s",
-		RequestName:    "List" + entityName + resourcePascal + "sRequest",
-		ResponseName:   "List" + entityName + resourcePascal + "sResponse",
-		PageSize:       FieldIR{Name: "page_size", Type: "int32", Number: 1},
-		PageToken:      FieldIR{Name: "page_token", Type: "string", Number: 2},
-		Filter:         FieldIR{Name: "filter", Type: filterType, Number: 3},
-		OrderBy:        FieldIR{Name: "order_by", Type: "string", Number: 4},
-		ResourcesField: FieldIR{Name: strings.ToLower(resourcePascal) + "s", Type: resourceType, Number: 1, Repeated: true},
-		NextPageToken:  FieldIR{Name: "next_page_token", Type: "string", Number: 2},
+	itemFields := make([]FieldIR, 0, len(resources))
+	for idx, r := range resources {
+		itemFields = append(itemFields, FieldIR{
+			Name:     r.Name,
+			Type:     cfg.ResolveTypeName(r.Type),
+			Number:   idx + 1,
+			Repeated: false,
+		})
 	}
-	if lc == nil || lc.TotalSize {
-		l.TotalSize = &FieldIR{Name: "total_size", Type: "int32", Number: 3}
+	return &ListIR{
+		RPCName:      "List" + entityPascal + "s",
+		RequestName:  "List" + entityPascal + "sRequest",
+		ResponseName: "List" + entityPascal + "sResponse",
+		ItemName:     entityPascal + "Item",
+		Limit:        FieldIR{Name: "limit", Type: "int32", Number: 1},
+		Offset:       FieldIR{Name: "offset", Type: "int32", Number: 2},
+		Filter:       FieldIR{Name: "filter", Type: filterType, Number: 3},
+		OrderBy:      FieldIR{Name: "order_by", Type: "string", Number: 4},
+		ItemFields:   itemFields,
+		TotalSize:    FieldIR{Name: "total_size", Type: "int32", Number: 2},
 	}
-	return l
 }
 
 func buildUpdate(entityName, resourcePascal, resourceType, keyType string, v VersionIR, mask bool) *UpdateIR {
@@ -793,7 +808,7 @@ func buildService(s *apigenyaml.Service, cfg *apigenyaml.Config, httpEnabled boo
 		OutGoDir:     cfg.Settings.Out.Go,
 	}
 	for _, se := range s.Entities {
-		ser := ServiceEntityIR{Name: se.Name}
+		ser := ServiceEntityIR{Name: se.Name, List: se.List}
 		for _, sr := range se.Resources {
 			narrow := ResourceNarrowIR{Name: sr.Name}
 			// When the service resource declares a reader block, only the
@@ -802,8 +817,7 @@ func buildService(s *apigenyaml.Service, cfg *apigenyaml.Config, httpEnabled boo
 			// → only List is exposed.)
 			if sr.Reader != nil {
 				b := sr.Reader.Batch
-				l := sr.Reader.List
-				narrow.Reader = &ReaderNarrowIR{Batch: &b, List: &l}
+				narrow.Reader = &ReaderNarrowIR{Batch: &b}
 			}
 			// When the service resource declares a writer block, Update is
 			// exposed only if the update sub-block is present.

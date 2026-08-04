@@ -73,12 +73,22 @@ type HTTPOverride struct {
 
 // Entity models a business object: key + multiple resources + entity-level writes.
 type Entity struct {
-	Name       string     `yaml:"name"`
-	Key        KeyDef     `yaml:"key"`
-	Create     *CreateDef `yaml:"create,omitempty"`
-	Delete     *struct{}  `yaml:"delete,omitempty"`
-	DeleteSoft *struct{}  `yaml:"delete_soft,omitempty"`
-	Resources  []Resource `yaml:"resources"`
+	Name       string         `yaml:"name"`
+	Key        KeyDef         `yaml:"key"`
+	Create     *CreateDef     `yaml:"create,omitempty"`
+	Delete     *struct{}      `yaml:"delete,omitempty"`
+	DeleteSoft *struct{}      `yaml:"delete_soft,omitempty"`
+	List       *EntityListDef `yaml:"list,omitempty"`
+	Resources  []Resource     `yaml:"resources"`
+}
+
+// EntityListDef declares entity-level List configuration.
+// Resources specifies which resources the List returns (each must match a
+// resource name declared under Resources). ListConfig holds optional
+// sub-configuration.
+type EntityListDef struct {
+	Resources  []string    `yaml:"resource"`
+	ListConfig *ListConfig `yaml:"list_config,omitempty"`
 }
 
 // CreateDef declares entity-level Create configuration.
@@ -122,15 +132,11 @@ type OptionDef struct {
 
 // ReaderDef declares resource-level read methods.
 type ReaderDef struct {
-	Batch      bool        `yaml:"batch,omitempty"`
-	List       bool        `yaml:"list,omitempty"`
-	ListConfig *ListConfig `yaml:"list_config,omitempty"`
-	HTTP       *HTTPOverride `yaml:"http,omitempty"`
+	Batch bool `yaml:"batch,omitempty"`
 }
 
 // ListConfig holds List sub-configuration.
 type ListConfig struct {
-	TotalSize  bool   `yaml:"total_size"`
 	FilterType string `yaml:"filter_type,omitempty"`
 }
 
@@ -155,6 +161,7 @@ type Service struct {
 // ServiceEntity references an entity, optionally narrowing resources.
 type ServiceEntity struct {
 	Name      string     `yaml:"name"`
+	List      *bool      `yaml:"list,omitempty"`
 	Resources []Resource `yaml:"resources,omitempty"`
 }
 

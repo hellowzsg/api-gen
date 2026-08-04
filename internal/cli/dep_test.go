@@ -42,11 +42,13 @@ entities:
     key: { type_: BookId }
     create: {}
     delete: {}
+    list:
+      resource: [meta]
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: STRONG, type: U64 }
-        reader: { batch: true, list: true }
+        reader: { batch: true }
         writer: { update: { mask: true } }
 services:
   - name: LibraryService
@@ -82,11 +84,13 @@ entities:
   - name: book
     key: { type_: BookId }
     create: {}
+    list:
+      resource: [meta]
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: NONE }
-        reader: { list: true }
+        reader: {}
 services:
   - name: LibraryService
     entities:

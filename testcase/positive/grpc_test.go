@@ -111,24 +111,24 @@ func TestGRPC_LibraryServiceAllMethods(t *testing.T) {
 		}
 	})
 
-	t.Run("ListBookMetas", func(t *testing.T) {
-		resp, err := libCli.ListBookMetas(ctx, &libpb.ListBookMetasRequest{
-			PageSize:  10,
-			PageToken: "p1",
-			Filter:    &bookpb.BookMetaFilter{Author: "X"},
-			OrderBy:   "title",
+	t.Run("ListBooks", func(t *testing.T) {
+		resp, err := libCli.ListBooks(ctx, &libpb.ListBooksRequest{
+			Limit:   10,
+			Offset:  5,
+			Filter:  &bookpb.BookMetaFilter{Author: "X"},
+			OrderBy: "title",
 		})
 		if err != nil {
-			t.Fatalf("ListBookMetas: %v", err)
+			t.Fatalf("ListBooks: %v", err)
 		}
 		if resp.GetTotalSize() != 1 {
 			t.Errorf("totalSize=%d want 1", resp.GetTotalSize())
 		}
-		if resp.GetNextPageToken() != "tok" {
-			t.Errorf("nextPageToken=%q want tok", resp.GetNextPageToken())
+		if len(resp.GetItems()) != 1 {
+			t.Errorf("items len=%d want 1", len(resp.GetItems()))
 		}
-		if srv.lastListReq.GetPageSize() != 10 {
-			t.Errorf("page_size=%d want 10", srv.lastListReq.GetPageSize())
+		if srv.lastListReq.GetLimit() != 10 {
+			t.Errorf("limit=%d want 10", srv.lastListReq.GetLimit())
 		}
 		if srv.lastListReq.GetFilter().GetAuthor() != "X" {
 			t.Errorf("filter.author=%q want X", srv.lastListReq.GetFilter().GetAuthor())
@@ -287,18 +287,18 @@ func TestGRPC_AdminServiceNarrowedMethods(t *testing.T) {
 		}
 	})
 
-	t.Run("ListBookMetas", func(t *testing.T) {
-		resp, err := adminCli.ListBookMetas(ctx, &adminpb.ListBookMetasRequest{
-			PageSize: 5,
+	t.Run("ListBooks", func(t *testing.T) {
+		resp, err := adminCli.ListBooks(ctx, &adminpb.ListBooksRequest{
+			Limit: 5,
 		})
 		if err != nil {
-			t.Fatalf("ListBookMetas: %v", err)
+			t.Fatalf("ListBooks: %v", err)
 		}
 		if resp.GetTotalSize() != 1 {
 			t.Errorf("totalSize=%d want 1", resp.GetTotalSize())
 		}
-		if adminSrv.lastListReq.GetPageSize() != 5 {
-			t.Errorf("page_size=%d want 5", adminSrv.lastListReq.GetPageSize())
+		if adminSrv.lastListReq.GetLimit() != 5 {
+			t.Errorf("limit=%d want 5", adminSrv.lastListReq.GetLimit())
 		}
 	})
 

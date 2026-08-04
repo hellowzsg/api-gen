@@ -153,6 +153,29 @@ func TestGenerateError_ServiceReferences(t *testing.T) {
 	}
 }
 
+// TestGenerateError_EntityList verifies entity-level List validation errors (E4-E6).
+func TestGenerateError_EntityList(t *testing.T) {
+	binary := apigenBinary(t)
+	dir := fixtureDir(t)
+
+	tests := []struct {
+		fixture string
+		errMsg  string
+	}{
+		{"list_resource_not_found.yaml", "is not declared in resources"},
+		{"list_resource_empty.yaml", "at least one resource is required"},
+		{"list_resource_duplicate.yaml", "duplicate resource"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.fixture, func(t *testing.T) {
+			output, exitCode := runGenerate(t, binary, filepath.Join(dir, tt.fixture))
+			assertExitNonZero(t, tt.fixture, exitCode)
+			assertErrorContains(t, tt.fixture, output, tt.errMsg)
+		})
+	}
+}
+
 // TestGenerateError_HTTPConfig verifies HTTP configuration errors (D1-D2).
 func TestGenerateError_HTTPConfig(t *testing.T) {
 	binary := apigenBinary(t)

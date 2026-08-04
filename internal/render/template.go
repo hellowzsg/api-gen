@@ -94,6 +94,12 @@ func narrowEntity(e ir.EntityIR, se ir.ServiceEntityIR) ir.EntityIR {
 		BatchCreate: e.BatchCreate,
 		Delete:      e.Delete,
 		DeleteSoft:  e.DeleteSoft,
+		List:        e.List,
+		KeyLeaves:   e.KeyLeaves,
+	}
+	// Entity-level List narrowing: se.List != nil && !*se.List suppresses List.
+	if se.List != nil && !*se.List {
+		out.List = nil
 	}
 	if len(se.Resources) == 0 {
 		out.Resources = e.Resources
@@ -115,11 +121,8 @@ func narrowEntity(e ir.EntityIR, se ir.ServiceEntityIR) ir.EntityIR {
 			if narrow.Reader.Batch != nil && !*narrow.Reader.Batch {
 				filt.BatchGet = nil
 			}
-			if narrow.Reader.List != nil && !*narrow.Reader.List {
-				filt.List = nil
-			}
-			// When a reader block is present but neither batch nor list is
-			// true, only the base Get remains (inherited). When Get should
+			// When a reader block is present but batch is not true,
+			// only the base Get remains (inherited). When Get should
 			// also be narrowed off, a future flag can control it; for now
 			// Get is inherited when reader block is present.
 		}
@@ -147,15 +150,15 @@ func renderServiceRPCs(sb *strings.Builder, e *ir.EntityIR, hctx httpRenderConte
 	if e.DeleteSoft != nil {
 		renderRPCWithHTTP(sb, e.DeleteSoft.RPCName, e.DeleteSoft.RequestName, e.DeleteSoft.ResponseName, "", e.DeleteSoft.HTTPAnnotation, hctx)
 	}
+	if e.List != nil {
+		renderRPCWithHTTP(sb, e.List.RPCName, e.List.RequestName, e.List.ResponseName, "", e.List.HTTPAnnotation, hctx)
+	}
 	for _, r := range e.Resources {
 		if r.Get != nil {
 			renderRPCWithHTTP(sb, r.Get.RPCName, r.Get.RequestName, r.Get.ResponseName, "", r.Get.HTTPAnnotation, hctx)
 		}
 		if r.BatchGet != nil {
 			renderRPCWithHTTP(sb, r.BatchGet.RPCName, r.BatchGet.RequestName, r.BatchGet.ResponseName, "", r.BatchGet.HTTPAnnotation, hctx)
-		}
-		if r.List != nil {
-			renderRPCWithHTTP(sb, r.List.RPCName, r.List.RequestName, r.List.ResponseName, "", r.List.HTTPAnnotation, hctx)
 		}
 		if r.Update != nil {
 			renderRPCWithHTTP(sb, r.Update.RPCName, r.Update.RequestName, r.Update.ResponseName, "", r.Update.HTTPAnnotation, hctx)
@@ -185,6 +188,23 @@ func renderMessages(sb *strings.Builder, e *ir.EntityIR) {
 	if e.DeleteSoft != nil {
 		sb.WriteString(fmt.Sprintf("message %s { %s key = %d; }\n", e.DeleteSoft.RequestName, e.DeleteSoft.KeyField.Type, e.DeleteSoft.KeyField.Number))
 	}
+	if e.List != nil {
+		sb.WriteString(fmt.Sprintf("message %s {\n", e.List.RequestName))
+		sb.WriteString(fmt.Sprintf("  int32 limit = %d;\n", e.List.Limit.Number))
+		sb.WriteString(fmt.Sprintf("  int32 offset = %d;\n", e.List.Offset.Number))
+		sb.WriteString(fmt.Sprintf("  %s filter = %d;\n", e.List.Filter.Type, e.List.Filter.Number))
+		sb.WriteString(fmt.Sprintf("  string order_by = %d;\n", e.List.OrderBy.Number))
+		sb.WriteString("}\n")
+		sb.WriteString(fmt.Sprintf("message %s {\n", e.List.ResponseName))
+		sb.WriteString(fmt.Sprintf("  repeated %s items = 1;\n", e.List.ItemName))
+		sb.WriteString(fmt.Sprintf("  int32 total_size = %d;\n", e.List.TotalSize.Number))
+		sb.WriteString("}\n")
+		sb.WriteString(fmt.Sprintf("message %s {\n", e.List.ItemName))
+		for _, f := range e.List.ItemFields {
+			sb.WriteString(fmt.Sprintf("  %s %s = %d;\n", f.Type, f.Name, f.Number))
+		}
+		sb.WriteString("}\n")
+	}
 	for _, r := range e.Resources {
 		if r.Get != nil {
 			sb.WriteString(fmt.Sprintf("message %s { %s key = %d; }\n", r.Get.RequestName, r.Get.KeyField.Type, r.Get.KeyField.Number))
@@ -198,21 +218,6 @@ func renderMessages(sb *strings.Builder, e *ir.EntityIR) {
 		if r.BatchGet != nil {
 			sb.WriteString(fmt.Sprintf("message %s { repeated %s keys = %d; }\n", r.BatchGet.RequestName, r.BatchGet.KeysField.Type, r.BatchGet.KeysField.Number))
 			sb.WriteString(fmt.Sprintf("message %s { repeated %s %s = %d; }\n", r.BatchGet.ResponseName, r.BatchGet.ResourcesField.Type, r.BatchGet.ResourcesField.Name, r.BatchGet.ResourcesField.Number))
-		}
-		if r.List != nil {
-			sb.WriteString(fmt.Sprintf("message %s {\n", r.List.RequestName))
-			sb.WriteString(fmt.Sprintf("  int32 page_size = %d;\n", r.List.PageSize.Number))
-			sb.WriteString(fmt.Sprintf("  string page_token = %d;\n", r.List.PageToken.Number))
-			sb.WriteString(fmt.Sprintf("  %s filter = %d;\n", r.List.Filter.Type, r.List.Filter.Number))
-			sb.WriteString(fmt.Sprintf("  string order_by = %d;\n", r.List.OrderBy.Number))
-			sb.WriteString("}\n")
-			sb.WriteString(fmt.Sprintf("message %s {\n", r.List.ResponseName))
-			sb.WriteString(fmt.Sprintf("  repeated %s %s = %d;\n", r.List.ResourcesField.Type, r.List.ResourcesField.Name, r.List.ResourcesField.Number))
-			sb.WriteString(fmt.Sprintf("  string next_page_token = %d;\n", r.List.NextPageToken.Number))
-			if r.List.TotalSize != nil {
-				sb.WriteString(fmt.Sprintf("  int32 total_size = %d;\n", r.List.TotalSize.Number))
-			}
-			sb.WriteString("}\n")
 		}
 		if r.Update != nil {
 			sb.WriteString(fmt.Sprintf("message %s {\n", r.Update.RequestName))
@@ -343,10 +348,10 @@ func generateExemptions(entities []ir.EntityIR, httpEnabled bool) []string {
 		if e.BatchCreate != nil { hasBatchCreate = true }
 		if e.Delete != nil { hasDelete = true }
 		if e.DeleteSoft != nil { hasDeleteSoft = true }
+		if e.List != nil { hasList = true }
 		for _, r := range e.Resources {
 			if r.Get != nil { hasGet = true }
 			if r.BatchGet != nil { hasBatchGet = true }
-			if r.List != nil { hasList = true }
 			if r.Update != nil { hasUpdate = true }
 		}
 	}

@@ -95,11 +95,13 @@ entities:
     key: { type_: BookId }
     create: {}
     delete: {}
+    list:
+      resource: [meta]
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: STRONG, type: U64 }
-        reader: { batch: true, list: true }
+        reader: { batch: true }
         writer: { update: { mask: true } }
       - name: content
         type_: BookContent
@@ -110,9 +112,10 @@ services:
   - name: AdminService
     entities:
       - name: book
+        list: true
         resources:
           - name: meta
-            reader: { list: true }
+            reader: {}
 `
 	writeTestFile(t, filepath.Join(dir, "api.yaml"), apiYAML)
 	writeTestFile(t, filepath.Join(dir, "proto", "book.proto"), `
@@ -139,12 +142,12 @@ message BookContent { string text = 1; }
 	if findSubstring(content, "UpdateBookContent") {
 		t.Error("AdminService should not expose UpdateBookContent (resource narrowed out)")
 	}
-	// meta reader: { list: true } → BatchGet narrowed off, Get + List retained.
+	// meta reader: {} → BatchGet narrowed off, Get retained; entity List enabled.
 	if findSubstring(content, "BatchGetBookMetas") {
 		t.Error("AdminService should not expose BatchGetBookMetas (batch narrowed off)")
 	}
-	if !findSubstring(content, "rpc ListBookMetas") {
-		t.Error("AdminService should expose ListBookMetas")
+	if !findSubstring(content, "rpc ListBooks") {
+		t.Error("AdminService should expose ListBooks")
 	}
 	if !findSubstring(content, "rpc GetBookMeta") {
 		t.Error("AdminService should expose GetBookMeta (base reader method retained)")

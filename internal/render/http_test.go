@@ -53,16 +53,16 @@ func TestRenderHTTPAnnotation_Format(t *testing.T) {
 			want:   `option (google.api.http) = { get: "/custom/{key.id}/items" };`,
 		},
 		{
-			name: "template override (entity-level reader/writer http)",
+			name: "template override (writer.update http)",
 			ann: &ir.HTTPAnnotation{
-				Verb:                "GET",
+				Verb:                "PATCH",
 				IsOverride:          true,
-				OverridePath:        "/library/LibraryService/book/meta/list",
+				OverridePath:        "/library/LibraryService/book/{key.id}/meta",
 				OverrideTemplateSvc: "LibraryService",
 			},
 			prefix: "/library",
 			svc:    "AdminService",
-			want:   `option (google.api.http) = { get: "/library/AdminService/book/meta/list" };`,
+			want:   `option (google.api.http) = { patch: "/library/AdminService/book/{key.id}/meta" };`,
 		},
 	}
 	for _, tt := range tests {
@@ -195,16 +195,17 @@ func TestRenderServiceProto_TwoServicesIndependentPaths(t *testing.T) {
 // empty so ResolvePath does not rewrite any segment.
 func TestRenderServiceProto_OverridePathVerbatim(t *testing.T) {
 	entity := bookEntityIR()
-	entity.Resources[0].List = &ir.ListIR{
-		RPCName:        "ListBookMetas",
-		RequestName:    "ListBookMetasRequest",
-		ResponseName:   "ListBookMetasResponse",
-		PageSize:       ir.FieldIR{Name: "page_size", Type: "int32", Number: 1},
-		PageToken:      ir.FieldIR{Name: "page_token", Type: "string", Number: 2},
-		Filter:         ir.FieldIR{Name: "filter", Type: "string", Number: 3},
-		OrderBy:        ir.FieldIR{Name: "order_by", Type: "string", Number: 4},
-		ResourcesField: ir.FieldIR{Name: "metas", Type: "test.BookMeta", Number: 1, Repeated: true},
-		NextPageToken:  ir.FieldIR{Name: "next_page_token", Type: "string", Number: 2},
+	entity.List = &ir.ListIR{
+		RPCName:      "ListBooks",
+		RequestName:  "ListBooksRequest",
+		ResponseName: "ListBooksResponse",
+		ItemName:     "BookItem",
+		Limit:        ir.FieldIR{Name: "limit", Type: "int32", Number: 1},
+		Offset:       ir.FieldIR{Name: "offset", Type: "int32", Number: 2},
+		Filter:       ir.FieldIR{Name: "filter", Type: "string", Number: 3},
+		OrderBy:      ir.FieldIR{Name: "order_by", Type: "string", Number: 4},
+		ItemFields:   []ir.FieldIR{{Name: "meta", Type: "test.BookMeta", Number: 1}},
+		TotalSize:    ir.FieldIR{Name: "total_size", Type: "int32", Number: 2},
 		HTTPAnnotation: &ir.HTTPAnnotation{
 			Verb:         "GET",
 			IsOverride:   true,
@@ -237,20 +238,21 @@ func TestRenderServiceProto_OverridePathVerbatim(t *testing.T) {
 // services yields two isolated routes (no collision).
 func TestRenderServiceProto_OverridePathTemplate(t *testing.T) {
 	entity := bookEntityIR()
-	entity.Resources[0].List = &ir.ListIR{
-		RPCName:        "ListBookMetas",
-		RequestName:    "ListBookMetasRequest",
-		ResponseName:   "ListBookMetasResponse",
-		PageSize:       ir.FieldIR{Name: "page_size", Type: "int32", Number: 1},
-		PageToken:      ir.FieldIR{Name: "page_token", Type: "string", Number: 2},
-		Filter:         ir.FieldIR{Name: "filter", Type: "string", Number: 3},
-		OrderBy:        ir.FieldIR{Name: "order_by", Type: "string", Number: 4},
-		ResourcesField: ir.FieldIR{Name: "metas", Type: "test.BookMeta", Number: 1, Repeated: true},
-		NextPageToken:  ir.FieldIR{Name: "next_page_token", Type: "string", Number: 2},
+	entity.List = &ir.ListIR{
+		RPCName:      "ListBooks",
+		RequestName:  "ListBooksRequest",
+		ResponseName: "ListBooksResponse",
+		ItemName:     "BookItem",
+		Limit:        ir.FieldIR{Name: "limit", Type: "int32", Number: 1},
+		Offset:       ir.FieldIR{Name: "offset", Type: "int32", Number: 2},
+		Filter:       ir.FieldIR{Name: "filter", Type: "string", Number: 3},
+		OrderBy:      ir.FieldIR{Name: "order_by", Type: "string", Number: 4},
+		ItemFields:   []ir.FieldIR{{Name: "meta", Type: "test.BookMeta", Number: 1}},
+		TotalSize:    ir.FieldIR{Name: "total_size", Type: "int32", Number: 2},
 		HTTPAnnotation: &ir.HTTPAnnotation{
 			Verb:                "GET",
 			IsOverride:          true,
-			OverridePath:        "/library/LibraryService/book/meta/list",
+			OverridePath:        "/library/LibraryService/book/list",
 			OverrideTemplateSvc: "LibraryService",
 		},
 	}
@@ -273,11 +275,11 @@ func TestRenderServiceProto_OverridePathTemplate(t *testing.T) {
 		return out
 	}
 	lib := render("LibraryService")
-	if !strings.Contains(lib, `get: "/library/LibraryService/book/meta/list"`) {
+	if !strings.Contains(lib, `get: "/library/LibraryService/book/list"`) {
 		t.Errorf("LibraryService should keep template as-is (segment matches), got:\n%s", lib)
 	}
 	admin := render("AdminService")
-	if !strings.Contains(admin, `get: "/library/AdminService/book/meta/list"`) {
+	if !strings.Contains(admin, `get: "/library/AdminService/book/list"`) {
 		t.Errorf("AdminService should have service segment rewritten, got:\n%s", admin)
 	}
 }
@@ -340,25 +342,25 @@ func TestRenderServiceProto_AllMethodVerbs(t *testing.T) {
 				RPCName: "DeleteBook", RequestName: "DeleteBookRequest", ResponseName: "google.protobuf.Empty",
 				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "DELETE", Entity: "book", KeyLeaves: []ir.KeyLeaf{{DotPath: "id"}}},
 			},
-			DeleteSoft: &ir.DeleteIR{
-				RPCName: "DeleteBookSoft", RequestName: "DeleteBookSoftRequest", ResponseName: "google.protobuf.Empty",
-				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Entity: "book", Suffix: "deleteSoft", Body: "*"},
+		DeleteSoft: &ir.DeleteIR{
+			RPCName: "DeleteBookSoft", RequestName: "DeleteBookSoftRequest", ResponseName: "google.protobuf.Empty",
+			HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Entity: "book", Suffix: "deleteSoft", Body: "*"},
+		},
+		List: &ir.ListIR{
+			RPCName: "ListBooks", RequestName: "ListBooksRequest", ResponseName: "ListBooksResponse",
+			HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Entity: "book", Suffix: "list", Body: "*"},
+		},
+		Resources: []ir.ResourceIR{{
+			Name: "meta", PascalName: "Meta", Type: "test.BookMeta", Version: ir.VersionIR{Kind: "NONE"},
+			Get: &ir.GetIR{
+				RPCName: "GetBookMeta", RequestName: "GetBookMetaRequest", ResponseName: "GetBookMetaResponse",
+				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "GET", Entity: "book", KeyLeaves: []ir.KeyLeaf{{DotPath: "id"}}, Resource: "meta"},
 			},
-			Resources: []ir.ResourceIR{{
-				Name: "meta", PascalName: "Meta", Type: "test.BookMeta", Version: ir.VersionIR{Kind: "NONE"},
-				Get: &ir.GetIR{
-					RPCName: "GetBookMeta", RequestName: "GetBookMetaRequest", ResponseName: "GetBookMetaResponse",
-					HTTPAnnotation: &ir.HTTPAnnotation{Verb: "GET", Entity: "book", KeyLeaves: []ir.KeyLeaf{{DotPath: "id"}}, Resource: "meta"},
-				},
-				BatchGet: &ir.BatchGetIR{
-					RPCName: "BatchGetBookMetas", RequestName: "BatchGetBookMetasRequest", ResponseName: "BatchGetBookMetasResponse",
-					HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Entity: "book", Resource: "meta", Suffix: "batchGet", Body: "*"},
-				},
-				List: &ir.ListIR{
-					RPCName: "ListBookMetas", RequestName: "ListBookMetasRequest", ResponseName: "ListBookMetasResponse",
-					HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Entity: "book", Resource: "meta", Suffix: "list", Body: "*"},
-				},
-				Update: &ir.UpdateIR{
+			BatchGet: &ir.BatchGetIR{
+				RPCName: "BatchGetBookMetas", RequestName: "BatchGetBookMetasRequest", ResponseName: "BatchGetBookMetasResponse",
+				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "POST", Entity: "book", Resource: "meta", Suffix: "batchGet", Body: "*"},
+			},
+			Update: &ir.UpdateIR{
 					RPCName: "UpdateBookMeta", RequestName: "UpdateBookMetaRequest", ResponseName: "google.protobuf.Empty",
 					HTTPAnnotation: &ir.HTTPAnnotation{Verb: "PATCH", Entity: "book", KeyLeaves: []ir.KeyLeaf{{DotPath: "id"}}, Resource: "meta", Body: "*"},
 				},
@@ -377,9 +379,9 @@ func TestRenderServiceProto_AllMethodVerbs(t *testing.T) {
 		`post: "/api/Svc/book" body: "*"`,
 		`delete: "/api/Svc/book/{key.id}"`,
 		`post: "/api/Svc/book/deleteSoft" body: "*"`,
+		`post: "/api/Svc/book/list" body: "*"`,
 		`get: "/api/Svc/book/{key.id}/meta"`,
 		`post: "/api/Svc/book/meta/batchGet" body: "*"`,
-		`post: "/api/Svc/book/meta/list" body: "*"`,
 		`patch: "/api/Svc/book/{key.id}/meta" body: "*"`,
 	}
 	for _, e := range expected {

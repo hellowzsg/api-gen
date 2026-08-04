@@ -249,14 +249,10 @@ func TestUserPathOverrideVerbatim(t *testing.T) {
 	irData := &ir.IR{PackageName: "test", HTTPEnabled: true}
 	irData.Entities = []ir.EntityIR{{
 		Name: "book", PascalName: "Book", KeyType: "test.BookId",
-		Resources: []ir.ResourceIR{{
-			Name: "meta", PascalName: "Meta", Type: "test.BookMeta",
-			Version: ir.VersionIR{Kind: "NONE"},
-			List: &ir.ListIR{
-				RPCName: "ListBookMetas", RequestName: "ListBookMetasRequest", ResponseName: "ListBookMetasResponse",
-				HTTPAnnotation: &ir.HTTPAnnotation{Verb: "GET", IsOverride: true, OverridePath: "/svc/LibraryService/book/meta/list"},
-			},
-		}},
+		List: &ir.ListIR{
+			RPCName: "ListBooks", RequestName: "ListBooksRequest", ResponseName: "ListBooksResponse",
+			HTTPAnnotation: &ir.HTTPAnnotation{Verb: "GET", IsOverride: true, OverridePath: "/svc/LibraryService/book/list"},
+		},
 	}}
 	svc := ir.ServiceIR{
 		Name:         "AdminService",
@@ -269,7 +265,7 @@ func TestUserPathOverrideVerbatim(t *testing.T) {
 		t.Fatalf("RenderServiceProto failed: %v", err)
 	}
 	// The user-declared path must appear verbatim — no service-segment rewrite.
-	if !strings.Contains(output, `get: "/svc/LibraryService/book/meta/list"`) {
+	if !strings.Contains(output, `get: "/svc/LibraryService/book/list"`) {
 		t.Errorf("override path should be verbatim, got:\n%s", output)
 	}
 }

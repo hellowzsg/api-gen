@@ -113,14 +113,14 @@
         ]
       }
     },
-    "/library/AdminService/book/meta/list": {
+    "/library/AdminService/book/list": {
       "post": {
-        "operationId": "AdminService_ListBookMetas",
+        "operationId": "AdminService_ListBooks",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/admin_serviceListBookMetasResponse"
+              "$ref": "#/definitions/admin_serviceListBooksResponse"
             }
           },
           "default": {
@@ -136,7 +136,39 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/admin_serviceListBookMetasRequest"
+              "$ref": "#/definitions/admin_serviceListBooksRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AdminService"
+        ]
+      }
+    },
+    "/library/AdminService/book/meta/batchGet": {
+      "post": {
+        "operationId": "AdminService_BatchGetBookMetas",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/admin_serviceBatchGetBookMetasResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/admin_serviceBatchGetBookMetasRequest"
             }
           }
         ],
@@ -169,6 +201,73 @@
             "in": "path",
             "required": true,
             "type": "string"
+          }
+        ],
+        "tags": [
+          "AdminService"
+        ]
+      }
+    },
+    "/library/AdminService/book/{key.id}/content": {
+      "get": {
+        "operationId": "AdminService_GetBookContent",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/admin_serviceGetBookContentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "AdminService"
+        ]
+      },
+      "patch": {
+        "operationId": "AdminService_UpdateBookContent",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AdminServiceUpdateBookContentBody"
+            }
           }
         ],
         "tags": [
@@ -244,6 +343,17 @@
     }
   },
   "definitions": {
+    "AdminServiceUpdateBookContentBody": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "$ref": "#/definitions/bookBookContent"
+        },
+        "key": {
+          "type": "object"
+        }
+      }
+    },
     "AdminServiceUpdateBookMetaBody": {
       "type": "object",
       "properties": {
@@ -286,6 +396,41 @@
         }
       }
     },
+    "admin_serviceBatchGetBookMetasRequest": {
+      "type": "object",
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bookBookId"
+          }
+        }
+      }
+    },
+    "admin_serviceBatchGetBookMetasResponse": {
+      "type": "object",
+      "properties": {
+        "metas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bookBookMeta"
+          }
+        }
+      }
+    },
+    "admin_serviceBookItem": {
+      "type": "object",
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/bookBookMeta"
+        },
+        "content": {
+          "$ref": "#/definitions/bookBookContent"
+        }
+      }
+    },
     "admin_serviceCreateBookRequest": {
       "type": "object",
       "properties": {
@@ -313,6 +458,14 @@
         }
       }
     },
+    "admin_serviceGetBookContentResponse": {
+      "type": "object",
+      "properties": {
+        "book_content": {
+          "$ref": "#/definitions/bookBookContent"
+        }
+      }
+    },
     "admin_serviceGetBookMetaResponse": {
       "type": "object",
       "properties": {
@@ -325,15 +478,16 @@
         }
       }
     },
-    "admin_serviceListBookMetasRequest": {
+    "admin_serviceListBooksRequest": {
       "type": "object",
       "properties": {
-        "page_size": {
+        "limit": {
           "type": "integer",
           "format": "int32"
         },
-        "page_token": {
-          "type": "string"
+        "offset": {
+          "type": "integer",
+          "format": "int32"
         },
         "filter": {
           "$ref": "#/definitions/bookBookMetaFilter"
@@ -343,18 +497,15 @@
         }
       }
     },
-    "admin_serviceListBookMetasResponse": {
+    "admin_serviceListBooksResponse": {
       "type": "object",
       "properties": {
-        "metas": {
+        "items": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/bookBookMeta"
+            "$ref": "#/definitions/admin_serviceBookItem"
           }
-        },
-        "next_page_token": {
-          "type": "string"
         },
         "total_size": {
           "type": "integer",

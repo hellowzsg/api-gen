@@ -131,38 +131,37 @@ func TestRenderProto_BatchCreate_HTTP(t *testing.T) {
 	}
 }
 
-// TestRenderProto_List: List RPC with pagination fields.
+// TestRenderProto_List: List RPC with pagination fields and EntityItem.
 func TestRenderProto_List(t *testing.T) {
-	totalSize := ir.FieldIR{Name: "total_size", Type: "int32", Number: 3}
 	irData := &ir.IR{PackageName: "test", Entities: []ir.EntityIR{{
 		Name: "book", PascalName: "Book", KeyType: "test.BookId",
-		Resources: []ir.ResourceIR{{
-			Name: "meta", PascalName: "Meta", Type: "test.BookMeta", Version: ir.VersionIR{Kind: "NONE"},
-			List: &ir.ListIR{
-				RPCName: "ListBookMetas", RequestName: "ListBookMetasRequest", ResponseName: "ListBookMetasResponse",
-				PageSize:       ir.FieldIR{Name: "page_size", Type: "int32", Number: 1},
-				PageToken:      ir.FieldIR{Name: "page_token", Type: "string", Number: 2},
-				Filter:         ir.FieldIR{Name: "filter", Type: "string", Number: 3},
-				OrderBy:        ir.FieldIR{Name: "order_by", Type: "string", Number: 4},
-				ResourcesField: ir.FieldIR{Name: "metas", Type: "test.BookMeta", Number: 1, Repeated: true},
-				NextPageToken:  ir.FieldIR{Name: "next_page_token", Type: "string", Number: 2},
-				TotalSize:      &totalSize,
+		List: &ir.ListIR{
+			RPCName: "ListBooks", RequestName: "ListBooksRequest", ResponseName: "ListBooksResponse",
+			ItemName: "BookItem",
+			Limit:    ir.FieldIR{Name: "limit", Type: "int32", Number: 1},
+			Offset:   ir.FieldIR{Name: "offset", Type: "int32", Number: 2},
+			Filter:   ir.FieldIR{Name: "filter", Type: "string", Number: 3},
+			OrderBy:  ir.FieldIR{Name: "order_by", Type: "string", Number: 4},
+			ItemFields: []ir.FieldIR{
+				{Name: "meta", Type: "test.BookMeta", Number: 1},
+				{Name: "content", Type: "test.BookContent", Number: 2},
 			},
-		}},
+			TotalSize: ir.FieldIR{Name: "total_size", Type: "int32", Number: 2},
+		},
 	}}}
 	svc := ir.ServiceIR{Name: "Svc", ProtoPackage: "test.svc", GoPackage: "svc", Entities: []ir.ServiceEntityIR{{Name: "book"}}}
 	output, err := RenderServiceProto(irData, svc)
 	if err != nil {
 		t.Fatalf("RenderServiceProto failed: %v", err)
 	}
-	if !strings.Contains(output, "rpc ListBookMetas") {
-		t.Error("missing ListBookMetas RPC")
+	if !strings.Contains(output, "rpc ListBooks") {
+		t.Error("missing ListBooks RPC")
 	}
-	if !strings.Contains(output, "int32 page_size") {
-		t.Error("missing page_size field")
+	if !strings.Contains(output, "int32 limit") {
+		t.Error("missing limit field")
 	}
-	if !strings.Contains(output, "string page_token") {
-		t.Error("missing page_token field")
+	if !strings.Contains(output, "int32 offset") {
+		t.Error("missing offset field")
 	}
 	if !strings.Contains(output, "string filter") {
 		t.Error("missing filter field")
@@ -170,11 +169,20 @@ func TestRenderProto_List(t *testing.T) {
 	if !strings.Contains(output, "string order_by") {
 		t.Error("missing order_by field")
 	}
-	if !strings.Contains(output, "string next_page_token") {
-		t.Error("missing next_page_token field")
+	if !strings.Contains(output, "repeated BookItem items = 1") {
+		t.Error("missing repeated BookItem items field")
 	}
 	if !strings.Contains(output, "int32 total_size") {
 		t.Error("missing total_size field")
+	}
+	if !strings.Contains(output, "message BookItem {") {
+		t.Error("missing BookItem message")
+	}
+	if !strings.Contains(output, "test.BookMeta meta = 1") {
+		t.Error("missing BookItem meta field")
+	}
+	if !strings.Contains(output, "test.BookContent content = 2") {
+		t.Error("missing BookItem content field")
 	}
 }
 

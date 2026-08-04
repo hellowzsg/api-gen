@@ -15,7 +15,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file admin_service/admin_service.proto.
  */
 export const file_admin_service_admin_service: GenFile = /*@__PURE__*/
-  fileDesc("CiFhZG1pbl9zZXJ2aWNlL2FkbWluX3NlcnZpY2UucHJvdG8SIGRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlInEKEUNyZWF0ZUJvb2tSZXF1ZXN0EioKBG1ldGEYASABKAsyHC5kZW1vLmJ1c2luZXNzLmJvb2suQm9va01ldGESMAoHY29udGVudBgCIAEoCzIfLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rQ29udGVudCI9ChJDcmVhdGVCb29rUmVzcG9uc2USJwoDa2V5GAEgASgLMhouZGVtby5idXNpbmVzcy5ib29rLkJvb2tJZCJgChdCYXRjaENyZWF0ZUJvb2tzUmVxdWVzdBJFCghyZXF1ZXN0cxgBIAMoCzIzLmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLkNyZWF0ZUJvb2tSZXF1ZXN0IkQKGEJhdGNoQ3JlYXRlQm9va3NSZXNwb25zZRIoCgRrZXlzGAEgAygLMhouZGVtby5idXNpbmVzcy5ib29rLkJvb2tJZCI8ChFEZWxldGVCb29rUmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIkAKFURlbGV0ZUJvb2tTb2Z0UmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIj0KEkdldEJvb2tNZXRhUmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIlcKE0dldEJvb2tNZXRhUmVzcG9uc2USLwoJYm9va19tZXRhGAEgASgLMhwuZGVtby5idXNpbmVzcy5ib29rLkJvb2tNZXRhEg8KB3ZlcnNpb24YAiABKAQigwEKFExpc3RCb29rTWV0YXNSZXF1ZXN0EhEKCXBhZ2Vfc2l6ZRgBIAEoBRISCgpwYWdlX3Rva2VuGAIgASgJEjIKBmZpbHRlchgDIAEoCzIiLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rTWV0YUZpbHRlchIQCghvcmRlcl9ieRgEIAEoCSJxChVMaXN0Qm9va01ldGFzUmVzcG9uc2USKwoFbWV0YXMYASADKAsyHC5kZW1vLmJ1c2luZXNzLmJvb2suQm9va01ldGESFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJEhIKCnRvdGFsX3NpemUYAyABKAUirgEKFVVwZGF0ZUJvb2tNZXRhUmVxdWVzdBIqCgRtZXRhGAEgASgLMhwuZGVtby5idXNpbmVzcy5ib29rLkJvb2tNZXRhEicKA2tleRgCIAEoCzIaLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rSWQSLwoLdXBkYXRlX21hc2sYAyABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrEg8KB3ZlcnNpb24YBCABKAQiKQoWVXBkYXRlQm9va01ldGFSZXNwb25zZRIPCgd2ZXJzaW9uGAEgASgEMqsJCgxBZG1pblNlcnZpY2USngEKCkNyZWF0ZUJvb2sSMy5kZW1vLmJ1c2luZXNzLmJvb2suYWRtaW5fc2VydmljZS5DcmVhdGVCb29rUmVxdWVzdBo0LmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLkNyZWF0ZUJvb2tSZXNwb25zZSIlgtPkkwIfOgEqIhovbGlicmFyeS9BZG1pblNlcnZpY2UvYm9vaxK8AQoQQmF0Y2hDcmVhdGVCb29rcxI5LmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLkJhdGNoQ3JlYXRlQm9va3NSZXF1ZXN0GjouZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuQmF0Y2hDcmVhdGVCb29rc1Jlc3BvbnNlIjGC0+STAis6ASoiJi9saWJyYXJ5L0FkbWluU2VydmljZS9ib29rL2JhdGNoQ3JlYXRlEoYBCgpEZWxldGVCb29rEjMuZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuRGVsZXRlQm9va1JlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiK4LT5JMCJSojL2xpYnJhcnkvQWRtaW5TZXJ2aWNlL2Jvb2sve2tleS5pZH0SkwEKDkRlbGV0ZUJvb2tTb2Z0EjcuZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuRGVsZXRlQm9va1NvZnRSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IjCC0+STAio6ASoiJS9saWJyYXJ5L0FkbWluU2VydmljZS9ib29rL2RlbGV0ZVNvZnQSrAEKC0dldEJvb2tNZXRhEjQuZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuR2V0Qm9va01ldGFSZXF1ZXN0GjUuZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuR2V0Qm9va01ldGFSZXNwb25zZSIwgtPkkwIqEigvbGlicmFyeS9BZG1pblNlcnZpY2UvYm9vay97a2V5LmlkfS9tZXRhErEBCg1MaXN0Qm9va01ldGFzEjYuZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuTGlzdEJvb2tNZXRhc1JlcXVlc3QaNy5kZW1vLmJ1c2luZXNzLmJvb2suYWRtaW5fc2VydmljZS5MaXN0Qm9va01ldGFzUmVzcG9uc2UiL4LT5JMCKToBKiIkL2xpYnJhcnkvQWRtaW5TZXJ2aWNlL2Jvb2svbWV0YS9saXN0ErgBCg5VcGRhdGVCb29rTWV0YRI3LmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLlVwZGF0ZUJvb2tNZXRhUmVxdWVzdBo4LmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLlVwZGF0ZUJvb2tNZXRhUmVzcG9uc2UiM4LT5JMCLToBKjIoL2xpYnJhcnkvQWRtaW5TZXJ2aWNlL2Jvb2sve2tleS5pZH0vbWV0YUJEWkJnaXRodWIuY29tL2FjbWUvZGVtby1ib29rL2dlbmVyYXRlZC9nby9hZG1pbl9zZXJ2aWNlO2FkbWluX3NlcnZpY2ViBnByb3RvMw", [file_demo_business_book_book, file_google_api_annotations, file_google_protobuf_empty, file_google_protobuf_field_mask]);
+  fileDesc("CiFhZG1pbl9zZXJ2aWNlL2FkbWluX3NlcnZpY2UucHJvdG8SIGRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlInEKEUNyZWF0ZUJvb2tSZXF1ZXN0EioKBG1ldGEYASABKAsyHC5kZW1vLmJ1c2luZXNzLmJvb2suQm9va01ldGESMAoHY29udGVudBgCIAEoCzIfLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rQ29udGVudCI9ChJDcmVhdGVCb29rUmVzcG9uc2USJwoDa2V5GAEgASgLMhouZGVtby5idXNpbmVzcy5ib29rLkJvb2tJZCJgChdCYXRjaENyZWF0ZUJvb2tzUmVxdWVzdBJFCghyZXF1ZXN0cxgBIAMoCzIzLmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLkNyZWF0ZUJvb2tSZXF1ZXN0IkQKGEJhdGNoQ3JlYXRlQm9va3NSZXNwb25zZRIoCgRrZXlzGAEgAygLMhouZGVtby5idXNpbmVzcy5ib29rLkJvb2tJZCI8ChFEZWxldGVCb29rUmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIkAKFURlbGV0ZUJvb2tTb2Z0UmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIncKEExpc3RCb29rc1JlcXVlc3QSDQoFbGltaXQYASABKAUSDgoGb2Zmc2V0GAIgASgFEjIKBmZpbHRlchgDIAEoCzIiLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rTWV0YUZpbHRlchIQCghvcmRlcl9ieRgEIAEoCSJiChFMaXN0Qm9va3NSZXNwb25zZRI5CgVpdGVtcxgBIAMoCzIqLmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLkJvb2tJdGVtEhIKCnRvdGFsX3NpemUYAiABKAUiaAoIQm9va0l0ZW0SKgoEbWV0YRgBIAEoCzIcLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rTWV0YRIwCgdjb250ZW50GAIgASgLMh8uZGVtby5idXNpbmVzcy5ib29rLkJvb2tDb250ZW50Ij0KEkdldEJvb2tNZXRhUmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIlcKE0dldEJvb2tNZXRhUmVzcG9uc2USLwoJYm9va19tZXRhGAEgASgLMhwuZGVtby5idXNpbmVzcy5ib29rLkJvb2tNZXRhEg8KB3ZlcnNpb24YAiABKAQiRAoYQmF0Y2hHZXRCb29rTWV0YXNSZXF1ZXN0EigKBGtleXMYASADKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIkgKGUJhdGNoR2V0Qm9va01ldGFzUmVzcG9uc2USKwoFbWV0YXMYASADKAsyHC5kZW1vLmJ1c2luZXNzLmJvb2suQm9va01ldGEirgEKFVVwZGF0ZUJvb2tNZXRhUmVxdWVzdBIqCgRtZXRhGAEgASgLMhwuZGVtby5idXNpbmVzcy5ib29rLkJvb2tNZXRhEicKA2tleRgCIAEoCzIaLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rSWQSLwoLdXBkYXRlX21hc2sYAyABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrEg8KB3ZlcnNpb24YBCABKAQiKQoWVXBkYXRlQm9va01ldGFSZXNwb25zZRIPCgd2ZXJzaW9uGAEgASgEIkAKFUdldEJvb2tDb250ZW50UmVxdWVzdBInCgNrZXkYASABKAsyGi5kZW1vLmJ1c2luZXNzLmJvb2suQm9va0lkIk8KFkdldEJvb2tDb250ZW50UmVzcG9uc2USNQoMYm9va19jb250ZW50GAEgASgLMh8uZGVtby5idXNpbmVzcy5ib29rLkJvb2tDb250ZW50InUKGFVwZGF0ZUJvb2tDb250ZW50UmVxdWVzdBIwCgdjb250ZW50GAEgASgLMh8uZGVtby5idXNpbmVzcy5ib29rLkJvb2tDb250ZW50EicKA2tleRgCIAEoCzIaLmRlbW8uYnVzaW5lc3MuYm9vay5Cb29rSWQyuw0KDEFkbWluU2VydmljZRKeAQoKQ3JlYXRlQm9vaxIzLmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLkNyZWF0ZUJvb2tSZXF1ZXN0GjQuZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuQ3JlYXRlQm9va1Jlc3BvbnNlIiWC0+STAh86ASoiGi9saWJyYXJ5L0FkbWluU2VydmljZS9ib29rErwBChBCYXRjaENyZWF0ZUJvb2tzEjkuZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuQmF0Y2hDcmVhdGVCb29rc1JlcXVlc3QaOi5kZW1vLmJ1c2luZXNzLmJvb2suYWRtaW5fc2VydmljZS5CYXRjaENyZWF0ZUJvb2tzUmVzcG9uc2UiMYLT5JMCKzoBKiImL2xpYnJhcnkvQWRtaW5TZXJ2aWNlL2Jvb2svYmF0Y2hDcmVhdGUShgEKCkRlbGV0ZUJvb2sSMy5kZW1vLmJ1c2luZXNzLmJvb2suYWRtaW5fc2VydmljZS5EZWxldGVCb29rUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIrgtPkkwIlKiMvbGlicmFyeS9BZG1pblNlcnZpY2UvYm9vay97a2V5LmlkfRKTAQoORGVsZXRlQm9va1NvZnQSNy5kZW1vLmJ1c2luZXNzLmJvb2suYWRtaW5fc2VydmljZS5EZWxldGVCb29rU29mdFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiMILT5JMCKjoBKiIlL2xpYnJhcnkvQWRtaW5TZXJ2aWNlL2Jvb2svZGVsZXRlU29mdBKgAQoJTGlzdEJvb2tzEjIuZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuTGlzdEJvb2tzUmVxdWVzdBozLmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLkxpc3RCb29rc1Jlc3BvbnNlIiqC0+STAiQ6ASoiHy9saWJyYXJ5L0FkbWluU2VydmljZS9ib29rL2xpc3QSrAEKC0dldEJvb2tNZXRhEjQuZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuR2V0Qm9va01ldGFSZXF1ZXN0GjUuZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuR2V0Qm9va01ldGFSZXNwb25zZSIwgtPkkwIqEigvbGlicmFyeS9BZG1pblNlcnZpY2UvYm9vay97a2V5LmlkfS9tZXRhEsEBChFCYXRjaEdldEJvb2tNZXRhcxI6LmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLkJhdGNoR2V0Qm9va01ldGFzUmVxdWVzdBo7LmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLkJhdGNoR2V0Qm9va01ldGFzUmVzcG9uc2UiM4LT5JMCLToBKiIoL2xpYnJhcnkvQWRtaW5TZXJ2aWNlL2Jvb2svbWV0YS9iYXRjaEdldBK4AQoOVXBkYXRlQm9va01ldGESNy5kZW1vLmJ1c2luZXNzLmJvb2suYWRtaW5fc2VydmljZS5VcGRhdGVCb29rTWV0YVJlcXVlc3QaOC5kZW1vLmJ1c2luZXNzLmJvb2suYWRtaW5fc2VydmljZS5VcGRhdGVCb29rTWV0YVJlc3BvbnNlIjOC0+STAi06ASoyKC9saWJyYXJ5L0FkbWluU2VydmljZS9ib29rL3trZXkuaWR9L21ldGESuAEKDkdldEJvb2tDb250ZW50EjcuZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuR2V0Qm9va0NvbnRlbnRSZXF1ZXN0GjguZGVtby5idXNpbmVzcy5ib29rLmFkbWluX3NlcnZpY2UuR2V0Qm9va0NvbnRlbnRSZXNwb25zZSIzgtPkkwItEisvbGlicmFyeS9BZG1pblNlcnZpY2UvYm9vay97a2V5LmlkfS9jb250ZW50Ep8BChFVcGRhdGVCb29rQ29udGVudBI6LmRlbW8uYnVzaW5lc3MuYm9vay5hZG1pbl9zZXJ2aWNlLlVwZGF0ZUJvb2tDb250ZW50UmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSI2gtPkkwIwOgEqMisvbGlicmFyeS9BZG1pblNlcnZpY2UvYm9vay97a2V5LmlkfS9jb250ZW50QkRaQmdpdGh1Yi5jb20vYWNtZS9kZW1vLWJvb2svZ2VuZXJhdGVkL2dvL2FkbWluX3NlcnZpY2U7YWRtaW5fc2VydmljZWIGcHJvdG8z", [file_demo_business_book_book, file_google_api_annotations, file_google_protobuf_empty, file_google_protobuf_field_mask]);
 
 /**
  * @generated from message demo.business.book.admin_service.CreateBookRequest
@@ -125,6 +125,82 @@ export const DeleteBookSoftRequestSchema: GenMessage<DeleteBookSoftRequest> = /*
   messageDesc(file_admin_service_admin_service, 5);
 
 /**
+ * @generated from message demo.business.book.admin_service.ListBooksRequest
+ */
+export type ListBooksRequest = Message<"demo.business.book.admin_service.ListBooksRequest"> & {
+  /**
+   * @generated from field: int32 limit = 1;
+   */
+  limit: number;
+
+  /**
+   * @generated from field: int32 offset = 2;
+   */
+  offset: number;
+
+  /**
+   * @generated from field: demo.business.book.BookMetaFilter filter = 3;
+   */
+  filter?: BookMetaFilter | undefined;
+
+  /**
+   * @generated from field: string order_by = 4;
+   */
+  orderBy: string;
+};
+
+/**
+ * Describes the message demo.business.book.admin_service.ListBooksRequest.
+ * Use `create(ListBooksRequestSchema)` to create a new message.
+ */
+export const ListBooksRequestSchema: GenMessage<ListBooksRequest> = /*@__PURE__*/
+  messageDesc(file_admin_service_admin_service, 6);
+
+/**
+ * @generated from message demo.business.book.admin_service.ListBooksResponse
+ */
+export type ListBooksResponse = Message<"demo.business.book.admin_service.ListBooksResponse"> & {
+  /**
+   * @generated from field: repeated demo.business.book.admin_service.BookItem items = 1;
+   */
+  items: BookItem[];
+
+  /**
+   * @generated from field: int32 total_size = 2;
+   */
+  totalSize: number;
+};
+
+/**
+ * Describes the message demo.business.book.admin_service.ListBooksResponse.
+ * Use `create(ListBooksResponseSchema)` to create a new message.
+ */
+export const ListBooksResponseSchema: GenMessage<ListBooksResponse> = /*@__PURE__*/
+  messageDesc(file_admin_service_admin_service, 7);
+
+/**
+ * @generated from message demo.business.book.admin_service.BookItem
+ */
+export type BookItem = Message<"demo.business.book.admin_service.BookItem"> & {
+  /**
+   * @generated from field: demo.business.book.BookMeta meta = 1;
+   */
+  meta?: BookMeta | undefined;
+
+  /**
+   * @generated from field: demo.business.book.BookContent content = 2;
+   */
+  content?: BookContent | undefined;
+};
+
+/**
+ * Describes the message demo.business.book.admin_service.BookItem.
+ * Use `create(BookItemSchema)` to create a new message.
+ */
+export const BookItemSchema: GenMessage<BookItem> = /*@__PURE__*/
+  messageDesc(file_admin_service_admin_service, 8);
+
+/**
  * @generated from message demo.business.book.admin_service.GetBookMetaRequest
  */
 export type GetBookMetaRequest = Message<"demo.business.book.admin_service.GetBookMetaRequest"> & {
@@ -139,7 +215,7 @@ export type GetBookMetaRequest = Message<"demo.business.book.admin_service.GetBo
  * Use `create(GetBookMetaRequestSchema)` to create a new message.
  */
 export const GetBookMetaRequestSchema: GenMessage<GetBookMetaRequest> = /*@__PURE__*/
-  messageDesc(file_admin_service_admin_service, 6);
+  messageDesc(file_admin_service_admin_service, 9);
 
 /**
  * @generated from message demo.business.book.admin_service.GetBookMetaResponse
@@ -161,66 +237,41 @@ export type GetBookMetaResponse = Message<"demo.business.book.admin_service.GetB
  * Use `create(GetBookMetaResponseSchema)` to create a new message.
  */
 export const GetBookMetaResponseSchema: GenMessage<GetBookMetaResponse> = /*@__PURE__*/
-  messageDesc(file_admin_service_admin_service, 7);
+  messageDesc(file_admin_service_admin_service, 10);
 
 /**
- * @generated from message demo.business.book.admin_service.ListBookMetasRequest
+ * @generated from message demo.business.book.admin_service.BatchGetBookMetasRequest
  */
-export type ListBookMetasRequest = Message<"demo.business.book.admin_service.ListBookMetasRequest"> & {
+export type BatchGetBookMetasRequest = Message<"demo.business.book.admin_service.BatchGetBookMetasRequest"> & {
   /**
-   * @generated from field: int32 page_size = 1;
+   * @generated from field: repeated demo.business.book.BookId keys = 1;
    */
-  pageSize: number;
-
-  /**
-   * @generated from field: string page_token = 2;
-   */
-  pageToken: string;
-
-  /**
-   * @generated from field: demo.business.book.BookMetaFilter filter = 3;
-   */
-  filter?: BookMetaFilter | undefined;
-
-  /**
-   * @generated from field: string order_by = 4;
-   */
-  orderBy: string;
+  keys: BookId[];
 };
 
 /**
- * Describes the message demo.business.book.admin_service.ListBookMetasRequest.
- * Use `create(ListBookMetasRequestSchema)` to create a new message.
+ * Describes the message demo.business.book.admin_service.BatchGetBookMetasRequest.
+ * Use `create(BatchGetBookMetasRequestSchema)` to create a new message.
  */
-export const ListBookMetasRequestSchema: GenMessage<ListBookMetasRequest> = /*@__PURE__*/
-  messageDesc(file_admin_service_admin_service, 8);
+export const BatchGetBookMetasRequestSchema: GenMessage<BatchGetBookMetasRequest> = /*@__PURE__*/
+  messageDesc(file_admin_service_admin_service, 11);
 
 /**
- * @generated from message demo.business.book.admin_service.ListBookMetasResponse
+ * @generated from message demo.business.book.admin_service.BatchGetBookMetasResponse
  */
-export type ListBookMetasResponse = Message<"demo.business.book.admin_service.ListBookMetasResponse"> & {
+export type BatchGetBookMetasResponse = Message<"demo.business.book.admin_service.BatchGetBookMetasResponse"> & {
   /**
    * @generated from field: repeated demo.business.book.BookMeta metas = 1;
    */
   metas: BookMeta[];
-
-  /**
-   * @generated from field: string next_page_token = 2;
-   */
-  nextPageToken: string;
-
-  /**
-   * @generated from field: int32 total_size = 3;
-   */
-  totalSize: number;
 };
 
 /**
- * Describes the message demo.business.book.admin_service.ListBookMetasResponse.
- * Use `create(ListBookMetasResponseSchema)` to create a new message.
+ * Describes the message demo.business.book.admin_service.BatchGetBookMetasResponse.
+ * Use `create(BatchGetBookMetasResponseSchema)` to create a new message.
  */
-export const ListBookMetasResponseSchema: GenMessage<ListBookMetasResponse> = /*@__PURE__*/
-  messageDesc(file_admin_service_admin_service, 9);
+export const BatchGetBookMetasResponseSchema: GenMessage<BatchGetBookMetasResponse> = /*@__PURE__*/
+  messageDesc(file_admin_service_admin_service, 12);
 
 /**
  * @generated from message demo.business.book.admin_service.UpdateBookMetaRequest
@@ -252,7 +303,7 @@ export type UpdateBookMetaRequest = Message<"demo.business.book.admin_service.Up
  * Use `create(UpdateBookMetaRequestSchema)` to create a new message.
  */
 export const UpdateBookMetaRequestSchema: GenMessage<UpdateBookMetaRequest> = /*@__PURE__*/
-  messageDesc(file_admin_service_admin_service, 10);
+  messageDesc(file_admin_service_admin_service, 13);
 
 /**
  * @generated from message demo.business.book.admin_service.UpdateBookMetaResponse
@@ -269,7 +320,63 @@ export type UpdateBookMetaResponse = Message<"demo.business.book.admin_service.U
  * Use `create(UpdateBookMetaResponseSchema)` to create a new message.
  */
 export const UpdateBookMetaResponseSchema: GenMessage<UpdateBookMetaResponse> = /*@__PURE__*/
-  messageDesc(file_admin_service_admin_service, 11);
+  messageDesc(file_admin_service_admin_service, 14);
+
+/**
+ * @generated from message demo.business.book.admin_service.GetBookContentRequest
+ */
+export type GetBookContentRequest = Message<"demo.business.book.admin_service.GetBookContentRequest"> & {
+  /**
+   * @generated from field: demo.business.book.BookId key = 1;
+   */
+  key?: BookId | undefined;
+};
+
+/**
+ * Describes the message demo.business.book.admin_service.GetBookContentRequest.
+ * Use `create(GetBookContentRequestSchema)` to create a new message.
+ */
+export const GetBookContentRequestSchema: GenMessage<GetBookContentRequest> = /*@__PURE__*/
+  messageDesc(file_admin_service_admin_service, 15);
+
+/**
+ * @generated from message demo.business.book.admin_service.GetBookContentResponse
+ */
+export type GetBookContentResponse = Message<"demo.business.book.admin_service.GetBookContentResponse"> & {
+  /**
+   * @generated from field: demo.business.book.BookContent book_content = 1;
+   */
+  bookContent?: BookContent | undefined;
+};
+
+/**
+ * Describes the message demo.business.book.admin_service.GetBookContentResponse.
+ * Use `create(GetBookContentResponseSchema)` to create a new message.
+ */
+export const GetBookContentResponseSchema: GenMessage<GetBookContentResponse> = /*@__PURE__*/
+  messageDesc(file_admin_service_admin_service, 16);
+
+/**
+ * @generated from message demo.business.book.admin_service.UpdateBookContentRequest
+ */
+export type UpdateBookContentRequest = Message<"demo.business.book.admin_service.UpdateBookContentRequest"> & {
+  /**
+   * @generated from field: demo.business.book.BookContent content = 1;
+   */
+  content?: BookContent | undefined;
+
+  /**
+   * @generated from field: demo.business.book.BookId key = 2;
+   */
+  key?: BookId | undefined;
+};
+
+/**
+ * Describes the message demo.business.book.admin_service.UpdateBookContentRequest.
+ * Use `create(UpdateBookContentRequestSchema)` to create a new message.
+ */
+export const UpdateBookContentRequestSchema: GenMessage<UpdateBookContentRequest> = /*@__PURE__*/
+  messageDesc(file_admin_service_admin_service, 17);
 
 /**
  * @generated from service demo.business.book.admin_service.AdminService
@@ -308,6 +415,14 @@ export const AdminService: GenService<{
     output: typeof EmptySchema;
   },
   /**
+   * @generated from rpc demo.business.book.admin_service.AdminService.ListBooks
+   */
+  listBooks: {
+    methodKind: "unary";
+    input: typeof ListBooksRequestSchema;
+    output: typeof ListBooksResponseSchema;
+  },
+  /**
    * @generated from rpc demo.business.book.admin_service.AdminService.GetBookMeta
    */
   getBookMeta: {
@@ -316,12 +431,12 @@ export const AdminService: GenService<{
     output: typeof GetBookMetaResponseSchema;
   },
   /**
-   * @generated from rpc demo.business.book.admin_service.AdminService.ListBookMetas
+   * @generated from rpc demo.business.book.admin_service.AdminService.BatchGetBookMetas
    */
-  listBookMetas: {
+  batchGetBookMetas: {
     methodKind: "unary";
-    input: typeof ListBookMetasRequestSchema;
-    output: typeof ListBookMetasResponseSchema;
+    input: typeof BatchGetBookMetasRequestSchema;
+    output: typeof BatchGetBookMetasResponseSchema;
   },
   /**
    * @generated from rpc demo.business.book.admin_service.AdminService.UpdateBookMeta
@@ -330,6 +445,22 @@ export const AdminService: GenService<{
     methodKind: "unary";
     input: typeof UpdateBookMetaRequestSchema;
     output: typeof UpdateBookMetaResponseSchema;
+  },
+  /**
+   * @generated from rpc demo.business.book.admin_service.AdminService.GetBookContent
+   */
+  getBookContent: {
+    methodKind: "unary";
+    input: typeof GetBookContentRequestSchema;
+    output: typeof GetBookContentResponseSchema;
+  },
+  /**
+   * @generated from rpc demo.business.book.admin_service.AdminService.UpdateBookContent
+   */
+  updateBookContent: {
+    methodKind: "unary";
+    input: typeof UpdateBookContentRequestSchema;
+    output: typeof EmptySchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_admin_service_admin_service, 0);

@@ -472,10 +472,9 @@ func TestValidatePathVariables_OverrideIntegration(t *testing.T) {
 					Name:    "meta",
 					Type:    "BookMeta",
 					Version: apigenyaml.VersionDef{Kind: "NONE"},
-					Reader: &apigenyaml.ReaderDef{
-						List: true,
+					Writer: &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{
 						HTTP: &apigenyaml.HTTPOverride{Path: overridePath},
-					},
+					}},
 				}},
 			}},
 		}

@@ -69,6 +69,9 @@ import_protos:
 | `create.batch` | bool | 设为 `true` 时额外生成 `BatchCreate<Entity>s` RPC；默认 `false` |
 | `delete` | object | 设为 `{}` 生成硬删除 `Delete` |
 | `delete_soft` | object | 设为 `{}` 生成软删除 `DeleteSoft`；可与 `delete` 并存 |
+| `list` | object | 生成实体级 `List`（如 `ListBooks`）。通过 `resource` 指定列表覆盖的资源集合；`list_config` 可配置筛选类型 |
+| `list.resource` | []string | 列表查询覆盖的资源名列表，每个必须是该实体下已声明的资源；不可为空、不可重复 |
+| `list.list_config.filter_type` | string | List 请求的自定义 filter message 类型 |
 | `resources` | []object | 至少声明一个资源 |
 
 ### 资源字段
@@ -81,10 +84,6 @@ import_protos:
 | `version.type` | string | 版本值类型：`U64` / `U32` / `STRING`（STRONG/WEAK 时需要） |
 | `reader` | object | 读取能力。`reader: {}` 生成 `Get` |
 | `reader.batch` | bool | 生成 `BatchGet` |
-| `reader.list` | bool | 生成 `List`（含分页、filter、order_by） |
-| `reader.list_config.total_size` | bool | List 响应是否包含 `total_size`（默认 true） |
-| `reader.list_config.filter_type` | string | List 请求的自定义 filter message 类型 |
-| `reader.http` | object | 覆盖 List 的 HTTP `verb`/`path`/`body`/`body_style` |
 | `writer.update` | object | 生成 `Update` |
 | `writer.update.mask` | bool | Update 请求中是否包含 `google.protobuf.FieldMask` |
 | `writer.update.http` | object | 覆盖 Update 的 HTTP `verb`/`path`/`body`/`body_style` |
@@ -106,6 +105,7 @@ import_protos:
 | --- | --- | --- |
 | `services[].name` | string | Service 名，`PascalCase` |
 | `services[].entities[].name` | string | 引用 `entities` 中定义的实体 |
+| `services[].entities[].list` | bool | 可选。设为 `false` 收窄掉实体 `List`；省略或 `true` 时继承实体 `list` 配置 |
 | `services[].entities[].resources` | []object | 可选的收窄规则；省略时暴露实体全部能力 |
 | `services[].custom_methods` | []object | service 级自定义 RPC 列表 |
 | `custom_methods[].name` | string | RPC 名，`PascalCase` |
@@ -136,9 +136,7 @@ services:
   - name: AdminService
     entities:
       - name: book
-        resources:
-          - name: meta
-            reader: { list: true } # 仅暴露 ListBookMetas
+        list: true                # 暴露实体级 ListBooks
     custom_methods:
       - name: ArchiveBook
         request: ArchiveBookRequest

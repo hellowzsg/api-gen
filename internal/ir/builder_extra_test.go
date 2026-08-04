@@ -16,15 +16,16 @@ func TestBuildMultiEntity(t *testing.T) {
 		Name:   "catalog",
 		Entities: []apigenyaml.Entity{
 			{
-				Name: "book",
-				Key:  apigenyaml.KeyDef{Type: "BookId"},
+				Name:   "book",
+				Key:    apigenyaml.KeyDef{Type: "BookId"},
 				Create: &apigenyaml.CreateDef{},
 				Delete: &struct{}{},
+				List:   &apigenyaml.EntityListDef{Resources: []string{"meta"}},
 				Resources: []apigenyaml.Resource{{
 					Name:    "meta",
 					Type:    "BookMeta",
 					Version: apigenyaml.VersionDef{Kind: "STRONG", Type: "U64"},
-					Reader:  &apigenyaml.ReaderDef{Batch: true, List: true},
+					Reader:  &apigenyaml.ReaderDef{Batch: true},
 					Writer:  &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{Mask: true}},
 				}},
 			},
@@ -68,7 +69,7 @@ func TestBuildMultiEntity(t *testing.T) {
 	if e0.Resources[0].BatchGet == nil {
 		t.Error("Entity[0].BatchGet is nil")
 	}
-	if e0.Resources[0].List == nil {
+	if e0.List == nil {
 		t.Error("Entity[0].List is nil")
 	}
 	if e0.Resources[0].Update == nil {
@@ -92,7 +93,7 @@ func TestBuildMultiEntity(t *testing.T) {
 	if e1.Resources[0].BatchGet != nil {
 		t.Error("Entity[1].BatchGet should be nil (batch not enabled)")
 	}
-	if e1.Resources[0].List != nil {
+	if e1.List != nil {
 		t.Error("Entity[1].List should be nil (list not enabled)")
 	}
 	if e1.Resources[0].Update != nil {
@@ -109,13 +110,14 @@ func TestBuildMultiResource(t *testing.T) {
 		Entities: []apigenyaml.Entity{{
 			Name: "book",
 			Key:  apigenyaml.KeyDef{Type: "BookId"},
+			List: &apigenyaml.EntityListDef{Resources: []string{"meta", "content", "review"}},
 			Resources: []apigenyaml.Resource{
 				{Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "STRONG", Type: "U64"},
-					Reader: &apigenyaml.ReaderDef{Batch: true, List: true}, Writer: &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{Mask: true}}},
+					Reader: &apigenyaml.ReaderDef{Batch: true}, Writer: &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{Mask: true}}},
 				{Name: "content", Type: "BookContent", Version: apigenyaml.VersionDef{Kind: "NONE"},
 					Reader: &apigenyaml.ReaderDef{}, Writer: &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{}}},
 				{Name: "review", Type: "BookReview", Version: apigenyaml.VersionDef{Kind: "WEAK", Type: "STRING"},
-					Reader: &apigenyaml.ReaderDef{List: true}},
+					Reader: &apigenyaml.ReaderDef{}},
 			},
 		}},
 	}
@@ -128,9 +130,9 @@ func TestBuildMultiResource(t *testing.T) {
 		t.Fatalf("Resources = %d, want 3", len(e.Resources))
 	}
 
-	// Resource 0: meta — STRONG, batch+list+update(mask)
+	// Resource 0: meta — STRONG, batch+update(mask)
 	r0 := e.Resources[0]
-	if r0.Get == nil || r0.BatchGet == nil || r0.List == nil || r0.Update == nil {
+	if r0.Get == nil || r0.BatchGet == nil || r0.Update == nil {
 		t.Error("Resource[0] missing methods")
 	}
 	if !r0.Update.HasVersion {
@@ -145,9 +147,6 @@ func TestBuildMultiResource(t *testing.T) {
 	if r1.BatchGet != nil {
 		t.Error("Resource[1] should not have BatchGet")
 	}
-	if r1.List != nil {
-		t.Error("Resource[1] should not have List")
-	}
 	if r1.Update == nil {
 		t.Error("Resource[1] Update is nil")
 	}
@@ -161,7 +160,8 @@ func TestBuildMultiResource(t *testing.T) {
 		t.Errorf("Resource[1] Update ResponseName = %q, want google.protobuf.Empty", r1.Update.ResponseName)
 	}
 
-	// Resource 2: review — WEAK, get+list only (no batch, no update)
+	// Resource 2: review — WEAK, get only (no batch, no update)
+	// List is entity-level pointing to review.
 	r2 := e.Resources[2]
 	if r2.Get == nil {
 		t.Error("Resource[2] Get is nil")
@@ -169,26 +169,38 @@ func TestBuildMultiResource(t *testing.T) {
 	if r2.BatchGet != nil {
 		t.Error("Resource[2] should not have BatchGet")
 	}
-	if r2.List == nil {
-		t.Error("Resource[2] List is nil")
-	}
 	if r2.Update != nil {
 		t.Error("Resource[2] should not have Update")
+	}
+	// Entity-level List should be present and aggregate all declared resources.
+	if e.List == nil {
+		t.Error("Entity List is nil (should target declared resources)")
+	}
+	if e.List.RPCName != "ListBooks" {
+		t.Errorf("Entity List RPCName = %q, want ListBooks", e.List.RPCName)
+	}
+	if e.List.ItemName != "BookItem" {
+		t.Errorf("Entity List ItemName = %q, want BookItem", e.List.ItemName)
+	}
+	if len(e.List.ItemFields) != 3 {
+		t.Errorf("Entity List ItemFields = %d, want 3", len(e.List.ItemFields))
 	}
 }
 
 // TestBuildServiceNarrowing: service-level resource narrowing produces
 // correct method set in the ServiceIR.
 func TestBuildServiceNarrowing(t *testing.T) {
+	listTrue := true
 	cfg := &apigenyaml.Config{
 		Syntax: "v1",
 		Name:   "test",
 		Entities: []apigenyaml.Entity{{
 			Name: "book",
 			Key:  apigenyaml.KeyDef{Type: "BookId"},
+			List: &apigenyaml.EntityListDef{Resources: []string{"meta"}},
 			Resources: []apigenyaml.Resource{
 				{Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"},
-					Reader: &apigenyaml.ReaderDef{Batch: true, List: true}, Writer: &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{Mask: true}}},
+					Reader: &apigenyaml.ReaderDef{Batch: true}, Writer: &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{Mask: true}}},
 				{Name: "content", Type: "BookContent", Version: apigenyaml.VersionDef{Kind: "NONE"},
 					Reader: &apigenyaml.ReaderDef{}, Writer: &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{}}},
 			},
@@ -202,9 +214,10 @@ func TestBuildServiceNarrowing(t *testing.T) {
 				Name: "NarrowService",
 				Entities: []apigenyaml.ServiceEntity{{
 					Name: "book",
+					List: &listTrue,
 					Resources: []apigenyaml.Resource{{
 						Name:   "meta",
-						Reader: &apigenyaml.ReaderDef{List: true},
+						Reader: &apigenyaml.ReaderDef{},
 					}},
 				}},
 			},
@@ -224,7 +237,7 @@ func TestBuildServiceNarrowing(t *testing.T) {
 		t.Errorf("FullService should have no resource narrowing, got %d resources", len(fullSvc.Entities[0].Resources))
 	}
 
-	// NarrowService — narrowed to meta with only list
+	// NarrowService — narrowed to meta with entity-level list enabled
 	narrowSvc := ir.Services[1]
 	if len(narrowSvc.Entities[0].Resources) != 1 {
 		t.Fatalf("NarrowService should have 1 narrowed resource, got %d", len(narrowSvc.Entities[0].Resources))
@@ -239,65 +252,38 @@ func TestBuildServiceNarrowing(t *testing.T) {
 	if nr.Reader.Batch == nil || *nr.Reader.Batch {
 		t.Error("Narrowed reader batch should be false")
 	}
-	if nr.Reader.List == nil || !*nr.Reader.List {
-		t.Error("Narrowed reader list should be true")
-	}
 	if nr.Writer != nil {
 		t.Error("Narrowed writer should be nil (not declared in service)")
 	}
+	// Entity-level List narrowing should be enabled.
+	if narrowSvc.Entities[0].List == nil || !*narrowSvc.Entities[0].List {
+		t.Error("Narrowed entity List should be true")
+	}
 }
 
-// TestBuildListTotalSize: list_config.total_size controls TotalSize field.
+// TestBuildListTotalSize: total_size is always present (no longer configurable).
 func TestBuildListTotalSize(t *testing.T) {
-	t.Run("total_size true", func(t *testing.T) {
+	t.Run("total_size always present", func(t *testing.T) {
 		cfg := &apigenyaml.Config{
 			Syntax: "v1", Name: "test",
 			Entities: []apigenyaml.Entity{{
 				Name: "book", Key: apigenyaml.KeyDef{Type: "BookId"},
+				List: &apigenyaml.EntityListDef{Resources: []string{"meta"}},
 				Resources: []apigenyaml.Resource{{
 					Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"},
-					Reader: &apigenyaml.ReaderDef{List: true, ListConfig: &apigenyaml.ListConfig{TotalSize: true}},
 				}},
 			}},
 		}
 		ir, _ := Build(cfg)
-		l := ir.Entities[0].Resources[0].List
-		if l.TotalSize == nil {
-			t.Error("TotalSize should be non-nil when total_size=true")
+		l := ir.Entities[0].List
+		if l == nil {
+			t.Fatal("List is nil")
 		}
-	})
-	t.Run("total_size false", func(t *testing.T) {
-		cfg := &apigenyaml.Config{
-			Syntax: "v1", Name: "test",
-			Entities: []apigenyaml.Entity{{
-				Name: "book", Key: apigenyaml.KeyDef{Type: "BookId"},
-				Resources: []apigenyaml.Resource{{
-					Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"},
-					Reader: &apigenyaml.ReaderDef{List: true, ListConfig: &apigenyaml.ListConfig{TotalSize: false}},
-				}},
-			}},
+		if l.TotalSize.Name != "total_size" {
+			t.Errorf("TotalSize.Name = %q, want total_size", l.TotalSize.Name)
 		}
-		ir, _ := Build(cfg)
-		l := ir.Entities[0].Resources[0].List
-		if l.TotalSize != nil {
-			t.Error("TotalSize should be nil when total_size=false")
-		}
-	})
-	t.Run("list_config omitted defaults to true", func(t *testing.T) {
-		cfg := &apigenyaml.Config{
-			Syntax: "v1", Name: "test",
-			Entities: []apigenyaml.Entity{{
-				Name: "book", Key: apigenyaml.KeyDef{Type: "BookId"},
-				Resources: []apigenyaml.Resource{{
-					Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"},
-					Reader: &apigenyaml.ReaderDef{List: true},
-				}},
-			}},
-		}
-		ir, _ := Build(cfg)
-		l := ir.Entities[0].Resources[0].List
-		if l.TotalSize == nil {
-			t.Error("TotalSize should be non-nil when list_config omitted (defaults to true)")
+		if l.TotalSize.Number != 2 {
+			t.Errorf("TotalSize.Number = %d, want 2", l.TotalSize.Number)
 		}
 	})
 }
@@ -305,8 +291,8 @@ func TestBuildListTotalSize(t *testing.T) {
 // TestBuildPascalCaseConversion: snake_case names are correctly converted.
 func TestBuildPascalCaseConversion(t *testing.T) {
 	tests := []struct {
-		input  string
-		want   string
+		input string
+		want  string
 	}{
 		{"book", "Book"},
 		{"book_meta", "BookMeta"},
@@ -327,8 +313,8 @@ func TestBuildPascalCaseConversion(t *testing.T) {
 // TestBuildSnakeCaseConversion: PascalCase service names converted to snake_case.
 func TestBuildSnakeCaseConversion(t *testing.T) {
 	tests := []struct {
-		input  string
-		want   string
+		input string
+		want  string
 	}{
 		{"LibraryService", "library_service"},
 		{"AdminService", "admin_service"},
@@ -380,12 +366,12 @@ func TestBuildUpdateFieldNumbers(t *testing.T) {
 		wantFields int
 		wantLast   int
 	}{
-		{"NONE+mask", "NONE", true, 3, 3},     // resource, key, update_mask
-		{"NONE+nomask", "NONE", false, 2, 2},   // resource, key
-		{"STRONG+mask", "STRONG", true, 4, 4},  // resource, key, update_mask, version
+		{"NONE+mask", "NONE", true, 3, 3},      // resource, key, update_mask
+		{"NONE+nomask", "NONE", false, 2, 2},    // resource, key
+		{"STRONG+mask", "STRONG", true, 4, 4},   // resource, key, update_mask, version
 		{"STRONG+nomask", "STRONG", false, 3, 3}, // resource, key, version
-		{"WEAK+mask", "WEAK", true, 4, 4},      // resource, key, update_mask, version(wrapper)
-		{"WEAK+nomask", "WEAK", false, 3, 3},   // resource, key, version(wrapper)
+		{"WEAK+mask", "WEAK", true, 4, 4},       // resource, key, update_mask, version(wrapper)
+		{"WEAK+nomask", "WEAK", false, 3, 3},    // resource, key, version(wrapper)
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -394,7 +380,8 @@ func TestBuildUpdateFieldNumbers(t *testing.T) {
 				Entities: []apigenyaml.Entity{{
 					Name: "book", Key: apigenyaml.KeyDef{Type: "BookId"},
 					Resources: []apigenyaml.Resource{{
-						Name: "meta", Type: "BookMeta",
+						Name:    "meta",
+						Type:    "BookMeta",
 						Version: apigenyaml.VersionDef{Kind: tt.kind, Type: "U64"},
 						Writer:  &apigenyaml.WriterDef{Update: &apigenyaml.UpdateDef{Mask: tt.mask}},
 					}},
@@ -552,29 +539,29 @@ func TestBuildBatchGetResponseField(t *testing.T) {
 	}
 }
 
-// TestBuildListRequestFields: List request has page_size, page_token,
+// TestBuildListRequestFields: List request has limit, offset,
 // filter, order_by in correct positions.
 func TestBuildListRequestFields(t *testing.T) {
 	cfg := &apigenyaml.Config{
 		Syntax: "v1", Name: "test",
 		Entities: []apigenyaml.Entity{{
 			Name: "book", Key: apigenyaml.KeyDef{Type: "BookId"},
-			Resources: []apigenyaml.Resource{{
-				Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"},
-				Reader: &apigenyaml.ReaderDef{List: true},
-			}},
+		List: &apigenyaml.EntityListDef{Resources: []string{"meta"}},
+		Resources: []apigenyaml.Resource{{
+			Name: "meta", Type: "BookMeta", Version: apigenyaml.VersionDef{Kind: "NONE"},
+		}},
 		}},
 	}
 	ir, err := Build(cfg)
 	if err != nil {
 		t.Fatalf("Build failed: %v", err)
 	}
-	l := ir.Entities[0].Resources[0].List
-	if l.PageSize.Name != "page_size" || l.PageSize.Number != 1 {
-		t.Errorf("PageSize = {%s, %d}, want {page_size, 1}", l.PageSize.Name, l.PageSize.Number)
+	l := ir.Entities[0].List
+	if l.Limit.Name != "limit" || l.Limit.Number != 1 {
+		t.Errorf("Limit = {%s, %d}, want {limit, 1}", l.Limit.Name, l.Limit.Number)
 	}
-	if l.PageToken.Name != "page_token" || l.PageToken.Number != 2 {
-		t.Errorf("PageToken = {%s, %d}, want {page_token, 2}", l.PageToken.Name, l.PageToken.Number)
+	if l.Offset.Name != "offset" || l.Offset.Number != 2 {
+		t.Errorf("Offset = {%s, %d}, want {offset, 2}", l.Offset.Name, l.Offset.Number)
 	}
 	if l.Filter.Name != "filter" || l.Filter.Number != 3 {
 		t.Errorf("Filter = {%s, %d}, want {filter, 3}", l.Filter.Name, l.Filter.Number)
@@ -582,8 +569,9 @@ func TestBuildListRequestFields(t *testing.T) {
 	if l.OrderBy.Name != "order_by" || l.OrderBy.Number != 4 {
 		t.Errorf("OrderBy = {%s, %d}, want {order_by, 4}", l.OrderBy.Name, l.OrderBy.Number)
 	}
-	if l.NextPageToken.Name != "next_page_token" || l.NextPageToken.Number != 2 {
-		t.Errorf("NextPageToken = {%s, %d}, want {next_page_token, 2}", l.NextPageToken.Name, l.NextPageToken.Number)
+	// Response TotalSize is always present at field 2.
+	if l.TotalSize.Name != "total_size" || l.TotalSize.Number != 2 {
+		t.Errorf("TotalSize = {%s, %d}, want {total_size, 2}", l.TotalSize.Name, l.TotalSize.Number)
 	}
 }
 

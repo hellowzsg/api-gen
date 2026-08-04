@@ -26,6 +26,9 @@ func (c *Config) ValidateReferences() error {
 	if err := c.validateCreateKey(); err != nil {
 		return err
 	}
+	if err := c.validateEntityList(); err != nil {
+		return err
+	}
 	if err := c.validateCustomMethodStream(); err != nil {
 		return err
 	}
@@ -45,6 +48,41 @@ func (c *Config) validateCreateKey() error {
 			continue
 		}
 		return fmt.Errorf("entities[%d].create.key: invalid value %q for entity %q (only \"server\" or \"client\" is supported)", i, k, e.Name)
+	}
+	return nil
+}
+
+// validateEntityList validates that entity.list.resource is a non-empty list,
+// each element references a resource declared on the same entity, and there are
+// no empty or duplicate elements.
+func (c *Config) validateEntityList() error {
+	for i, e := range c.Entities {
+		if e.List == nil {
+			continue
+		}
+		if len(e.List.Resources) == 0 {
+			return fmt.Errorf("entities[%d].list.resource: at least one resource is required for entity %q", i, e.Name)
+		}
+		seen := make(map[string]bool, len(e.List.Resources))
+		for _, res := range e.List.Resources {
+			if res == "" {
+				return fmt.Errorf("entities[%d].list.resource: empty resource name for entity %q", i, e.Name)
+			}
+			if seen[res] {
+				return fmt.Errorf("entities[%d].list.resource: duplicate resource %q for entity %q", i, res, e.Name)
+			}
+			seen[res] = true
+			found := false
+			for _, r := range e.Resources {
+				if r.Name == res {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return fmt.Errorf("entities[%d].list.resource: %q is not declared in resources of entity %q", i, res, e.Name)
+			}
+		}
 	}
 	return nil
 }
@@ -125,10 +163,10 @@ func (c *Config) validateTypeReferences() error {
 			if err := validateTypeName(r.Type); err != nil {
 				return fmt.Errorf("entities[%d].resources[%d].type_: %w", i, j, err)
 			}
-			if r.Reader != nil && r.Reader.ListConfig != nil && r.Reader.ListConfig.FilterType != "" {
-				if err := validateTypeName(r.Reader.ListConfig.FilterType); err != nil {
-					return fmt.Errorf("entities[%d].resources[%d].reader.list_config.filter_type: %w", i, j, err)
-				}
+		}
+		if e.List != nil && e.List.ListConfig != nil && e.List.ListConfig.FilterType != "" {
+			if err := validateTypeName(e.List.ListConfig.FilterType); err != nil {
+				return fmt.Errorf("entities[%d].list.list_config.filter_type: %w", i, err)
 			}
 		}
 	}
@@ -205,11 +243,6 @@ func (c *Config) validatePerMethodHTTPOverrides() error {
 	for i := range c.Entities {
 		for j := range c.Entities[i].Resources {
 			r := &c.Entities[i].Resources[j]
-			if r.Reader != nil && r.Reader.HTTP != nil {
-				if err := validatePathVarSyntax(r.Reader.HTTP.Path); err != nil {
-					return fmt.Errorf("entities[%d].resources[%d].reader.http.path: %w", i, j, err)
-				}
-			}
 			if r.Writer != nil && r.Writer.Update != nil && r.Writer.Update.HTTP != nil {
 				if err := validatePathVarSyntax(r.Writer.Update.HTTP.Path); err != nil {
 					return fmt.Errorf("entities[%d].resources[%d].writer.update.http.path: %w", i, j, err)

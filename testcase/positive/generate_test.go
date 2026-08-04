@@ -57,7 +57,7 @@ func TestGenerateBookProtoStructure(t *testing.T) {
 			"rpc DeleteBookSoft(",
 			"rpc GetBookMeta(",
 			"rpc BatchGetBookMetas(",
-			"rpc ListBookMetas(",
+			"rpc ListBooks(",
 			"rpc UpdateBookMeta(",
 			"rpc GetBookContent(",
 			"rpc UpdateBookContent(",
@@ -79,7 +79,7 @@ func TestGenerateBookProtoStructure(t *testing.T) {
 
 	t.Run("AdminService is narrowed (no BatchGet, no GetContent, no UpdateContent)", func(t *testing.T) {
 		proto := mustReadFile(t, filepath.Join(dir, "generated", "proto", "admin_service", "admin_service.proto"))
-		assertContains(t, "admin_service.proto", proto, "rpc ListBookMetas(")
+		assertContains(t, "admin_service.proto", proto, "rpc ListBooks(")
 		assertContains(t, "admin_service.proto", proto, "rpc GetBookMeta(")
 		assertNotContains(t, "admin_service.proto", proto, "rpc BatchGetBookMetas(")
 		assertNotContains(t, "admin_service.proto", proto, "rpc GetBookContent(")
@@ -115,13 +115,17 @@ func TestGenerateBookProtoStructure(t *testing.T) {
 		assertContains(t, "library_service.proto", proto, "google.protobuf.FieldMask update_mask")
 	})
 
-	t.Run("ListBookMetasRequest has filter and pagination fields", func(t *testing.T) {
+	t.Run("ListBooksRequest has limit/offset/filter/order_by and ListBooksResponse has BookItem", func(t *testing.T) {
 		proto := mustReadFile(t, filepath.Join(dir, "generated", "proto", "library_service", "library_service.proto"))
-		assertContains(t, "library_service.proto", proto, "int32 page_size")
-		assertContains(t, "library_service.proto", proto, "string page_token")
+		assertContains(t, "library_service.proto", proto, "int32 limit")
+		assertContains(t, "library_service.proto", proto, "int32 offset")
 		assertContains(t, "library_service.proto", proto, "BookMetaFilter filter")
 		assertContains(t, "library_service.proto", proto, "string order_by")
+		assertContains(t, "library_service.proto", proto, "repeated BookItem items")
 		assertContains(t, "library_service.proto", proto, "int32 total_size")
+		assertContains(t, "library_service.proto", proto, "message BookItem")
+		assertContains(t, "library_service.proto", proto, "BookMeta meta")
+		assertContains(t, "library_service.proto", proto, "BookContent content")
 	})
 
 	t.Run("custom method ArchiveBook has AIP-136 colon syntax", func(t *testing.T) {
@@ -135,6 +139,6 @@ func TestGenerateBookProtoStructure(t *testing.T) {
 		assertContains(t, "library_service.proto", proto, `delete: "/library/LibraryService/book/{key.id}"`)
 		assertContains(t, "library_service.proto", proto, `patch: "/library/LibraryService/book/{key.id}/meta"`)
 		assertContains(t, "library_service.proto", proto, `post: "/library/LibraryService/book/meta/batchGet"`)
-		assertContains(t, "library_service.proto", proto, `post: "/library/LibraryService/book/meta/list"`)
+		assertContains(t, "library_service.proto", proto, `post: "/library/LibraryService/book/list"`)
 	})
 }

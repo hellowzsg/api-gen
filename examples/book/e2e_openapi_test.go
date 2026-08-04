@@ -34,10 +34,10 @@ func TestE2EOpenAPI(t *testing.T) {
 		t.Errorf("swagger.json paths missing custom method path %q; got paths: %v", archivePath, pathKeys(paths))
 	}
 
-	// Verify the overridden List path (GET) is present.
-	listPath := "/library/LibraryService/book/meta/list"
+	// Verify the List path (POST entity-level) is present.
+	listPath := "/library/LibraryService/book/list"
 	if _, ok := paths[listPath]; !ok {
-		t.Errorf("swagger.json paths missing overridden List path %q; got paths: %v", listPath, pathKeys(paths))
+		t.Errorf("swagger.json paths missing List path %q; got paths: %v", listPath, pathKeys(paths))
 	}
 }
 

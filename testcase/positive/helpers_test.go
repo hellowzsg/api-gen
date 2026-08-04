@@ -108,7 +108,7 @@ type mockLibraryServer struct {
 	lastDeleteSoft  *libpb.DeleteBookSoftRequest
 	lastGetMetaReq  *libpb.GetBookMetaRequest
 	lastBatchGetReq *libpb.BatchGetBookMetasRequest
-	lastListReq     *libpb.ListBookMetasRequest
+	lastListReq     *libpb.ListBooksRequest
 	lastUpdateMeta  *libpb.UpdateBookMetaRequest
 	lastGetContent  *libpb.GetBookContentRequest
 	lastUpdateCont  *libpb.UpdateBookContentRequest
@@ -152,12 +152,11 @@ func (m *mockLibraryServer) BatchGetBookMetas(_ context.Context, req *libpb.Batc
 	}
 	return &libpb.BatchGetBookMetasResponse{Metas: metas}, nil
 }
-func (m *mockLibraryServer) ListBookMetas(_ context.Context, req *libpb.ListBookMetasRequest) (*libpb.ListBookMetasResponse, error) {
+func (m *mockLibraryServer) ListBooks(_ context.Context, req *libpb.ListBooksRequest) (*libpb.ListBooksResponse, error) {
 	m.lastListReq = req
-	return &libpb.ListBookMetasResponse{
-		Metas:         []*bookpb.BookMeta{{Title: "list-item"}},
-		NextPageToken: "tok",
-		TotalSize:     1,
+	return &libpb.ListBooksResponse{
+		Items:     []*libpb.BookItem{{Meta: &bookpb.BookMeta{Title: "list-item"}}},
+		TotalSize: 1,
 	}, nil
 }
 func (m *mockLibraryServer) UpdateBookMeta(_ context.Context, req *libpb.UpdateBookMetaRequest) (*libpb.UpdateBookMetaResponse, error) {
@@ -198,7 +197,7 @@ func (m *mockLibraryServer) StreamBookMetas(req *bookpb.StreamBookMetasRequest, 
 type mockAdminServer struct {
 	adminpb.UnimplementedAdminServiceServer
 
-	lastListReq *adminpb.ListBookMetasRequest
+	lastListReq *adminpb.ListBooksRequest
 	lastGetReq  *adminpb.GetBookMetaRequest
 }
 
@@ -215,10 +214,10 @@ func (m *mockAdminServer) GetBookMeta(_ context.Context, req *adminpb.GetBookMet
 	m.lastGetReq = req
 	return &adminpb.GetBookMetaResponse{BookMeta: &bookpb.BookMeta{Title: "admin-meta"}, Version: 7}, nil
 }
-func (m *mockAdminServer) ListBookMetas(_ context.Context, req *adminpb.ListBookMetasRequest) (*adminpb.ListBookMetasResponse, error) {
+func (m *mockAdminServer) ListBooks(_ context.Context, req *adminpb.ListBooksRequest) (*adminpb.ListBooksResponse, error) {
 	m.lastListReq = req
-	return &adminpb.ListBookMetasResponse{
-		Metas:     []*bookpb.BookMeta{{Title: "admin-list"}},
+	return &adminpb.ListBooksResponse{
+		Items:     []*adminpb.BookItem{{Meta: &bookpb.BookMeta{Title: "admin-list"}}},
 		TotalSize: 1,
 	}, nil
 }

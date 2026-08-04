@@ -20,13 +20,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AdminService_CreateBook_FullMethodName       = "/demo.business.book.admin_service.AdminService/CreateBook"
-	AdminService_BatchCreateBooks_FullMethodName = "/demo.business.book.admin_service.AdminService/BatchCreateBooks"
-	AdminService_DeleteBook_FullMethodName       = "/demo.business.book.admin_service.AdminService/DeleteBook"
-	AdminService_DeleteBookSoft_FullMethodName   = "/demo.business.book.admin_service.AdminService/DeleteBookSoft"
-	AdminService_GetBookMeta_FullMethodName      = "/demo.business.book.admin_service.AdminService/GetBookMeta"
-	AdminService_ListBookMetas_FullMethodName    = "/demo.business.book.admin_service.AdminService/ListBookMetas"
-	AdminService_UpdateBookMeta_FullMethodName   = "/demo.business.book.admin_service.AdminService/UpdateBookMeta"
+	AdminService_CreateBook_FullMethodName        = "/demo.business.book.admin_service.AdminService/CreateBook"
+	AdminService_BatchCreateBooks_FullMethodName  = "/demo.business.book.admin_service.AdminService/BatchCreateBooks"
+	AdminService_DeleteBook_FullMethodName        = "/demo.business.book.admin_service.AdminService/DeleteBook"
+	AdminService_DeleteBookSoft_FullMethodName    = "/demo.business.book.admin_service.AdminService/DeleteBookSoft"
+	AdminService_ListBooks_FullMethodName         = "/demo.business.book.admin_service.AdminService/ListBooks"
+	AdminService_GetBookMeta_FullMethodName       = "/demo.business.book.admin_service.AdminService/GetBookMeta"
+	AdminService_BatchGetBookMetas_FullMethodName = "/demo.business.book.admin_service.AdminService/BatchGetBookMetas"
+	AdminService_UpdateBookMeta_FullMethodName    = "/demo.business.book.admin_service.AdminService/UpdateBookMeta"
+	AdminService_GetBookContent_FullMethodName    = "/demo.business.book.admin_service.AdminService/GetBookContent"
+	AdminService_UpdateBookContent_FullMethodName = "/demo.business.book.admin_service.AdminService/UpdateBookContent"
 )
 
 // AdminServiceClient is the client API for AdminService service.
@@ -37,9 +40,12 @@ type AdminServiceClient interface {
 	BatchCreateBooks(ctx context.Context, in *BatchCreateBooksRequest, opts ...grpc.CallOption) (*BatchCreateBooksResponse, error)
 	DeleteBook(ctx context.Context, in *DeleteBookRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteBookSoft(ctx context.Context, in *DeleteBookSoftRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ListBooks(ctx context.Context, in *ListBooksRequest, opts ...grpc.CallOption) (*ListBooksResponse, error)
 	GetBookMeta(ctx context.Context, in *GetBookMetaRequest, opts ...grpc.CallOption) (*GetBookMetaResponse, error)
-	ListBookMetas(ctx context.Context, in *ListBookMetasRequest, opts ...grpc.CallOption) (*ListBookMetasResponse, error)
+	BatchGetBookMetas(ctx context.Context, in *BatchGetBookMetasRequest, opts ...grpc.CallOption) (*BatchGetBookMetasResponse, error)
 	UpdateBookMeta(ctx context.Context, in *UpdateBookMetaRequest, opts ...grpc.CallOption) (*UpdateBookMetaResponse, error)
+	GetBookContent(ctx context.Context, in *GetBookContentRequest, opts ...grpc.CallOption) (*GetBookContentResponse, error)
+	UpdateBookContent(ctx context.Context, in *UpdateBookContentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type adminServiceClient struct {
@@ -90,6 +96,16 @@ func (c *adminServiceClient) DeleteBookSoft(ctx context.Context, in *DeleteBookS
 	return out, nil
 }
 
+func (c *adminServiceClient) ListBooks(ctx context.Context, in *ListBooksRequest, opts ...grpc.CallOption) (*ListBooksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListBooksResponse)
+	err := c.cc.Invoke(ctx, AdminService_ListBooks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *adminServiceClient) GetBookMeta(ctx context.Context, in *GetBookMetaRequest, opts ...grpc.CallOption) (*GetBookMetaResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetBookMetaResponse)
@@ -100,10 +116,10 @@ func (c *adminServiceClient) GetBookMeta(ctx context.Context, in *GetBookMetaReq
 	return out, nil
 }
 
-func (c *adminServiceClient) ListBookMetas(ctx context.Context, in *ListBookMetasRequest, opts ...grpc.CallOption) (*ListBookMetasResponse, error) {
+func (c *adminServiceClient) BatchGetBookMetas(ctx context.Context, in *BatchGetBookMetasRequest, opts ...grpc.CallOption) (*BatchGetBookMetasResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListBookMetasResponse)
-	err := c.cc.Invoke(ctx, AdminService_ListBookMetas_FullMethodName, in, out, cOpts...)
+	out := new(BatchGetBookMetasResponse)
+	err := c.cc.Invoke(ctx, AdminService_BatchGetBookMetas_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -120,6 +136,26 @@ func (c *adminServiceClient) UpdateBookMeta(ctx context.Context, in *UpdateBookM
 	return out, nil
 }
 
+func (c *adminServiceClient) GetBookContent(ctx context.Context, in *GetBookContentRequest, opts ...grpc.CallOption) (*GetBookContentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetBookContentResponse)
+	err := c.cc.Invoke(ctx, AdminService_GetBookContent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *adminServiceClient) UpdateBookContent(ctx context.Context, in *UpdateBookContentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, AdminService_UpdateBookContent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations must embed UnimplementedAdminServiceServer
 // for forward compatibility.
@@ -128,9 +164,12 @@ type AdminServiceServer interface {
 	BatchCreateBooks(context.Context, *BatchCreateBooksRequest) (*BatchCreateBooksResponse, error)
 	DeleteBook(context.Context, *DeleteBookRequest) (*emptypb.Empty, error)
 	DeleteBookSoft(context.Context, *DeleteBookSoftRequest) (*emptypb.Empty, error)
+	ListBooks(context.Context, *ListBooksRequest) (*ListBooksResponse, error)
 	GetBookMeta(context.Context, *GetBookMetaRequest) (*GetBookMetaResponse, error)
-	ListBookMetas(context.Context, *ListBookMetasRequest) (*ListBookMetasResponse, error)
+	BatchGetBookMetas(context.Context, *BatchGetBookMetasRequest) (*BatchGetBookMetasResponse, error)
 	UpdateBookMeta(context.Context, *UpdateBookMetaRequest) (*UpdateBookMetaResponse, error)
+	GetBookContent(context.Context, *GetBookContentRequest) (*GetBookContentResponse, error)
+	UpdateBookContent(context.Context, *UpdateBookContentRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedAdminServiceServer()
 }
 
@@ -153,14 +192,23 @@ func (UnimplementedAdminServiceServer) DeleteBook(context.Context, *DeleteBookRe
 func (UnimplementedAdminServiceServer) DeleteBookSoft(context.Context, *DeleteBookSoftRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteBookSoft not implemented")
 }
+func (UnimplementedAdminServiceServer) ListBooks(context.Context, *ListBooksRequest) (*ListBooksResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListBooks not implemented")
+}
 func (UnimplementedAdminServiceServer) GetBookMeta(context.Context, *GetBookMetaRequest) (*GetBookMetaResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBookMeta not implemented")
 }
-func (UnimplementedAdminServiceServer) ListBookMetas(context.Context, *ListBookMetasRequest) (*ListBookMetasResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListBookMetas not implemented")
+func (UnimplementedAdminServiceServer) BatchGetBookMetas(context.Context, *BatchGetBookMetasRequest) (*BatchGetBookMetasResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BatchGetBookMetas not implemented")
 }
 func (UnimplementedAdminServiceServer) UpdateBookMeta(context.Context, *UpdateBookMetaRequest) (*UpdateBookMetaResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateBookMeta not implemented")
+}
+func (UnimplementedAdminServiceServer) GetBookContent(context.Context, *GetBookContentRequest) (*GetBookContentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetBookContent not implemented")
+}
+func (UnimplementedAdminServiceServer) UpdateBookContent(context.Context, *UpdateBookContentRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateBookContent not implemented")
 }
 func (UnimplementedAdminServiceServer) mustEmbedUnimplementedAdminServiceServer() {}
 func (UnimplementedAdminServiceServer) testEmbeddedByValue()                      {}
@@ -255,6 +303,24 @@ func _AdminService_DeleteBookSoft_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_ListBooks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBooksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).ListBooks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_ListBooks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).ListBooks(ctx, req.(*ListBooksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AdminService_GetBookMeta_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetBookMetaRequest)
 	if err := dec(in); err != nil {
@@ -273,20 +339,20 @@ func _AdminService_GetBookMeta_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AdminService_ListBookMetas_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListBookMetasRequest)
+func _AdminService_BatchGetBookMetas_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchGetBookMetasRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AdminServiceServer).ListBookMetas(ctx, in)
+		return srv.(AdminServiceServer).BatchGetBookMetas(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AdminService_ListBookMetas_FullMethodName,
+		FullMethod: AdminService_BatchGetBookMetas_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AdminServiceServer).ListBookMetas(ctx, req.(*ListBookMetasRequest))
+		return srv.(AdminServiceServer).BatchGetBookMetas(ctx, req.(*BatchGetBookMetasRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -305,6 +371,42 @@ func _AdminService_UpdateBookMeta_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AdminServiceServer).UpdateBookMeta(ctx, req.(*UpdateBookMetaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_GetBookContent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBookContentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).GetBookContent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_GetBookContent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).GetBookContent(ctx, req.(*GetBookContentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AdminService_UpdateBookContent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateBookContentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).UpdateBookContent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AdminService_UpdateBookContent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).UpdateBookContent(ctx, req.(*UpdateBookContentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -333,16 +435,28 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AdminService_DeleteBookSoft_Handler,
 		},
 		{
+			MethodName: "ListBooks",
+			Handler:    _AdminService_ListBooks_Handler,
+		},
+		{
 			MethodName: "GetBookMeta",
 			Handler:    _AdminService_GetBookMeta_Handler,
 		},
 		{
-			MethodName: "ListBookMetas",
-			Handler:    _AdminService_ListBookMetas_Handler,
+			MethodName: "BatchGetBookMetas",
+			Handler:    _AdminService_BatchGetBookMetas_Handler,
 		},
 		{
 			MethodName: "UpdateBookMeta",
 			Handler:    _AdminService_UpdateBookMeta_Handler,
+		},
+		{
+			MethodName: "GetBookContent",
+			Handler:    _AdminService_GetBookContent_Handler,
+		},
+		{
+			MethodName: "UpdateBookContent",
+			Handler:    _AdminService_UpdateBookContent_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

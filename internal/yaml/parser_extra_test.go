@@ -123,63 +123,34 @@ entities:
 	}
 }
 
-// TestParseListConfig: reader.list_config.total_size parsing.
+// TestParseListConfig: entity.list.list_config parsing.
 func TestParseListConfig(t *testing.T) {
-	t.Run("total_size true", func(t *testing.T) {
+	t.Run("list_config with filter_type", func(t *testing.T) {
 		input := `
 syntax: v1
 name: foo
 entities:
   - name: book
     key: { type_: BookId }
+    list:
+      resource: [meta]
+      list_config:
+        filter_type: BookMetaFilter
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: NONE }
-        reader:
-          list: true
-          list_config:
-            total_size: true
 `
 		cfg, err := Parse(strings.NewReader(input))
 		if err != nil {
 			t.Fatalf("Parse failed: %v", err)
 		}
-		r := cfg.Entities[0].Resources[0]
-		if r.Reader == nil || r.Reader.ListConfig == nil {
+		e := cfg.Entities[0]
+		if e.List == nil || e.List.ListConfig == nil {
 			t.Fatal("ListConfig is nil")
 		}
-		if !r.Reader.ListConfig.TotalSize {
-			t.Error("TotalSize = false, want true")
-		}
-	})
-
-	t.Run("total_size false", func(t *testing.T) {
-		input := `
-syntax: v1
-name: foo
-entities:
-  - name: book
-    key: { type_: BookId }
-    resources:
-      - name: meta
-        type_: BookMeta
-        version: { kind: NONE }
-        reader:
-          list: true
-          list_config:
-            total_size: false
-`
-		cfg, err := Parse(strings.NewReader(input))
-		if err != nil {
-			t.Fatalf("Parse failed: %v", err)
-		}
-		r := cfg.Entities[0].Resources[0]
-		if r.Reader == nil || r.Reader.ListConfig == nil {
-			t.Fatal("ListConfig is nil")
-		}
-		if r.Reader.ListConfig.TotalSize {
-			t.Error("TotalSize = true, want false")
+		if e.List.ListConfig.FilterType != "BookMetaFilter" {
+			t.Errorf("FilterType = %q, want BookMetaFilter", e.List.ListConfig.FilterType)
 		}
 	})
 
@@ -190,20 +161,23 @@ name: foo
 entities:
   - name: book
     key: { type_: BookId }
+    list:
+      resource: [meta]
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: NONE }
-        reader:
-          list: true
 `
 		cfg, err := Parse(strings.NewReader(input))
 		if err != nil {
 			t.Fatalf("Parse failed: %v", err)
 		}
-		r := cfg.Entities[0].Resources[0]
-		if r.Reader.ListConfig != nil {
-			t.Errorf("ListConfig = %+v, want nil", r.Reader.ListConfig)
+		e := cfg.Entities[0]
+		if e.List == nil {
+			t.Fatal("List is nil")
+		}
+		if e.List.ListConfig != nil {
+			t.Errorf("ListConfig = %+v, want nil", e.List.ListConfig)
 		}
 	})
 }
@@ -216,6 +190,8 @@ name: foo
 entities:
   - name: book
     key: { type_: BookId }
+    list:
+      resource: [meta]
     resources:
       - name: meta
         type_: BookMeta
@@ -227,9 +203,7 @@ services:
   - name: AdminService
     entities:
       - name: book
-        resources:
-          - name: meta
-            reader: { list: true }
+        list: true
   - name: ReadOnlyService
     entities:
       - name: book
@@ -602,11 +576,13 @@ name: foo
 entities:
   - name: book
     key: { type_: BookId }
+    list:
+      resource: [meta]
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: NONE }
-        reader: { batch: true, list: true }
+        reader: { batch: true }
 `
 	cfg, err := Parse(strings.NewReader(input))
 	if err != nil {
@@ -616,8 +592,8 @@ entities:
 	if r.Reader == nil {
 		t.Fatal("Reader is nil")
 	}
-	if !r.Reader.Batch || !r.Reader.List {
-		t.Errorf("Reader: Batch=%v List=%v, want both true", r.Reader.Batch, r.Reader.List)
+	if !r.Reader.Batch {
+		t.Errorf("Reader: Batch=%v, want true", r.Reader.Batch)
 	}
 	if r.Writer != nil {
 		t.Error("Writer should be nil for reader-only resource")

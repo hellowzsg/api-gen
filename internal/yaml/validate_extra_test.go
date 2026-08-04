@@ -156,9 +156,9 @@ func TestValidateHTTPOverridePath_EdgeCases(t *testing.T) {
 								Name:    "meta",
 								Type:    "BookMeta",
 								Version: VersionDef{Kind: "NONE"},
-								Reader: &ReaderDef{
-									HTTP: &HTTPOverride{Verb: "get", Path: tt.path},
-								},
+								Writer: &WriterDef{Update: &UpdateDef{
+									HTTP: &HTTPOverride{Verb: "patch", Path: tt.path},
+								}},
 							},
 						},
 					},
@@ -451,14 +451,16 @@ func TestResolveTypeName(t *testing.T) {
 // TestValidateServiceNarrowing_ResourceNotInEntity: narrowing to a resource
 // that exists on the entity but with different capabilities.
 func TestValidateServiceNarrowing_ValidMetaNarrowing(t *testing.T) {
+	listTrue := true
 	cfg := &Config{
 		Syntax: "v1",
 		Name:   "foo",
 		Entities: []Entity{{
 			Name: "book", Key: KeyDef{Type: "BookId"},
+			List: &EntityListDef{Resources: []string{"meta"}},
 			Resources: []Resource{
 				{Name: "meta", Type: "BookMeta", Version: VersionDef{Kind: "NONE"},
-					Reader: &ReaderDef{Batch: true, List: true}, Writer: &WriterDef{Update: &UpdateDef{Mask: true}}},
+					Reader: &ReaderDef{Batch: true}, Writer: &WriterDef{Update: &UpdateDef{Mask: true}}},
 				{Name: "content", Type: "BookContent", Version: VersionDef{Kind: "NONE"},
 					Reader: &ReaderDef{}, Writer: &WriterDef{Update: &UpdateDef{}}},
 			},
@@ -467,8 +469,9 @@ func TestValidateServiceNarrowing_ValidMetaNarrowing(t *testing.T) {
 			Name: "AdminSvc",
 			Entities: []ServiceEntity{{
 				Name: "book",
+				List: &listTrue,
 				Resources: []Resource{
-					{Name: "meta", Reader: &ReaderDef{List: true}},
+					{Name: "meta", Reader: &ReaderDef{}},
 				},
 			}},
 		}},

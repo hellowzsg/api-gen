@@ -1,6 +1,6 @@
-# B5: filter_type has invalid type reference (starts with digit)
+# E4: entity.list.resource references a resource not declared in the entity
 syntax: v1
-name: test.filter_type_invalid
+name: test.list_resource_not_found
 import_protos:
   - path: "proto/**/*.proto"
 entities:
@@ -8,9 +8,7 @@ entities:
     key:
       type_: FooId
     list:
-      resource: [bar]
-      list_config:
-        filter_type: "1InvalidFilter"
+      resource: [nonexistent]
     resources:
       - name: bar
         type_: Bar

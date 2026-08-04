@@ -113,6 +113,38 @@
         ]
       }
     },
+    "/library/LibraryService/book/list": {
+      "post": {
+        "operationId": "LibraryService_ListBooks",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/library_serviceListBooksResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/library_serviceListBooksRequest"
+            }
+          }
+        ],
+        "tags": [
+          "LibraryService"
+        ]
+      }
+    },
     "/library/LibraryService/book/meta/batchGet": {
       "post": {
         "operationId": "LibraryService_BatchGetBookMetas",
@@ -137,38 +169,6 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/library_serviceBatchGetBookMetasRequest"
-            }
-          }
-        ],
-        "tags": [
-          "LibraryService"
-        ]
-      }
-    },
-    "/library/LibraryService/book/meta/list": {
-      "post": {
-        "operationId": "LibraryService_ListBookMetas",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/library_serviceListBookMetasResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/library_serviceListBookMetasRequest"
             }
           }
         ],
@@ -908,6 +908,17 @@
         }
       }
     },
+    "library_serviceBookItem": {
+      "type": "object",
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/bookBookMeta"
+        },
+        "content": {
+          "$ref": "#/definitions/bookBookContent"
+        }
+      }
+    },
     "library_serviceCreateBookRequest": {
       "type": "object",
       "properties": {
@@ -995,15 +1006,16 @@
         }
       }
     },
-    "library_serviceListBookMetasRequest": {
+    "library_serviceListBooksRequest": {
       "type": "object",
       "properties": {
-        "page_size": {
+        "limit": {
           "type": "integer",
           "format": "int32"
         },
-        "page_token": {
-          "type": "string"
+        "offset": {
+          "type": "integer",
+          "format": "int32"
         },
         "filter": {
           "$ref": "#/definitions/bookBookMetaFilter"
@@ -1013,18 +1025,15 @@
         }
       }
     },
-    "library_serviceListBookMetasResponse": {
+    "library_serviceListBooksResponse": {
       "type": "object",
       "properties": {
-        "metas": {
+        "items": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/bookBookMeta"
+            "$ref": "#/definitions/library_serviceBookItem"
           }
-        },
-        "next_page_token": {
-          "type": "string"
         },
         "total_size": {
           "type": "integer",

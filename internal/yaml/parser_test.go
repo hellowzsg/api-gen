@@ -25,13 +25,14 @@ entities:
       type_: BookId
     create: {}
     delete: {}
+    list:
+      resource: [meta]
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: STRONG, type: U64 }
         reader:
           batch: true
-          list: true
         writer:
           update: { mask: true }
 services:
@@ -81,8 +82,8 @@ services:
 	if r.Version.Type != "U64" {
 		t.Errorf("Version.Type = %q, want %q", r.Version.Type, "U64")
 	}
-	if r.Reader == nil || !r.Reader.Batch || !r.Reader.List {
-		t.Errorf("Reader = %+v, want Batch=true List=true", r.Reader)
+	if r.Reader == nil || !r.Reader.Batch {
+		t.Errorf("Reader = %+v, want Batch=true", r.Reader)
 	}
 	if r.Writer == nil || r.Writer.Update == nil || !r.Writer.Update.Mask {
 		t.Errorf("Writer.Update.Mask = false, want true")
@@ -189,15 +190,13 @@ entities:
   - name: book
     key:
       type_: BookId
+    list:
+      resource: [meta]
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: STRONG, type: U64 }
-        reader:
-          list: true
-          http:
-            verb: get
-            path: /library/LibraryService/book/{key.id}/metadata
+        reader: {}
         writer:
           update:
             mask: true
@@ -222,19 +221,8 @@ services:
 		t.Fatalf("Parse failed: %v", err)
 	}
 
-	// 验证 reader.http
-	r := cfg.Entities[0].Resources[0]
-	if r.Reader == nil || r.Reader.HTTP == nil {
-		t.Fatalf("Reader.HTTP is nil, want non-nil")
-	}
-	if r.Reader.HTTP.Verb != "get" {
-		t.Errorf("Reader.HTTP.Verb = %q, want %q", r.Reader.HTTP.Verb, "get")
-	}
-	if r.Reader.HTTP.Path != "/library/LibraryService/book/{key.id}/metadata" {
-		t.Errorf("Reader.HTTP.Path = %q, want %q", r.Reader.HTTP.Path, "/library/LibraryService/book/{key.id}/metadata")
-	}
-
 	// 验证 writer.update.http
+	r := cfg.Entities[0].Resources[0]
 	if r.Writer == nil || r.Writer.Update == nil || r.Writer.Update.HTTP == nil {
 		t.Fatalf("Writer.Update.HTTP is nil, want non-nil")
 	}
@@ -267,7 +255,7 @@ services:
 	}
 }
 
-// TestParseFilterType 测试 list_config.filter_type 解析。
+// TestParseFilterType 测试 entity.list.list_config.filter_type 解析。
 func TestParseFilterType(t *testing.T) {
 	input := `
 syntax: v1
@@ -283,15 +271,14 @@ entities:
   - name: book
     key:
       type_: BookId
+    list:
+      resource: [meta]
+      list_config:
+        filter_type: BookMetaFilter
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: STRONG, type: U64 }
-        reader:
-          list: true
-          list_config:
-            total_size: true
-            filter_type: BookMetaFilter
         writer:
           update: { mask: true }
 `
@@ -299,15 +286,12 @@ entities:
 	if err != nil {
 		t.Fatalf("Parse failed: %v", err)
 	}
-	r := cfg.Entities[0].Resources[0]
-	if r.Reader == nil || r.Reader.ListConfig == nil {
-		t.Fatalf("Reader.ListConfig is nil, want non-nil")
+	e := cfg.Entities[0]
+	if e.List == nil || e.List.ListConfig == nil {
+		t.Fatalf("Entity.List.ListConfig is nil, want non-nil")
 	}
-	if r.Reader.ListConfig.FilterType != "BookMetaFilter" {
-		t.Errorf("ListConfig.FilterType = %q, want %q", r.Reader.ListConfig.FilterType, "BookMetaFilter")
-	}
-	if !r.Reader.ListConfig.TotalSize {
-		t.Errorf("ListConfig.TotalSize = false, want true")
+	if e.List.ListConfig.FilterType != "BookMetaFilter" {
+		t.Errorf("ListConfig.FilterType = %q, want %q", e.List.ListConfig.FilterType, "BookMetaFilter")
 	}
 }
 
@@ -319,25 +303,23 @@ name: foo
 entities:
   - name: book
     key: { type_: BookId }
+    list:
+      resource: [meta]
     resources:
       - name: meta
         type_: BookMeta
         version: { kind: NONE }
-        reader:
-          list: true
-          list_config:
-            total_size: true
 `
 	cfg, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatalf("Parse failed: %v", err)
 	}
-	r := cfg.Entities[0].Resources[0]
-	if r.Reader == nil || r.Reader.ListConfig == nil {
-		t.Fatalf("Reader.ListConfig is nil, want non-nil")
+	e := cfg.Entities[0]
+	if e.List == nil {
+		t.Fatalf("Entity.List is nil, want non-nil")
 	}
-	if r.Reader.ListConfig.FilterType != "" {
-		t.Errorf("ListConfig.FilterType = %q, want empty", r.Reader.ListConfig.FilterType)
+	if e.List.ListConfig != nil {
+		t.Errorf("ListConfig = %+v, want nil", e.List.ListConfig)
 	}
 }
 

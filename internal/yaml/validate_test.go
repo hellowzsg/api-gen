@@ -332,7 +332,7 @@ func TestValidateHTTP_BodyStyleWrapperDefault(t *testing.T) {
 	}
 }
 
-// TestValidateHTTPOverridePath 校验逐方法 http 覆盖的 path 变量语法。
+// TestValidateHTTPOverridePath 校验 writer.update.http 的 path 变量语法。
 func TestValidateHTTPOverridePath(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -366,9 +366,9 @@ func TestValidateHTTPOverridePath(t *testing.T) {
 								Name:    "meta",
 								Type:    "BookMeta",
 								Version: VersionDef{Kind: "NONE"},
-								Reader: &ReaderDef{
-									HTTP: &HTTPOverride{Verb: "get", Path: tt.path},
-								},
+								Writer: &WriterDef{Update: &UpdateDef{
+									HTTP: &HTTPOverride{Verb: "patch", Path: tt.path},
+								}},
 							},
 						},
 					},
@@ -385,7 +385,7 @@ func TestValidateHTTPOverridePath(t *testing.T) {
 	}
 }
 
-// TestValidateFilterType 校验 list_config.filter_type 语法。
+// TestValidateFilterType 校验 entity.list.list_config.filter_type 语法。
 func TestValidateFilterType(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -410,18 +410,15 @@ func TestValidateFilterType(t *testing.T) {
 					{
 						Name: "book",
 						Key:  KeyDef{Type: "BookId"},
+						List: &EntityListDef{
+							Resources:  []string{"meta"},
+							ListConfig: &ListConfig{FilterType: tt.filterType},
+						},
 						Resources: []Resource{
 							{
 								Name:    "meta",
 								Type:    "BookMeta",
 								Version: VersionDef{Kind: "NONE"},
-								Reader: &ReaderDef{
-									List: true,
-									ListConfig: &ListConfig{
-										TotalSize:  true,
-										FilterType: tt.filterType,
-									},
-								},
 							},
 						},
 					},

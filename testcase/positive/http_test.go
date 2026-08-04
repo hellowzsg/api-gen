@@ -106,18 +106,18 @@ func TestHTTP_LibraryServiceAllRoutes(t *testing.T) {
 		}
 	})
 
-	t.Run("ListBookMetas POST /meta/list body=*", func(t *testing.T) {
-		resp := doReq(t, ts, "POST", "/library/LibraryService/book/meta/list", map[string]any{
-			"page_size":  10,
-			"page_token": "p1",
-			"filter":     map[string]any{"author": "X"},
-			"order_by":   "title",
+	t.Run("ListBooks POST /list body=*", func(t *testing.T) {
+		resp := doReq(t, ts, "POST", "/library/LibraryService/book/list", map[string]any{
+			"limit":    10,
+			"offset":   5,
+			"filter":   map[string]any{"author": "X"},
+			"order_by": "title",
 		})
 		if resp.StatusCode != http.StatusOK {
 			t.Fatalf("status=%d", resp.StatusCode)
 		}
-		if got := srv.lastListReq.GetPageSize(); got != 10 {
-			t.Errorf("page_size=%d want 10", got)
+		if got := srv.lastListReq.GetLimit(); got != 10 {
+			t.Errorf("limit=%d want 10", got)
 		}
 		if got := srv.lastListReq.GetFilter().GetAuthor(); got != "X" {
 			t.Errorf("filter.author=%q want X", got)
@@ -194,15 +194,15 @@ func TestHTTP_AdminServiceNarrowedRoutes(t *testing.T) {
 	ts := httptest.NewServer(mux)
 	defer ts.Close()
 
-	t.Run("ListBookMetas on AdminService", func(t *testing.T) {
-		resp := doReq(t, ts, "POST", "/library/AdminService/book/meta/list", map[string]any{
-			"page_size": 5,
+	t.Run("ListBooks on AdminService", func(t *testing.T) {
+		resp := doReq(t, ts, "POST", "/library/AdminService/book/list", map[string]any{
+			"limit": 5,
 		})
 		if resp.StatusCode != http.StatusOK {
 			t.Fatalf("status=%d", resp.StatusCode)
 		}
-		if got := adminSrv.lastListReq.GetPageSize(); got != 5 {
-			t.Errorf("page_size=%d want 5", got)
+		if got := adminSrv.lastListReq.GetLimit(); got != 5 {
+			t.Errorf("limit=%d want 5", got)
 		}
 	})
 

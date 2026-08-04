@@ -297,6 +297,178 @@ func (x *DeleteBookSoftRequest) GetKey() *book.BookId {
 	return nil
 }
 
+type ListBooksRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Limit         int32                  `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	Filter        *book.BookMetaFilter   `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
+	OrderBy       string                 `protobuf:"bytes,4,opt,name=order_by,json=orderBy,proto3" json:"order_by,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListBooksRequest) Reset() {
+	*x = ListBooksRequest{}
+	mi := &file_admin_service_admin_service_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListBooksRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListBooksRequest) ProtoMessage() {}
+
+func (x *ListBooksRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_service_admin_service_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListBooksRequest.ProtoReflect.Descriptor instead.
+func (*ListBooksRequest) Descriptor() ([]byte, []int) {
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ListBooksRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *ListBooksRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *ListBooksRequest) GetFilter() *book.BookMetaFilter {
+	if x != nil {
+		return x.Filter
+	}
+	return nil
+}
+
+func (x *ListBooksRequest) GetOrderBy() string {
+	if x != nil {
+		return x.OrderBy
+	}
+	return ""
+}
+
+type ListBooksResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Items         []*BookItem            `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	TotalSize     int32                  `protobuf:"varint,2,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListBooksResponse) Reset() {
+	*x = ListBooksResponse{}
+	mi := &file_admin_service_admin_service_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListBooksResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListBooksResponse) ProtoMessage() {}
+
+func (x *ListBooksResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_service_admin_service_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListBooksResponse.ProtoReflect.Descriptor instead.
+func (*ListBooksResponse) Descriptor() ([]byte, []int) {
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListBooksResponse) GetItems() []*BookItem {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+func (x *ListBooksResponse) GetTotalSize() int32 {
+	if x != nil {
+		return x.TotalSize
+	}
+	return 0
+}
+
+type BookItem struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Meta          *book.BookMeta         `protobuf:"bytes,1,opt,name=meta,proto3" json:"meta,omitempty"`
+	Content       *book.BookContent      `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BookItem) Reset() {
+	*x = BookItem{}
+	mi := &file_admin_service_admin_service_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BookItem) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BookItem) ProtoMessage() {}
+
+func (x *BookItem) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_service_admin_service_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BookItem.ProtoReflect.Descriptor instead.
+func (*BookItem) Descriptor() ([]byte, []int) {
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *BookItem) GetMeta() *book.BookMeta {
+	if x != nil {
+		return x.Meta
+	}
+	return nil
+}
+
+func (x *BookItem) GetContent() *book.BookContent {
+	if x != nil {
+		return x.Content
+	}
+	return nil
+}
+
 type GetBookMetaRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Key           *book.BookId           `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
@@ -306,7 +478,7 @@ type GetBookMetaRequest struct {
 
 func (x *GetBookMetaRequest) Reset() {
 	*x = GetBookMetaRequest{}
-	mi := &file_admin_service_admin_service_proto_msgTypes[6]
+	mi := &file_admin_service_admin_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -318,7 +490,7 @@ func (x *GetBookMetaRequest) String() string {
 func (*GetBookMetaRequest) ProtoMessage() {}
 
 func (x *GetBookMetaRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_service_admin_service_proto_msgTypes[6]
+	mi := &file_admin_service_admin_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -331,7 +503,7 @@ func (x *GetBookMetaRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBookMetaRequest.ProtoReflect.Descriptor instead.
 func (*GetBookMetaRequest) Descriptor() ([]byte, []int) {
-	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{6}
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetBookMetaRequest) GetKey() *book.BookId {
@@ -351,7 +523,7 @@ type GetBookMetaResponse struct {
 
 func (x *GetBookMetaResponse) Reset() {
 	*x = GetBookMetaResponse{}
-	mi := &file_admin_service_admin_service_proto_msgTypes[7]
+	mi := &file_admin_service_admin_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -363,7 +535,7 @@ func (x *GetBookMetaResponse) String() string {
 func (*GetBookMetaResponse) ProtoMessage() {}
 
 func (x *GetBookMetaResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_service_admin_service_proto_msgTypes[7]
+	mi := &file_admin_service_admin_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -376,7 +548,7 @@ func (x *GetBookMetaResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBookMetaResponse.ProtoReflect.Descriptor instead.
 func (*GetBookMetaResponse) Descriptor() ([]byte, []int) {
-	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{7}
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetBookMetaResponse) GetBookMeta() *book.BookMeta {
@@ -393,31 +565,28 @@ func (x *GetBookMetaResponse) GetVersion() uint64 {
 	return 0
 }
 
-type ListBookMetasRequest struct {
+type BatchGetBookMetasRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	PageSize      int32                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	PageToken     string                 `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
-	Filter        *book.BookMetaFilter   `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
-	OrderBy       string                 `protobuf:"bytes,4,opt,name=order_by,json=orderBy,proto3" json:"order_by,omitempty"`
+	Keys          []*book.BookId         `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListBookMetasRequest) Reset() {
-	*x = ListBookMetasRequest{}
-	mi := &file_admin_service_admin_service_proto_msgTypes[8]
+func (x *BatchGetBookMetasRequest) Reset() {
+	*x = BatchGetBookMetasRequest{}
+	mi := &file_admin_service_admin_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListBookMetasRequest) String() string {
+func (x *BatchGetBookMetasRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListBookMetasRequest) ProtoMessage() {}
+func (*BatchGetBookMetasRequest) ProtoMessage() {}
 
-func (x *ListBookMetasRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_service_admin_service_proto_msgTypes[8]
+func (x *BatchGetBookMetasRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_service_admin_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -428,63 +597,40 @@ func (x *ListBookMetasRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListBookMetasRequest.ProtoReflect.Descriptor instead.
-func (*ListBookMetasRequest) Descriptor() ([]byte, []int) {
-	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{8}
+// Deprecated: Use BatchGetBookMetasRequest.ProtoReflect.Descriptor instead.
+func (*BatchGetBookMetasRequest) Descriptor() ([]byte, []int) {
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *ListBookMetasRequest) GetPageSize() int32 {
+func (x *BatchGetBookMetasRequest) GetKeys() []*book.BookId {
 	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
-func (x *ListBookMetasRequest) GetPageToken() string {
-	if x != nil {
-		return x.PageToken
-	}
-	return ""
-}
-
-func (x *ListBookMetasRequest) GetFilter() *book.BookMetaFilter {
-	if x != nil {
-		return x.Filter
+		return x.Keys
 	}
 	return nil
 }
 
-func (x *ListBookMetasRequest) GetOrderBy() string {
-	if x != nil {
-		return x.OrderBy
-	}
-	return ""
-}
-
-type ListBookMetasResponse struct {
+type BatchGetBookMetasResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Metas         []*book.BookMeta       `protobuf:"bytes,1,rep,name=metas,proto3" json:"metas,omitempty"`
-	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
-	TotalSize     int32                  `protobuf:"varint,3,opt,name=total_size,json=totalSize,proto3" json:"total_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ListBookMetasResponse) Reset() {
-	*x = ListBookMetasResponse{}
-	mi := &file_admin_service_admin_service_proto_msgTypes[9]
+func (x *BatchGetBookMetasResponse) Reset() {
+	*x = BatchGetBookMetasResponse{}
+	mi := &file_admin_service_admin_service_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ListBookMetasResponse) String() string {
+func (x *BatchGetBookMetasResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ListBookMetasResponse) ProtoMessage() {}
+func (*BatchGetBookMetasResponse) ProtoMessage() {}
 
-func (x *ListBookMetasResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_service_admin_service_proto_msgTypes[9]
+func (x *BatchGetBookMetasResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_service_admin_service_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -495,30 +641,16 @@ func (x *ListBookMetasResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ListBookMetasResponse.ProtoReflect.Descriptor instead.
-func (*ListBookMetasResponse) Descriptor() ([]byte, []int) {
-	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{9}
+// Deprecated: Use BatchGetBookMetasResponse.ProtoReflect.Descriptor instead.
+func (*BatchGetBookMetasResponse) Descriptor() ([]byte, []int) {
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *ListBookMetasResponse) GetMetas() []*book.BookMeta {
+func (x *BatchGetBookMetasResponse) GetMetas() []*book.BookMeta {
 	if x != nil {
 		return x.Metas
 	}
 	return nil
-}
-
-func (x *ListBookMetasResponse) GetNextPageToken() string {
-	if x != nil {
-		return x.NextPageToken
-	}
-	return ""
-}
-
-func (x *ListBookMetasResponse) GetTotalSize() int32 {
-	if x != nil {
-		return x.TotalSize
-	}
-	return 0
 }
 
 type UpdateBookMetaRequest struct {
@@ -533,7 +665,7 @@ type UpdateBookMetaRequest struct {
 
 func (x *UpdateBookMetaRequest) Reset() {
 	*x = UpdateBookMetaRequest{}
-	mi := &file_admin_service_admin_service_proto_msgTypes[10]
+	mi := &file_admin_service_admin_service_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -545,7 +677,7 @@ func (x *UpdateBookMetaRequest) String() string {
 func (*UpdateBookMetaRequest) ProtoMessage() {}
 
 func (x *UpdateBookMetaRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_service_admin_service_proto_msgTypes[10]
+	mi := &file_admin_service_admin_service_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -558,7 +690,7 @@ func (x *UpdateBookMetaRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateBookMetaRequest.ProtoReflect.Descriptor instead.
 func (*UpdateBookMetaRequest) Descriptor() ([]byte, []int) {
-	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{10}
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *UpdateBookMetaRequest) GetMeta() *book.BookMeta {
@@ -598,7 +730,7 @@ type UpdateBookMetaResponse struct {
 
 func (x *UpdateBookMetaResponse) Reset() {
 	*x = UpdateBookMetaResponse{}
-	mi := &file_admin_service_admin_service_proto_msgTypes[11]
+	mi := &file_admin_service_admin_service_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -610,7 +742,7 @@ func (x *UpdateBookMetaResponse) String() string {
 func (*UpdateBookMetaResponse) ProtoMessage() {}
 
 func (x *UpdateBookMetaResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_admin_service_admin_service_proto_msgTypes[11]
+	mi := &file_admin_service_admin_service_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -623,7 +755,7 @@ func (x *UpdateBookMetaResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateBookMetaResponse.ProtoReflect.Descriptor instead.
 func (*UpdateBookMetaResponse) Descriptor() ([]byte, []int) {
-	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{11}
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *UpdateBookMetaResponse) GetVersion() uint64 {
@@ -631,6 +763,146 @@ func (x *UpdateBookMetaResponse) GetVersion() uint64 {
 		return x.Version
 	}
 	return 0
+}
+
+type GetBookContentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           *book.BookId           `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBookContentRequest) Reset() {
+	*x = GetBookContentRequest{}
+	mi := &file_admin_service_admin_service_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBookContentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBookContentRequest) ProtoMessage() {}
+
+func (x *GetBookContentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_service_admin_service_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBookContentRequest.ProtoReflect.Descriptor instead.
+func (*GetBookContentRequest) Descriptor() ([]byte, []int) {
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *GetBookContentRequest) GetKey() *book.BookId {
+	if x != nil {
+		return x.Key
+	}
+	return nil
+}
+
+type GetBookContentResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BookContent   *book.BookContent      `protobuf:"bytes,1,opt,name=book_content,json=bookContent,proto3" json:"book_content,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBookContentResponse) Reset() {
+	*x = GetBookContentResponse{}
+	mi := &file_admin_service_admin_service_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBookContentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBookContentResponse) ProtoMessage() {}
+
+func (x *GetBookContentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_service_admin_service_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBookContentResponse.ProtoReflect.Descriptor instead.
+func (*GetBookContentResponse) Descriptor() ([]byte, []int) {
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *GetBookContentResponse) GetBookContent() *book.BookContent {
+	if x != nil {
+		return x.BookContent
+	}
+	return nil
+}
+
+type UpdateBookContentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Content       *book.BookContent      `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
+	Key           *book.BookId           `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateBookContentRequest) Reset() {
+	*x = UpdateBookContentRequest{}
+	mi := &file_admin_service_admin_service_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateBookContentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateBookContentRequest) ProtoMessage() {}
+
+func (x *UpdateBookContentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_admin_service_admin_service_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateBookContentRequest.ProtoReflect.Descriptor instead.
+func (*UpdateBookContentRequest) Descriptor() ([]byte, []int) {
+	return file_admin_service_admin_service_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *UpdateBookContentRequest) GetContent() *book.BookContent {
+	if x != nil {
+		return x.Content
+	}
+	return nil
+}
+
+func (x *UpdateBookContentRequest) GetKey() *book.BookId {
+	if x != nil {
+		return x.Key
+	}
+	return nil
 }
 
 var File_admin_service_admin_service_proto protoreflect.FileDescriptor
@@ -650,23 +922,28 @@ const file_admin_service_admin_service_proto_rawDesc = "" +
 	"\x11DeleteBookRequest\x12,\n" +
 	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"E\n" +
 	"\x15DeleteBookSoftRequest\x12,\n" +
-	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"B\n" +
+	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"\x97\x01\n" +
+	"\x10ListBooksRequest\x12\x14\n" +
+	"\x05limit\x18\x01 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x02 \x01(\x05R\x06offset\x12:\n" +
+	"\x06filter\x18\x03 \x01(\v2\".demo.business.book.BookMetaFilterR\x06filter\x12\x19\n" +
+	"\border_by\x18\x04 \x01(\tR\aorderBy\"t\n" +
+	"\x11ListBooksResponse\x12@\n" +
+	"\x05items\x18\x01 \x03(\v2*.demo.business.book.admin_service.BookItemR\x05items\x12\x1d\n" +
+	"\n" +
+	"total_size\x18\x02 \x01(\x05R\ttotalSize\"w\n" +
+	"\bBookItem\x120\n" +
+	"\x04meta\x18\x01 \x01(\v2\x1c.demo.business.book.BookMetaR\x04meta\x129\n" +
+	"\acontent\x18\x02 \x01(\v2\x1f.demo.business.book.BookContentR\acontent\"B\n" +
 	"\x12GetBookMetaRequest\x12,\n" +
 	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"j\n" +
 	"\x13GetBookMetaResponse\x129\n" +
 	"\tbook_meta\x18\x01 \x01(\v2\x1c.demo.business.book.BookMetaR\bbookMeta\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\x04R\aversion\"\xa9\x01\n" +
-	"\x14ListBookMetasRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
-	"\n" +
-	"page_token\x18\x02 \x01(\tR\tpageToken\x12:\n" +
-	"\x06filter\x18\x03 \x01(\v2\".demo.business.book.BookMetaFilterR\x06filter\x12\x19\n" +
-	"\border_by\x18\x04 \x01(\tR\aorderBy\"\x92\x01\n" +
-	"\x15ListBookMetasResponse\x122\n" +
-	"\x05metas\x18\x01 \x03(\v2\x1c.demo.business.book.BookMetaR\x05metas\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1d\n" +
-	"\n" +
-	"total_size\x18\x03 \x01(\x05R\ttotalSize\"\xce\x01\n" +
+	"\aversion\x18\x02 \x01(\x04R\aversion\"J\n" +
+	"\x18BatchGetBookMetasRequest\x12.\n" +
+	"\x04keys\x18\x01 \x03(\v2\x1a.demo.business.book.BookIdR\x04keys\"O\n" +
+	"\x19BatchGetBookMetasResponse\x122\n" +
+	"\x05metas\x18\x01 \x03(\v2\x1c.demo.business.book.BookMetaR\x05metas\"\xce\x01\n" +
 	"\x15UpdateBookMetaRequest\x120\n" +
 	"\x04meta\x18\x01 \x01(\v2\x1c.demo.business.book.BookMetaR\x04meta\x12,\n" +
 	"\x03key\x18\x02 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\x12;\n" +
@@ -674,17 +951,27 @@ const file_admin_service_admin_service_proto_rawDesc = "" +
 	"updateMask\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\x04R\aversion\"2\n" +
 	"\x16UpdateBookMetaResponse\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\x04R\aversion2\xab\t\n" +
+	"\aversion\x18\x01 \x01(\x04R\aversion\"E\n" +
+	"\x15GetBookContentRequest\x12,\n" +
+	"\x03key\x18\x01 \x01(\v2\x1a.demo.business.book.BookIdR\x03key\"\\\n" +
+	"\x16GetBookContentResponse\x12B\n" +
+	"\fbook_content\x18\x01 \x01(\v2\x1f.demo.business.book.BookContentR\vbookContent\"\x83\x01\n" +
+	"\x18UpdateBookContentRequest\x129\n" +
+	"\acontent\x18\x01 \x01(\v2\x1f.demo.business.book.BookContentR\acontent\x12,\n" +
+	"\x03key\x18\x02 \x01(\v2\x1a.demo.business.book.BookIdR\x03key2\xbb\r\n" +
 	"\fAdminService\x12\x9e\x01\n" +
 	"\n" +
 	"CreateBook\x123.demo.business.book.admin_service.CreateBookRequest\x1a4.demo.business.book.admin_service.CreateBookResponse\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\"\x1a/library/AdminService/book\x12\xbc\x01\n" +
 	"\x10BatchCreateBooks\x129.demo.business.book.admin_service.BatchCreateBooksRequest\x1a:.demo.business.book.admin_service.BatchCreateBooksResponse\"1\x82\xd3\xe4\x93\x02+:\x01*\"&/library/AdminService/book/batchCreate\x12\x86\x01\n" +
 	"\n" +
 	"DeleteBook\x123.demo.business.book.admin_service.DeleteBookRequest\x1a\x16.google.protobuf.Empty\"+\x82\xd3\xe4\x93\x02%*#/library/AdminService/book/{key.id}\x12\x93\x01\n" +
-	"\x0eDeleteBookSoft\x127.demo.business.book.admin_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\"0\x82\xd3\xe4\x93\x02*:\x01*\"%/library/AdminService/book/deleteSoft\x12\xac\x01\n" +
-	"\vGetBookMeta\x124.demo.business.book.admin_service.GetBookMetaRequest\x1a5.demo.business.book.admin_service.GetBookMetaResponse\"0\x82\xd3\xe4\x93\x02*\x12(/library/AdminService/book/{key.id}/meta\x12\xb1\x01\n" +
-	"\rListBookMetas\x126.demo.business.book.admin_service.ListBookMetasRequest\x1a7.demo.business.book.admin_service.ListBookMetasResponse\"/\x82\xd3\xe4\x93\x02):\x01*\"$/library/AdminService/book/meta/list\x12\xb8\x01\n" +
-	"\x0eUpdateBookMeta\x127.demo.business.book.admin_service.UpdateBookMetaRequest\x1a8.demo.business.book.admin_service.UpdateBookMetaResponse\"3\x82\xd3\xe4\x93\x02-:\x01*2(/library/AdminService/book/{key.id}/metaBDZBgithub.com/acme/demo-book/generated/go/admin_service;admin_serviceb\x06proto3"
+	"\x0eDeleteBookSoft\x127.demo.business.book.admin_service.DeleteBookSoftRequest\x1a\x16.google.protobuf.Empty\"0\x82\xd3\xe4\x93\x02*:\x01*\"%/library/AdminService/book/deleteSoft\x12\xa0\x01\n" +
+	"\tListBooks\x122.demo.business.book.admin_service.ListBooksRequest\x1a3.demo.business.book.admin_service.ListBooksResponse\"*\x82\xd3\xe4\x93\x02$:\x01*\"\x1f/library/AdminService/book/list\x12\xac\x01\n" +
+	"\vGetBookMeta\x124.demo.business.book.admin_service.GetBookMetaRequest\x1a5.demo.business.book.admin_service.GetBookMetaResponse\"0\x82\xd3\xe4\x93\x02*\x12(/library/AdminService/book/{key.id}/meta\x12\xc1\x01\n" +
+	"\x11BatchGetBookMetas\x12:.demo.business.book.admin_service.BatchGetBookMetasRequest\x1a;.demo.business.book.admin_service.BatchGetBookMetasResponse\"3\x82\xd3\xe4\x93\x02-:\x01*\"(/library/AdminService/book/meta/batchGet\x12\xb8\x01\n" +
+	"\x0eUpdateBookMeta\x127.demo.business.book.admin_service.UpdateBookMetaRequest\x1a8.demo.business.book.admin_service.UpdateBookMetaResponse\"3\x82\xd3\xe4\x93\x02-:\x01*2(/library/AdminService/book/{key.id}/meta\x12\xb8\x01\n" +
+	"\x0eGetBookContent\x127.demo.business.book.admin_service.GetBookContentRequest\x1a8.demo.business.book.admin_service.GetBookContentResponse\"3\x82\xd3\xe4\x93\x02-\x12+/library/AdminService/book/{key.id}/content\x12\x9f\x01\n" +
+	"\x11UpdateBookContent\x12:.demo.business.book.admin_service.UpdateBookContentRequest\x1a\x16.google.protobuf.Empty\"6\x82\xd3\xe4\x93\x020:\x01*2+/library/AdminService/book/{key.id}/contentBDZBgithub.com/acme/demo-book/generated/go/admin_service;admin_serviceb\x06proto3"
 
 var (
 	file_admin_service_admin_service_proto_rawDescOnce sync.Once
@@ -698,61 +985,81 @@ func file_admin_service_admin_service_proto_rawDescGZIP() []byte {
 	return file_admin_service_admin_service_proto_rawDescData
 }
 
-var file_admin_service_admin_service_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_admin_service_admin_service_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_admin_service_admin_service_proto_goTypes = []any{
-	(*CreateBookRequest)(nil),        // 0: demo.business.book.admin_service.CreateBookRequest
-	(*CreateBookResponse)(nil),       // 1: demo.business.book.admin_service.CreateBookResponse
-	(*BatchCreateBooksRequest)(nil),  // 2: demo.business.book.admin_service.BatchCreateBooksRequest
-	(*BatchCreateBooksResponse)(nil), // 3: demo.business.book.admin_service.BatchCreateBooksResponse
-	(*DeleteBookRequest)(nil),        // 4: demo.business.book.admin_service.DeleteBookRequest
-	(*DeleteBookSoftRequest)(nil),    // 5: demo.business.book.admin_service.DeleteBookSoftRequest
-	(*GetBookMetaRequest)(nil),       // 6: demo.business.book.admin_service.GetBookMetaRequest
-	(*GetBookMetaResponse)(nil),      // 7: demo.business.book.admin_service.GetBookMetaResponse
-	(*ListBookMetasRequest)(nil),     // 8: demo.business.book.admin_service.ListBookMetasRequest
-	(*ListBookMetasResponse)(nil),    // 9: demo.business.book.admin_service.ListBookMetasResponse
-	(*UpdateBookMetaRequest)(nil),    // 10: demo.business.book.admin_service.UpdateBookMetaRequest
-	(*UpdateBookMetaResponse)(nil),   // 11: demo.business.book.admin_service.UpdateBookMetaResponse
-	(*book.BookMeta)(nil),            // 12: demo.business.book.BookMeta
-	(*book.BookContent)(nil),         // 13: demo.business.book.BookContent
-	(*book.BookId)(nil),              // 14: demo.business.book.BookId
-	(*book.BookMetaFilter)(nil),      // 15: demo.business.book.BookMetaFilter
-	(*fieldmaskpb.FieldMask)(nil),    // 16: google.protobuf.FieldMask
-	(*emptypb.Empty)(nil),            // 17: google.protobuf.Empty
+	(*CreateBookRequest)(nil),         // 0: demo.business.book.admin_service.CreateBookRequest
+	(*CreateBookResponse)(nil),        // 1: demo.business.book.admin_service.CreateBookResponse
+	(*BatchCreateBooksRequest)(nil),   // 2: demo.business.book.admin_service.BatchCreateBooksRequest
+	(*BatchCreateBooksResponse)(nil),  // 3: demo.business.book.admin_service.BatchCreateBooksResponse
+	(*DeleteBookRequest)(nil),         // 4: demo.business.book.admin_service.DeleteBookRequest
+	(*DeleteBookSoftRequest)(nil),     // 5: demo.business.book.admin_service.DeleteBookSoftRequest
+	(*ListBooksRequest)(nil),          // 6: demo.business.book.admin_service.ListBooksRequest
+	(*ListBooksResponse)(nil),         // 7: demo.business.book.admin_service.ListBooksResponse
+	(*BookItem)(nil),                  // 8: demo.business.book.admin_service.BookItem
+	(*GetBookMetaRequest)(nil),        // 9: demo.business.book.admin_service.GetBookMetaRequest
+	(*GetBookMetaResponse)(nil),       // 10: demo.business.book.admin_service.GetBookMetaResponse
+	(*BatchGetBookMetasRequest)(nil),  // 11: demo.business.book.admin_service.BatchGetBookMetasRequest
+	(*BatchGetBookMetasResponse)(nil), // 12: demo.business.book.admin_service.BatchGetBookMetasResponse
+	(*UpdateBookMetaRequest)(nil),     // 13: demo.business.book.admin_service.UpdateBookMetaRequest
+	(*UpdateBookMetaResponse)(nil),    // 14: demo.business.book.admin_service.UpdateBookMetaResponse
+	(*GetBookContentRequest)(nil),     // 15: demo.business.book.admin_service.GetBookContentRequest
+	(*GetBookContentResponse)(nil),    // 16: demo.business.book.admin_service.GetBookContentResponse
+	(*UpdateBookContentRequest)(nil),  // 17: demo.business.book.admin_service.UpdateBookContentRequest
+	(*book.BookMeta)(nil),             // 18: demo.business.book.BookMeta
+	(*book.BookContent)(nil),          // 19: demo.business.book.BookContent
+	(*book.BookId)(nil),               // 20: demo.business.book.BookId
+	(*book.BookMetaFilter)(nil),       // 21: demo.business.book.BookMetaFilter
+	(*fieldmaskpb.FieldMask)(nil),     // 22: google.protobuf.FieldMask
+	(*emptypb.Empty)(nil),             // 23: google.protobuf.Empty
 }
 var file_admin_service_admin_service_proto_depIdxs = []int32{
-	12, // 0: demo.business.book.admin_service.CreateBookRequest.meta:type_name -> demo.business.book.BookMeta
-	13, // 1: demo.business.book.admin_service.CreateBookRequest.content:type_name -> demo.business.book.BookContent
-	14, // 2: demo.business.book.admin_service.CreateBookResponse.key:type_name -> demo.business.book.BookId
+	18, // 0: demo.business.book.admin_service.CreateBookRequest.meta:type_name -> demo.business.book.BookMeta
+	19, // 1: demo.business.book.admin_service.CreateBookRequest.content:type_name -> demo.business.book.BookContent
+	20, // 2: demo.business.book.admin_service.CreateBookResponse.key:type_name -> demo.business.book.BookId
 	0,  // 3: demo.business.book.admin_service.BatchCreateBooksRequest.requests:type_name -> demo.business.book.admin_service.CreateBookRequest
-	14, // 4: demo.business.book.admin_service.BatchCreateBooksResponse.keys:type_name -> demo.business.book.BookId
-	14, // 5: demo.business.book.admin_service.DeleteBookRequest.key:type_name -> demo.business.book.BookId
-	14, // 6: demo.business.book.admin_service.DeleteBookSoftRequest.key:type_name -> demo.business.book.BookId
-	14, // 7: demo.business.book.admin_service.GetBookMetaRequest.key:type_name -> demo.business.book.BookId
-	12, // 8: demo.business.book.admin_service.GetBookMetaResponse.book_meta:type_name -> demo.business.book.BookMeta
-	15, // 9: demo.business.book.admin_service.ListBookMetasRequest.filter:type_name -> demo.business.book.BookMetaFilter
-	12, // 10: demo.business.book.admin_service.ListBookMetasResponse.metas:type_name -> demo.business.book.BookMeta
-	12, // 11: demo.business.book.admin_service.UpdateBookMetaRequest.meta:type_name -> demo.business.book.BookMeta
-	14, // 12: demo.business.book.admin_service.UpdateBookMetaRequest.key:type_name -> demo.business.book.BookId
-	16, // 13: demo.business.book.admin_service.UpdateBookMetaRequest.update_mask:type_name -> google.protobuf.FieldMask
-	0,  // 14: demo.business.book.admin_service.AdminService.CreateBook:input_type -> demo.business.book.admin_service.CreateBookRequest
-	2,  // 15: demo.business.book.admin_service.AdminService.BatchCreateBooks:input_type -> demo.business.book.admin_service.BatchCreateBooksRequest
-	4,  // 16: demo.business.book.admin_service.AdminService.DeleteBook:input_type -> demo.business.book.admin_service.DeleteBookRequest
-	5,  // 17: demo.business.book.admin_service.AdminService.DeleteBookSoft:input_type -> demo.business.book.admin_service.DeleteBookSoftRequest
-	6,  // 18: demo.business.book.admin_service.AdminService.GetBookMeta:input_type -> demo.business.book.admin_service.GetBookMetaRequest
-	8,  // 19: demo.business.book.admin_service.AdminService.ListBookMetas:input_type -> demo.business.book.admin_service.ListBookMetasRequest
-	10, // 20: demo.business.book.admin_service.AdminService.UpdateBookMeta:input_type -> demo.business.book.admin_service.UpdateBookMetaRequest
-	1,  // 21: demo.business.book.admin_service.AdminService.CreateBook:output_type -> demo.business.book.admin_service.CreateBookResponse
-	3,  // 22: demo.business.book.admin_service.AdminService.BatchCreateBooks:output_type -> demo.business.book.admin_service.BatchCreateBooksResponse
-	17, // 23: demo.business.book.admin_service.AdminService.DeleteBook:output_type -> google.protobuf.Empty
-	17, // 24: demo.business.book.admin_service.AdminService.DeleteBookSoft:output_type -> google.protobuf.Empty
-	7,  // 25: demo.business.book.admin_service.AdminService.GetBookMeta:output_type -> demo.business.book.admin_service.GetBookMetaResponse
-	9,  // 26: demo.business.book.admin_service.AdminService.ListBookMetas:output_type -> demo.business.book.admin_service.ListBookMetasResponse
-	11, // 27: demo.business.book.admin_service.AdminService.UpdateBookMeta:output_type -> demo.business.book.admin_service.UpdateBookMetaResponse
-	21, // [21:28] is the sub-list for method output_type
-	14, // [14:21] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	20, // 4: demo.business.book.admin_service.BatchCreateBooksResponse.keys:type_name -> demo.business.book.BookId
+	20, // 5: demo.business.book.admin_service.DeleteBookRequest.key:type_name -> demo.business.book.BookId
+	20, // 6: demo.business.book.admin_service.DeleteBookSoftRequest.key:type_name -> demo.business.book.BookId
+	21, // 7: demo.business.book.admin_service.ListBooksRequest.filter:type_name -> demo.business.book.BookMetaFilter
+	8,  // 8: demo.business.book.admin_service.ListBooksResponse.items:type_name -> demo.business.book.admin_service.BookItem
+	18, // 9: demo.business.book.admin_service.BookItem.meta:type_name -> demo.business.book.BookMeta
+	19, // 10: demo.business.book.admin_service.BookItem.content:type_name -> demo.business.book.BookContent
+	20, // 11: demo.business.book.admin_service.GetBookMetaRequest.key:type_name -> demo.business.book.BookId
+	18, // 12: demo.business.book.admin_service.GetBookMetaResponse.book_meta:type_name -> demo.business.book.BookMeta
+	20, // 13: demo.business.book.admin_service.BatchGetBookMetasRequest.keys:type_name -> demo.business.book.BookId
+	18, // 14: demo.business.book.admin_service.BatchGetBookMetasResponse.metas:type_name -> demo.business.book.BookMeta
+	18, // 15: demo.business.book.admin_service.UpdateBookMetaRequest.meta:type_name -> demo.business.book.BookMeta
+	20, // 16: demo.business.book.admin_service.UpdateBookMetaRequest.key:type_name -> demo.business.book.BookId
+	22, // 17: demo.business.book.admin_service.UpdateBookMetaRequest.update_mask:type_name -> google.protobuf.FieldMask
+	20, // 18: demo.business.book.admin_service.GetBookContentRequest.key:type_name -> demo.business.book.BookId
+	19, // 19: demo.business.book.admin_service.GetBookContentResponse.book_content:type_name -> demo.business.book.BookContent
+	19, // 20: demo.business.book.admin_service.UpdateBookContentRequest.content:type_name -> demo.business.book.BookContent
+	20, // 21: demo.business.book.admin_service.UpdateBookContentRequest.key:type_name -> demo.business.book.BookId
+	0,  // 22: demo.business.book.admin_service.AdminService.CreateBook:input_type -> demo.business.book.admin_service.CreateBookRequest
+	2,  // 23: demo.business.book.admin_service.AdminService.BatchCreateBooks:input_type -> demo.business.book.admin_service.BatchCreateBooksRequest
+	4,  // 24: demo.business.book.admin_service.AdminService.DeleteBook:input_type -> demo.business.book.admin_service.DeleteBookRequest
+	5,  // 25: demo.business.book.admin_service.AdminService.DeleteBookSoft:input_type -> demo.business.book.admin_service.DeleteBookSoftRequest
+	6,  // 26: demo.business.book.admin_service.AdminService.ListBooks:input_type -> demo.business.book.admin_service.ListBooksRequest
+	9,  // 27: demo.business.book.admin_service.AdminService.GetBookMeta:input_type -> demo.business.book.admin_service.GetBookMetaRequest
+	11, // 28: demo.business.book.admin_service.AdminService.BatchGetBookMetas:input_type -> demo.business.book.admin_service.BatchGetBookMetasRequest
+	13, // 29: demo.business.book.admin_service.AdminService.UpdateBookMeta:input_type -> demo.business.book.admin_service.UpdateBookMetaRequest
+	15, // 30: demo.business.book.admin_service.AdminService.GetBookContent:input_type -> demo.business.book.admin_service.GetBookContentRequest
+	17, // 31: demo.business.book.admin_service.AdminService.UpdateBookContent:input_type -> demo.business.book.admin_service.UpdateBookContentRequest
+	1,  // 32: demo.business.book.admin_service.AdminService.CreateBook:output_type -> demo.business.book.admin_service.CreateBookResponse
+	3,  // 33: demo.business.book.admin_service.AdminService.BatchCreateBooks:output_type -> demo.business.book.admin_service.BatchCreateBooksResponse
+	23, // 34: demo.business.book.admin_service.AdminService.DeleteBook:output_type -> google.protobuf.Empty
+	23, // 35: demo.business.book.admin_service.AdminService.DeleteBookSoft:output_type -> google.protobuf.Empty
+	7,  // 36: demo.business.book.admin_service.AdminService.ListBooks:output_type -> demo.business.book.admin_service.ListBooksResponse
+	10, // 37: demo.business.book.admin_service.AdminService.GetBookMeta:output_type -> demo.business.book.admin_service.GetBookMetaResponse
+	12, // 38: demo.business.book.admin_service.AdminService.BatchGetBookMetas:output_type -> demo.business.book.admin_service.BatchGetBookMetasResponse
+	14, // 39: demo.business.book.admin_service.AdminService.UpdateBookMeta:output_type -> demo.business.book.admin_service.UpdateBookMetaResponse
+	16, // 40: demo.business.book.admin_service.AdminService.GetBookContent:output_type -> demo.business.book.admin_service.GetBookContentResponse
+	23, // 41: demo.business.book.admin_service.AdminService.UpdateBookContent:output_type -> google.protobuf.Empty
+	32, // [32:42] is the sub-list for method output_type
+	22, // [22:32] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_admin_service_admin_service_proto_init() }
@@ -766,7 +1073,7 @@ func file_admin_service_admin_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_admin_service_admin_service_proto_rawDesc), len(file_admin_service_admin_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   12,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

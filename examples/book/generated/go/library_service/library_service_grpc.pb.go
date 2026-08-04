@@ -25,9 +25,9 @@ const (
 	LibraryService_BatchCreateBooks_FullMethodName  = "/demo.business.book.library_service.LibraryService/BatchCreateBooks"
 	LibraryService_DeleteBook_FullMethodName        = "/demo.business.book.library_service.LibraryService/DeleteBook"
 	LibraryService_DeleteBookSoft_FullMethodName    = "/demo.business.book.library_service.LibraryService/DeleteBookSoft"
+	LibraryService_ListBooks_FullMethodName         = "/demo.business.book.library_service.LibraryService/ListBooks"
 	LibraryService_GetBookMeta_FullMethodName       = "/demo.business.book.library_service.LibraryService/GetBookMeta"
 	LibraryService_BatchGetBookMetas_FullMethodName = "/demo.business.book.library_service.LibraryService/BatchGetBookMetas"
-	LibraryService_ListBookMetas_FullMethodName     = "/demo.business.book.library_service.LibraryService/ListBookMetas"
 	LibraryService_UpdateBookMeta_FullMethodName    = "/demo.business.book.library_service.LibraryService/UpdateBookMeta"
 	LibraryService_GetBookContent_FullMethodName    = "/demo.business.book.library_service.LibraryService/GetBookContent"
 	LibraryService_UpdateBookContent_FullMethodName = "/demo.business.book.library_service.LibraryService/UpdateBookContent"
@@ -50,9 +50,9 @@ type LibraryServiceClient interface {
 	BatchCreateBooks(ctx context.Context, in *BatchCreateBooksRequest, opts ...grpc.CallOption) (*BatchCreateBooksResponse, error)
 	DeleteBook(ctx context.Context, in *DeleteBookRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteBookSoft(ctx context.Context, in *DeleteBookSoftRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	ListBooks(ctx context.Context, in *ListBooksRequest, opts ...grpc.CallOption) (*ListBooksResponse, error)
 	GetBookMeta(ctx context.Context, in *GetBookMetaRequest, opts ...grpc.CallOption) (*GetBookMetaResponse, error)
 	BatchGetBookMetas(ctx context.Context, in *BatchGetBookMetasRequest, opts ...grpc.CallOption) (*BatchGetBookMetasResponse, error)
-	ListBookMetas(ctx context.Context, in *ListBookMetasRequest, opts ...grpc.CallOption) (*ListBookMetasResponse, error)
 	UpdateBookMeta(ctx context.Context, in *UpdateBookMetaRequest, opts ...grpc.CallOption) (*UpdateBookMetaResponse, error)
 	GetBookContent(ctx context.Context, in *GetBookContentRequest, opts ...grpc.CallOption) (*GetBookContentResponse, error)
 	UpdateBookContent(ctx context.Context, in *UpdateBookContentRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
@@ -115,6 +115,16 @@ func (c *libraryServiceClient) DeleteBookSoft(ctx context.Context, in *DeleteBoo
 	return out, nil
 }
 
+func (c *libraryServiceClient) ListBooks(ctx context.Context, in *ListBooksRequest, opts ...grpc.CallOption) (*ListBooksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListBooksResponse)
+	err := c.cc.Invoke(ctx, LibraryService_ListBooks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *libraryServiceClient) GetBookMeta(ctx context.Context, in *GetBookMetaRequest, opts ...grpc.CallOption) (*GetBookMetaResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetBookMetaResponse)
@@ -129,16 +139,6 @@ func (c *libraryServiceClient) BatchGetBookMetas(ctx context.Context, in *BatchG
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(BatchGetBookMetasResponse)
 	err := c.cc.Invoke(ctx, LibraryService_BatchGetBookMetas_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *libraryServiceClient) ListBookMetas(ctx context.Context, in *ListBookMetasRequest, opts ...grpc.CallOption) (*ListBookMetasResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ListBookMetasResponse)
-	err := c.cc.Invoke(ctx, LibraryService_ListBookMetas_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -282,9 +282,9 @@ type LibraryServiceServer interface {
 	BatchCreateBooks(context.Context, *BatchCreateBooksRequest) (*BatchCreateBooksResponse, error)
 	DeleteBook(context.Context, *DeleteBookRequest) (*emptypb.Empty, error)
 	DeleteBookSoft(context.Context, *DeleteBookSoftRequest) (*emptypb.Empty, error)
+	ListBooks(context.Context, *ListBooksRequest) (*ListBooksResponse, error)
 	GetBookMeta(context.Context, *GetBookMetaRequest) (*GetBookMetaResponse, error)
 	BatchGetBookMetas(context.Context, *BatchGetBookMetasRequest) (*BatchGetBookMetasResponse, error)
-	ListBookMetas(context.Context, *ListBookMetasRequest) (*ListBookMetasResponse, error)
 	UpdateBookMeta(context.Context, *UpdateBookMetaRequest) (*UpdateBookMetaResponse, error)
 	GetBookContent(context.Context, *GetBookContentRequest) (*GetBookContentResponse, error)
 	UpdateBookContent(context.Context, *UpdateBookContentRequest) (*emptypb.Empty, error)
@@ -319,14 +319,14 @@ func (UnimplementedLibraryServiceServer) DeleteBook(context.Context, *DeleteBook
 func (UnimplementedLibraryServiceServer) DeleteBookSoft(context.Context, *DeleteBookSoftRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteBookSoft not implemented")
 }
+func (UnimplementedLibraryServiceServer) ListBooks(context.Context, *ListBooksRequest) (*ListBooksResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListBooks not implemented")
+}
 func (UnimplementedLibraryServiceServer) GetBookMeta(context.Context, *GetBookMetaRequest) (*GetBookMetaResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBookMeta not implemented")
 }
 func (UnimplementedLibraryServiceServer) BatchGetBookMetas(context.Context, *BatchGetBookMetasRequest) (*BatchGetBookMetasResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method BatchGetBookMetas not implemented")
-}
-func (UnimplementedLibraryServiceServer) ListBookMetas(context.Context, *ListBookMetasRequest) (*ListBookMetasResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ListBookMetas not implemented")
 }
 func (UnimplementedLibraryServiceServer) UpdateBookMeta(context.Context, *UpdateBookMetaRequest) (*UpdateBookMetaResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateBookMeta not implemented")
@@ -457,6 +457,24 @@ func _LibraryService_DeleteBookSoft_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LibraryService_ListBooks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBooksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).ListBooks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_ListBooks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).ListBooks(ctx, req.(*ListBooksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LibraryService_GetBookMeta_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetBookMetaRequest)
 	if err := dec(in); err != nil {
@@ -489,24 +507,6 @@ func _LibraryService_BatchGetBookMetas_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(LibraryServiceServer).BatchGetBookMetas(ctx, req.(*BatchGetBookMetasRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _LibraryService_ListBookMetas_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListBookMetasRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LibraryServiceServer).ListBookMetas(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LibraryService_ListBookMetas_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LibraryServiceServer).ListBookMetas(ctx, req.(*ListBookMetasRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -744,16 +744,16 @@ var LibraryService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _LibraryService_DeleteBookSoft_Handler,
 		},
 		{
+			MethodName: "ListBooks",
+			Handler:    _LibraryService_ListBooks_Handler,
+		},
+		{
 			MethodName: "GetBookMeta",
 			Handler:    _LibraryService_GetBookMeta_Handler,
 		},
 		{
 			MethodName: "BatchGetBookMetas",
 			Handler:    _LibraryService_BatchGetBookMetas_Handler,
-		},
-		{
-			MethodName: "ListBookMetas",
-			Handler:    _LibraryService_ListBookMetas_Handler,
 		},
 		{
 			MethodName: "UpdateBookMeta",
